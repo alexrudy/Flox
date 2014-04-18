@@ -1,0 +1,19 @@
+# 
+#  .gitignore
+#  Flox
+#  
+#  Created by Alexander Rudy on 2014-04-17.
+#  Copyright 2014 Alexander Rudy. All rights reserved.
+# 
+
+# Python Compiled Files
+*.so
+*.c
+*.html
+*.py[co]
+
+# Python Builders
+build/*
+*.egg-info
+
+*.pdf
