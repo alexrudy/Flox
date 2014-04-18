@@ -9,10 +9,9 @@
 
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
-import numpy
-import inspect
+import numpy as np
 import astropy.units as u
-from pyshell.astron.units import HasNonDimensonals, HasInitialValues, UnitsProperty, ComputedUnitsProperty
+from pyshell.astron.units import HasNonDimensonals, HasInitialValues, NonDimensionalProperty, ComputedUnitsProperty, InitialValueProperty
 from pyshell.util import setup_kwargs
 
 from .input import FloxConfiguration
@@ -55,16 +54,16 @@ class System2D(HasNonDimensonals, HasInitialValues):
     nx = 0
     nz = 0
     
-    time = UnitsProperty("time", u.s, latex=r"$t$")
+    time = NonDimensionalProperty("time", u.s, latex=r"$t$")
     
-    deltaT = UnitsProperty("deltaT", u.K, latex=r"$\Delta T$")
-    depth = UnitsProperty("depth", u.m, latex=r"$D$")
-    aspect = UnitsProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
+    deltaT = NonDimensionalProperty("deltaT", u.K, latex=r"$\Delta T$")
+    depth = NonDimensionalProperty("depth", u.m, latex=r"$D$")
+    aspect = NonDimensionalProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
     
-    kinematic_viscosity = UnitsProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
-    thermal_diffusivity = UnitsProperty("thermal diffusivity", u.m**2.0 / u.s, latex=r"$\nu$")
-    thermal_expansion = UnitsProperty("thermal expansion", 1.0 / u.K, latex=r"$\alpha$")
-    gravitaional_acceleration = UnitsProperty("gravitational acceleration", u.m / u.s**2.0, latex=r"$g$")
+    kinematic_viscosity = NonDimensionalProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
+    thermal_diffusivity = NonDimensionalProperty("thermal diffusivity", u.m**2.0 / u.s, latex=r"$\nu$")
+    thermal_expansion = NonDimensionalProperty("thermal expansion", 1.0 / u.K, latex=r"$\alpha$")
+    gravitaional_acceleration = NonDimensionalProperty("gravitational acceleration", u.m / u.s**2.0, latex=r"$g$")
     
     @ComputedUnitsProperty
     def width(self):
@@ -91,6 +90,7 @@ class System2D(HasNonDimensonals, HasInitialValues):
     @classmethod
     def get_parameter_list(cls):
         """Get a list of the parameters which can be changed/modified directly"""
+        import inspect
         return inspect.getargspec(cls.__init__)[0][1:]
         
     @classmethod
