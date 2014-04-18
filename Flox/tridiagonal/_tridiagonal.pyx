@@ -20,9 +20,7 @@ from __future__ import division
 import numpy as np
 cimport numpy as np
 cimport cython
-
-# Get some common mathematical functions
-from libc.math cimport sqrt, log, floor
+from cpython.array cimport array, clone
 
 # We'll use DTYPE_t everywhere.
 DTYPE = np.float
@@ -45,10 +43,10 @@ cpdef int tridiagonal_split_matrix(DTYPE_t[:,:] mat, DTYPE_t[:] sub, DTYPE_t[:] 
 
 cpdef int tridiagonal_from_matrix(DTYPE_t[:] rhs, DTYPE_t[:] sol, DTYPE_t[:,:] mat):
     
-    cdef int r1, r2
-    cdef DTYPE_t[:] sub = np.zeros_like(rhs)
-    cdef DTYPE_t[:] dia = np.zeros_like(rhs)
-    cdef DTYPE_t[:] sup = np.zeros_like(rhs)
+    cdef int r1, r2, J = rhs.shape[0]
+    cdef DTYPE_t[:] sub = clone(array('d'), J, False)
+    cdef DTYPE_t[:] dia = clone(array('d'), J, False)
+    cdef DTYPE_t[:] sup = clone(array('d'), J, False)
     
     r1 = tridiagonal_split_matrix(mat, sub, dia, sup)
     r2 = tridiagonal_solver(rhs, sol, sub, dia, sup)
@@ -59,8 +57,8 @@ cpdef int tridiagonal_from_matrix(DTYPE_t[:] rhs, DTYPE_t[:] sol, DTYPE_t[:,:] m
 cpdef int tridiagonal_solver(DTYPE_t[:] rhs, DTYPE_t[:] sol, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup):
     
     cdef int r1, r2, j, J = rhs.shape[0]
-    cdef DTYPE_t[:] wk1 = np.zeros_like(rhs)
-    cdef DTYPE_t[:] wk2 = np.zeros_like(rhs)
+    cdef DTYPE_t[:] wk1 = clone(array('d'), J, False)
+    cdef DTYPE_t[:] wk2 = clone(array('d'), J, False)
     
     r1 = tridiagonal_do_work(sub, dia, sup, wk1, wk2)
     r2 = tridiagonal_from_work(rhs, sol, wk1, wk2, sub)
