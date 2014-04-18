@@ -16,5 +16,7 @@
 build/*
 *.egg-info
 
-*.pdf
-*.npy
+performance/*.pdf
+performance/*.npy
+
+integration/*.yml

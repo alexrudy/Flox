@@ -10,9 +10,12 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 import numpy
-
+import inspect
 import astropy.units as u
 from pyshell.astron.units import HasNonDimensonals, HasInitialValues, UnitsProperty, ComputedUnitsProperty
+from pyshell.util import setup_kwargs
+
+from .input import FloxConfiguration
 
 class System2D(HasNonDimensonals, HasInitialValues):
     """A 2D Fluid box, with some basic properties.
@@ -26,9 +29,9 @@ class System2D(HasNonDimensonals, HasInitialValues):
     :param gravitaional_acceleration: The rate of gravitational acceleration.
     
     """
-    def __init__(self, deltaT, depth, aspect,
-        time, nx, nz
-        kinematic_viscosity, thermal_diffusivity, thermal_expansion, gravitaional_acceleration):
+    def __init__(self, deltaT=0, depth=0, aspect=0,
+        time=0, nx=0, nz=0,
+        kinematic_viscosity=0, thermal_diffusivity=0, thermal_expansion=0, gravitaional_acceleration=0):
         super(System2D, self).__init__()
         
         # Simulation State Variables
@@ -47,6 +50,8 @@ class System2D(HasNonDimensonals, HasInitialValues):
         self.thermal_expansion = thermal_expansion
         self.gravitaional_acceleration = gravitaional_acceleration
         
+        self._setup_standard_bases()
+        
     nx = 0
     nz = 0
     
@@ -59,7 +64,7 @@ class System2D(HasNonDimensonals, HasInitialValues):
     kinematic_viscosity = UnitsProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
     thermal_diffusivity = UnitsProperty("thermal diffusivity", u.m**2.0 / u.s, latex=r"$\nu$")
     thermal_expansion = UnitsProperty("thermal expansion", 1.0 / u.K, latex=r"$\alpha$")
-    gravitaional_acceleration = UnitsProperty("gravitaional acceleration", u.m / u.s**2.0, latex=r"$g$")
+    gravitaional_acceleration = UnitsProperty("gravitational acceleration", u.m / u.s**2.0, latex=r"$g$")
     
     @ComputedUnitsProperty
     def width(self):
@@ -84,6 +89,23 @@ class System2D(HasNonDimensonals, HasInitialValues):
         self._nondimensional_bases = set([temperature_unit, length_unit, time_unit])
         
     @classmethod
+    def get_parameter_list(cls):
+        """Get a list of the parameters which can be changed/modified directly"""
+        return inspect.getargspec(cls.__init__)[0][1:]
+        
+    @classmethod
     def from_param_file(cls, filename):
         """Load a box from a parameter file."""
+        parameters = FloxConfiguration.fromfile(filename)
+        return cls(**setup_kwargs(cls.__init__,parameters))
+        
+    def to_param_file(self, filename):
+        """Create a parameter file."""
+        parameters = FloxConfiguration()
+        argnames = self.get_parameter_list()
+        for argname in argnames:
+            parameters[argname] = getattr(self, argname)
+        parameters.save(filename)
+        
+    
         
