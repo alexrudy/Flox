@@ -21,16 +21,10 @@ def assemble_tridiagonal_matrix(n, eps=1e-2, seed=5):
     with NumpyRNGContext(seed):
         from numpy import random
         
-        matrix = np.diag(random.randn(n))
-        
-        # Handle the off-diagonal terms.
-        matrix[1,0] = eps * random.randn(1)
-        for i in range(1,n-1):
-            matrix[i-1,i] = eps * random.randn(1)
-            matrix[i+1,i] = eps * random.randn(1)
-        matrix[n-2,n-1] = eps * random.randn(1)
-        
-    return np.matrix(matrix)
+        dia = np.diag(random.randn(n))
+        sup = eps * np.diag(random.randn(n-1),-1)
+        sub = eps * np.diag(random.randn(n-1),1)
+    return np.matrix(dia + sup + sub)
     
 def assemble_solution_matrix(n, seed=5):
     """Assemble a solution matrix"""
@@ -43,13 +37,13 @@ def assemble_solution_matrix(n, seed=5):
     return np.matrix(sol).T
     
 def test_tridiagonal_solve():
-    """Test a tridiagonal solver"""
+    """Tridiagonal solver basic"""
     from . import tridiagonal_from_matrix
     seed = 5
-    n = int(1e4)
-    eps = 1e-7
+    n = int(1e2)
+    eps = 1e-2
     
-    mat = assemble_tridiagonal_matrix(n, seed=seed)
+    mat = assemble_tridiagonal_matrix(n, eps, seed=seed)
     sol = assemble_solution_matrix(n, seed=seed)
     
     rhs = np.array(mat * sol)[:,0]
@@ -60,5 +54,24 @@ def test_tridiagonal_solve():
     assert np.allclose(res, solar)
     
 
+def test_tridiagonal_solve_linear():
+    """Tridiagonal solver linear"""
+    from . import tridiagonal_from_matrix
+    seed = 5
+    n = int(1e2)
+    eps = 1e-2
+    with NumpyRNGContext(seed):
+        from numpy import random
+        factor = random.randn()
     
+
+    mat = assemble_tridiagonal_matrix(n, eps, seed=seed)
+    sol = assemble_solution_matrix(n, seed=seed)
+    
+    rhs = np.array(mat * sol)[:,0]
+    solar = np.array(sol)[:,0]
+    res = np.array(np.zeros_like(sol))[:,0]
+
+    status = tridiagonal_from_matrix(factor*rhs, res, factor*mat)
+    assert np.allclose(res, solar)
     
