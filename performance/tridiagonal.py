@@ -17,7 +17,7 @@ import os, os.path
 
 import matplotlib.pyplot as plt
 
-def tridiagonal_trial_setup(n, seed):
+def tridiagonal_matrix_trial_setup(n, seed):
     """Do a single trial with a n=? trial."""
     from Flox.tridiagonal import tridiagonal_from_matrix
     from Flox.tridiagonal.test_tridiagonal import assemble_tridiagonal_matrix, assemble_solution_matrix
@@ -52,12 +52,12 @@ def tridiagonal_split_trial_setup(n, seed):
     
     return rhs, res, sub, dia, sup
 
-def tridiagonal_trial_setup_cmd(n, seed):
+def tridiagonal_matrix_trial_setup_cmd(n, seed):
     """Setup command"""
     return textwrap.dedent("""
     from __main__ import tridiagonal_trial_setup
     from Flox.tridiagonal import tridiagonal_from_matrix
-    rhs, res, mat = tridiagonal_trial_setup({n:d},{seed:d})    
+    rhs, res, mat = tridiagonal_matrix_trial_setup({n:d},{seed:d})    
     """.format(n=n,seed=seed))
     
 def tridiagonal_split_trial_setup_cmd(n, seed):
@@ -68,37 +68,36 @@ def tridiagonal_split_trial_setup_cmd(n, seed):
     rhs, res, sup, dia, sub = tridiagonal_split_trial_setup({n:d},{seed:d})    
     """.format(n=n,seed=seed))
 
-def tridiagonal_trial(n, seed):
+def tridiagonal_matrix_trial(n, seed, iterations=int(1e4)):
     """Tridiagonal trial."""
     cmd = "status = tridiagonal_from_matrix(rhs, res, mat)"
-    print("Trying n={:d}".format(n))
-    return timeit.timeit(cmd, setup=tridiagonal_trial_setup_cmd(n, seed), number=int(1e6))
+    print("Trying Matrix n={:d}".format(n))
+    return 1e3 * timeit.timeit(cmd, setup=tridiagonal_matrix_trial_setup_cmd(n, seed), number=iterations) / iterations
 
-def tridiagonal_split_trial(n, seed):
+def tridiagonal_split_trial(n, seed, iterations=int(1e4)):
     """Tridiagonal trial."""
     cmd = "status = tridiagonal_solver(rhs, res, sub, dia, sup)"
-    print("Trying n={:d}".format(n))
-    return timeit.timeit(cmd, setup=tridiagonal_split_trial_setup_cmd(n, seed), number=int(1e6))
-
-
-def tridiagonal_timing(ns, seed):
-    """Do the timing trials"""
-    return [tridiagonal_trial(n, seed) for n in ns]
+    print("Trying Split n={:d}".format(n))
+    return 1e3 * timeit.timeit(cmd, setup=tridiagonal_split_trial_setup_cmd(n, seed), number=iterations) / iterations
 
 if __name__ == '__main__':
     
+    seed = 5
+    iterations = int(1e4)
+    log_n_max = 15
+    
     filename = os.path.join(os.path.dirname(__file__),"tridiagonal.npy")
     if os.path.exists(filename):
-        ns, times, times_split = np.hsplit(np.load(filename).T, 3)
+        ns, times_matrix, times_split = np.hsplit(np.load(filename).T, 3)
     else:
-        ns = np.power(2, np.arange(1,10))
-        times_split = [tridiagonal_split_trial(n, 5) for n in ns]
-        times = tridiagonal_timing(ns, 5)
-        np.save(filename, np.vstack((ns, times, times_split)))
+        ns = np.power(2, np.arange(1,log_n_max))
+        times_split = [tridiagonal_split_trial(n, seed, iterations) for n in ns]
+        times_matrix = [tridiagonal_trial(n, seed, iterations) for n in ns]
+        np.save(filename, np.vstack((ns, times_matrix, times_split)))
     
     print("Plotting Timing Results")
     plotname = os.path.join(os.path.dirname(__file__),"tridiagonal.pdf")
-    plt.plot(ns, times, 'bo-', label="With Matrix Split")
+    plt.plot(ns, times_matrix, 'bo-', label="With Matrix Split")
     plt.plot(ns, times_split, 'go-', label="Pre-split arrays")
     plt.xlabel(r"Matrix Size $(n \times n)$")
     plt.ylabel(r"Time per loop $(\mu s)$")
