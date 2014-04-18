@@ -14,7 +14,7 @@ import numpy
 import astropy.units as u
 from pyshell.astron.units import HasNonDimensonals, HasInitialValues, UnitsProperty, ComputedUnitsProperty
 
-class Box2D(HasNonDimensonals, HasInitialValues):
+class System2D(HasNonDimensonals, HasInitialValues):
     """A 2D Fluid box, with some basic properties.
     
     :param deltaT: The temperature change between the bottom and top of the box.
@@ -29,7 +29,7 @@ class Box2D(HasNonDimensonals, HasInitialValues):
     def __init__(self, deltaT, depth, aspect,
         time, nx, nz
         kinematic_viscosity, thermal_diffusivity, thermal_expansion, gravitaional_acceleration):
-        super(Box, self).__init__()
+        super(System2D, self).__init__()
         
         # Simulation State Variables
         self.time = time
