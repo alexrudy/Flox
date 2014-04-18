@@ -94,18 +94,17 @@ class System2D(HasNonDimensonals, HasInitialValues):
         return inspect.getargspec(cls.__init__)[0][1:]
         
     @classmethod
-    def from_param_file(cls, filename):
+    def from_params(cls, parameters):
         """Load a box from a parameter file."""
-        parameters = FloxConfiguration.fromfile(filename)
         return cls(**setup_kwargs(cls.__init__,parameters))
         
-    def to_param_file(self, filename):
+    def to_params(self):
         """Create a parameter file."""
         parameters = FloxConfiguration()
         argnames = self.get_parameter_list()
         for argname in argnames:
             parameters[argname] = getattr(self, argname)
-        parameters.save(filename)
+        return parameters
         
     
         

@@ -53,10 +53,11 @@ def create_system():
 def test_make_parameter_file():
     """Test creating a parameter file."""
     system = create_system()
-    system.to_param_file(make_parameter_filename)
+    system.to_params().save(make_parameter_filename)
     
 def test_read_parameter_file():
     """Test reading a parameter file."""
     from Flox.system import System2D
-    System2D.from_param_file(read_parameter_filename)
+    from Flox.input import FloxConfiguration
+    System2D.from_params(FloxConfiguration.fromfile(read_parameter_filename))
     
