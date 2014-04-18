@@ -14,9 +14,14 @@ from Cython.Build import cythonize
 
 import numpy as np
 
+extension_include_dirs = [ np.get_include(), './Flox/']
 extensions = [
+    Extension("*", ["Flox/finitedifference.pyx"],
+        include_dirs = extension_include_dirs,),
     Extension("*", ["Flox/tridiagonal/*.pyx"],
-        include_dirs = [ np.get_include() ],),
+        include_dirs = extension_include_dirs,),
+    Extension("*", ["Flox/linear/*.pyx"],
+        include_dirs = extension_include_dirs,),
         ]
 
 DEPENDENCIES = [
