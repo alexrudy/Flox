@@ -22,9 +22,7 @@ cimport numpy as np
 cimport cython
 from cpython.array cimport array, clone
 
-# We'll use DTYPE_t everywhere.
-DTYPE = np.float
-ctypedef np.float_t DTYPE_t
+from Flox._flox cimport DTYPE_t
 
 cpdef int tridiagonal_split_matrix(DTYPE_t[:,:] mat, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup):
     

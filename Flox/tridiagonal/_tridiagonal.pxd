@@ -6,11 +6,7 @@
 #  Copyright 2014 University of California. All rights reserved.
 # 
 
-import numpy as np
-cimport numpy as np
-
-DTYPE = np.float
-ctypedef np.float_t DTYPE_t
+from Flox._flox cimport DTYPE_t
 
 cpdef int tridiagonal_split_matrix(DTYPE_t[:,:] mat, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup)
 
