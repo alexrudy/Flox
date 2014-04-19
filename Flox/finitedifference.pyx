@@ -31,7 +31,7 @@ cpdef int clear_values(int J, DTYPE_t[:] val):
     return 0
 
 
-cpdef int second_derivative(int J, DTYPE_t[:] ddf, DTYPE_t[:] f, DTYPE_t dz, DTYPE_t f_p, DTYPE_t f_m):
+cpdef int second_derivative(int J, DTYPE_t[:] ddf, DTYPE_t[:] f, DTYPE_t dz, DTYPE_t f_p, DTYPE_t f_m, DTYPE_t factor):
     
     cdef int j
     cdef DTYPE_t dzs
@@ -39,13 +39,13 @@ cpdef int second_derivative(int J, DTYPE_t[:] ddf, DTYPE_t[:] f, DTYPE_t dz, DTY
     dzs = dz * dz
     
     j = 0
-    ddf[j] += (f[j+1] - 2.0 * f[j] + f_m)/(dzs)
+    ddf[j] += factor * (f[j+1] - 2.0 * f[j] + f_m)/(dzs)
     
     for j in range(1, J-1):
-        ddf[j] += (f[j+1] - 2.0 * f[j] + f[j-1])/(dzs)
+        ddf[j] += factor * (f[j+1] - 2.0 * f[j] + f[j-1])/(dzs)
         
     j = J-1
-    ddf[j] += (f_p - 2.0 * f[j] + f[j-1])/(dzs)
+    ddf[j] += factor * (f_p - 2.0 * f[j] + f[j-1])/(dzs)
     
     return 0
     
