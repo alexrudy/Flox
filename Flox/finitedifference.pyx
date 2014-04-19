@@ -21,6 +21,7 @@ from cpython.array cimport array, clone
 
 from Flox._flox cimport DTYPE_t
 
+# Also known as 'clear_walrus'
 cpdef int clear_values(int J, DTYPE_t[:] val):
     
     cdef int j
