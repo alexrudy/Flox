@@ -91,3 +91,47 @@ cpdef int tridiagonal_from_work(DTYPE_t[:] rhs, DTYPE_t[:] sol, DTYPE_t[:] wk1, 
     return 0
     
 
+cdef class TridiagonalSolver:
+    
+    # cdef DTYPE_t[:] wk1
+    # cdef DTYPE_t[:] wk2
+    # cdef DTYPE_t[:] sub
+    # cdef DTYPE_t[:] dia
+    # cdef DTYPE_t[:] sup
+    # cdef int J
+    # cdef bint warmed
+    
+    def __cinit__(self, int size):
+        
+        self.J = size
+        self.warmed = False
+        self.wk1 = clone(array('d'), self.J, False)
+        self.wk2 = clone(array('d'), self.J, False)
+        self.sub = clone(array('d'), self.J, False)
+        self.dia = clone(array('d'), self.J, False)
+        self.sup = clone(array('d'), self.J, False)
+        
+        print("__cinit__")
+    
+    cpdef int warm(self, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup):
+        self.sub = sub
+        self.dia = dia
+        self.sub = sub
+        return self._warm_work()
+    
+    cdef _warm_work(self):
+        return tridiagonal_do_work(self.sub, self.dia, self.sup, self.wk1, self.wk2)
+    
+    cpdef int solve(self, DTYPE_t[:] rhs, DTYPE_t[:] sol):
+        return tridiagonal_from_work(rhs, sol, self.wk1, self.wk2, self.sub)
+    
+    cpdef int matrix(self, DTYPE_t[:,:] mat):
+        cdef int r1, r2
+        r1 = tridiagonal_split_matrix(mat, self.sub, self.dia, self.sup)
+        r2 = self._warm_work()
+        return r1 + r2
+        
+    
+    
+    
+    

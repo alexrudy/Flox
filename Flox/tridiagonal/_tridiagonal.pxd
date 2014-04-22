@@ -17,3 +17,17 @@ cpdef int tridiagonal_solver(DTYPE_t[:] rhs, DTYPE_t[:] sol, DTYPE_t[:] sub, DTY
 cpdef int tridiagonal_do_work(DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup, DTYPE_t[:] wk1, DTYPE_t[:] wk2)
 
 cpdef int tridiagonal_from_work(DTYPE_t[:] rhs, DTYPE_t[:] sol, DTYPE_t[:] wk1, DTYPE_t[:] wk2, DTYPE_t[:] sub)
+
+cdef class TridiagonalSolver:
+    cdef DTYPE_t[:] wk1
+    cdef DTYPE_t[:] wk2
+    cdef DTYPE_t[:] sub
+    cdef DTYPE_t[:] dia
+    cdef DTYPE_t[:] sup
+    cdef int J
+    cdef bint warmed
+    cdef _warm_work(self)
+    cpdef int solve(self, DTYPE_t[:] rhs, DTYPE_t[:] sol)
+    cpdef int warm(self, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup)
+    cpdef int matrix(self, DTYPE_t[:,:] mat)
+

@@ -75,3 +75,23 @@ def test_tridiagonal_solve_linear():
     status = tridiagonal_from_matrix(factor*rhs, res, factor*mat)
     assert np.allclose(res, solar)
     
+def test_tridiagonal_object():
+    """TridiagonalSolver"""
+    from . import TridiagonalSolver
+    seed = 5
+    n = int(1e2)
+    eps = 1e-2
+    
+    mat = assemble_tridiagonal_matrix(n, eps, seed=seed)
+    sol = assemble_solution_matrix(n, seed=seed)
+    
+    rhs = np.array(mat * sol)[:,0]
+    solar = np.array(sol)[:,0]
+    res = np.array(np.zeros_like(sol))[:,0]
+    
+    TS = TridiagonalSolver(n)
+    TS.matrix(mat)
+    TS.solve(rhs, res)    
+    assert np.allclose(res, solar)
+    TS.solve(5 * rhs, res)
+    assert np.allclose(res, 5 * solar)
