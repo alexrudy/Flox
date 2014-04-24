@@ -16,6 +16,8 @@ import numpy as np
 
 extension_include_dirs = [ np.get_include(), './Flox/']
 extensions = [
+    Extension("*", ["Flox/_solve.pyx"],
+        include_dirs = extension_include_dirs,),
     Extension("*", ["Flox/finitedifference.pyx"],
         include_dirs = extension_include_dirs,),
     Extension("*", ["Flox/tridiagonal/*.pyx"],
