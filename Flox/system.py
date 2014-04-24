@@ -39,6 +39,15 @@ class System2D(HasNonDimensonals, HasInitialValues):
         self.initialize_arrays()
         
     
+    def __repr__(self):
+        """Represent this object!"""
+        try:
+            Pr = self.Prandtl
+            Re = self.Reynolds
+            return "<{0} with Re={1.value} and Pr={2.value}>".format(self.__class__.__name__, Re, Pr)
+        except NotImplementedError:
+            return super(System2D, self).__repr__()
+    
     @abc.abstractproperty
     def Prandtl(self):
         """Prandtl number."""
@@ -60,7 +69,7 @@ class System2D(HasNonDimensonals, HasInitialValues):
         """Box depth"""
         raise NotImplementedError()
         
-    @property
+    @ComputedUnitsProperty
     def dz(self):
         """The z-grid spacing"""
         return self.depth / self.nz
@@ -70,6 +79,7 @@ class System2D(HasNonDimensonals, HasInitialValues):
         """docstring for aspect"""
         raise NotImplementedError()
     
+    @ComputedUnitsProperty
     def width(self):
         """The box width."""
         return self.aspect * self.depth
@@ -84,7 +94,7 @@ class System2D(HasNonDimensonals, HasInitialValues):
         """Thermal Diffusivity"""
         raise NotImplementedError()
     
-    @property
+    @ComputedUnitsProperty
     def primary_viscosity(self):
         """Primary Viscosity component"""
         if self.kinematic_viscosity > self.thermal_diffusivity:
@@ -92,8 +102,8 @@ class System2D(HasNonDimensonals, HasInitialValues):
         else:
             return self.thermal_diffusivity
         
-    @property
-    def _npa(self):
+    @ComputedUnitsProperty
+    def npa(self):
         """(n * pi / a)"""
         return np.arange(1, self.nx+1) * np.pi / self.aspect
         
@@ -104,9 +114,9 @@ class System2D(HasNonDimensonals, HasInitialValues):
         
     def _setup_standard_bases(self):
         """Set the standard, non-dimensional bases"""
-        temperature_unit = u.def_unit("Box ∆T", self.deltaT)
+        temperature_unit = u.def_unit("Box delta T", self.deltaT)
         length_unit = u.def_unit("Box D", self.depth)
-        time_unit = u.def_unit("Box D²/κ", self.depth**2 / self.primary_viscosity)
+        time_unit = u.def_unit("Box D^2/kappa", self.depth**2 / self.primary_viscosity)
         self._nondimensional_bases = set([temperature_unit, length_unit, time_unit])
         
     @classmethod
@@ -152,8 +162,8 @@ class NDSystem2D(System2D):
         self.Prandtl = Prandtl
         self.Reynolds = Reynolds
         self.kinematic_viscosity = kinematic_viscosity
-        
         self._setup_standard_bases()
+        
         
     deltaT = NonDimensionalProperty("deltaT", u.K, latex=r"$\Delta T$")
     depth = NonDimensionalProperty("depth", u.m, latex=r"$D$")
@@ -203,9 +213,9 @@ class PhysicalSystem2D(System2D):
         self.thermal_diffusivity = thermal_diffusivity
         self.thermal_expansion = thermal_expansion
         self.gravitaional_acceleration = gravitaional_acceleration
-        
         self._setup_standard_bases()
-    
+        
+        
     deltaT = NonDimensionalProperty("deltaT", u.K, latex=r"$\Delta T$")
     depth = NonDimensionalProperty("depth", u.m, latex=r"$D$")
     aspect = NonDimensionalProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
