@@ -20,3 +20,4 @@ performance/*.pdf
 performance/*.npy
 
 integration/*.yml
+integration/*.hdf5
