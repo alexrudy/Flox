@@ -32,6 +32,17 @@ cpdef int clear_values(int J, DTYPE_t[:] val):
     return 0
 
 
+# TODO: Make a 2D and 3D version of this function!
+
+cpdef int second_derivative2D(int J, int K, DTYPE_t[:,:] ddf, DTYPE_t[:,:] f, DTYPE_t dz, DTYPE_t f_p, DTYPE_t f_m, DTYPE_t factor):
+    
+    cdef int k, r = 0
+    
+    for k in range(K):
+        r += second_derivative(J, ddf[:,k], f[:,k], dz, f_p, f_m, factor)
+    return r
+
+
 cpdef int second_derivative(int J, DTYPE_t[:] ddf, DTYPE_t[:] f, DTYPE_t dz, DTYPE_t f_p, DTYPE_t f_m, DTYPE_t factor):
     
     cdef int j
