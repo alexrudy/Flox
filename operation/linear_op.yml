@@ -8,3 +8,4 @@ system:
   nx: 100
   nz: 100
   nt: 100
+iterations: 20000

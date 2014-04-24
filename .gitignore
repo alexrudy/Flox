@@ -21,3 +21,5 @@ performance/*.npy
 
 integration/*.yml
 integration/*.hdf5
+
+operation/*.hdf5
