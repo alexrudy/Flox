@@ -111,6 +111,8 @@ cdef class LinearEvolver(Evolver):
         self.Vorticity.advance(delta_time)
         
         self.time += delta_time
+        
+        return 0
     
     
     

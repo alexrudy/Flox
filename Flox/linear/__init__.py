@@ -27,10 +27,16 @@ class LinearEvolver(_LinearEvolver):
     def from_grids(cls, grids):
         """Load the grid parameters into the LE"""
         with grids.in_nondimensional():
-            return cls(grids.Temperature[...,-1].value, grids.Vorticity[...,-1].value, 
+            return cls(grids.Temperature[...,grids.it].value, grids.Vorticity[...,grids.it].value, 
                 grids.npa.value, grids.Prandtl.value, grids.Reynolds.value, grids.dz.value, 
-                grids.Time[...,-1].value)
+                grids.Time[grids.it].value)
         
-    def to_grids(self, grids):
+    def to_grids(self, grids, iteration):
         """Load the LE data back into a grid set."""
-        raise NotImplementedError()
+        grids.it = iteration
+        with grids.in_nondimensional():
+            time_unit = grids.Time.unit
+            self.get_state(grids.Temperature[...,grids.it], grids.Vorticity[...,grids.it])
+            grids.Time[grids.it] = self.time * time_unit
+        
+            

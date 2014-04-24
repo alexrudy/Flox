@@ -29,12 +29,14 @@ class System2D(HasNonDimensonals, HasInitialValues):
     nx = 0
     nz = 0
     nt = 0
+    it = 0
     
-    def __init__(self, nx, nz, nt, dtype=np.float):
+    def __init__(self, nx, nz, nt, it=0, dtype=np.float):
         super(System2D, self).__init__()
         self.nx = nx
         self.nz = nz
         self.nt = nt
+        self.it = it
         self.dtype = dtype
         self.initialize_arrays()
         
@@ -44,7 +46,8 @@ class System2D(HasNonDimensonals, HasInitialValues):
         try:
             Pr = self.Prandtl
             Re = self.Reynolds
-            return "<{0} with Re={1.value} and Pr={2.value}>".format(self.__class__.__name__, Re, Pr)
+            time = self.Time[self.it]
+            return "<{0} with Re={1.value} and Pr={2.value} at {3}>".format(self.__class__.__name__, Re, Pr, time)
         except NotImplementedError:
             return super(System2D, self).__repr__()
     
@@ -118,6 +121,7 @@ class System2D(HasNonDimensonals, HasInitialValues):
         length_unit = u.def_unit("Box D", self.depth)
         time_unit = u.def_unit("Box D^2/kappa", self.depth**2 / self.primary_viscosity)
         self._nondimensional_bases = set([temperature_unit, length_unit, time_unit])
+        self._bases = u.si
         
     @classmethod
     def from_params(cls, parameters):
