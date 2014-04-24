@@ -29,8 +29,9 @@ cdef class Solver:
         self.G_curr = np.empty((nz, nx), dtype=np.float)
         self.G_prev = np.empty((nz, nx), dtype=np.float)
         
-        for j in range(self.size):
-            self.G_prev[j] = 0.0
+        for k in range(self.nx):
+            for j in range(self.nz):
+                self.G_prev[j,k] = 0.0
         
         
     cpdef int advance(self, DTYPE_t deltaT):
@@ -49,7 +50,7 @@ cdef class Solver:
     
 cdef class Evolver:
     
-    cdef DTYPE_t delta_time(self):
+    cpdef DTYPE_t delta_time(self):
         
         return 0.0
     
@@ -59,20 +60,17 @@ cdef class Evolver:
         
     cpdef int evolve(self, DTYPE_t time, int max_iterations):
         
-        cdef DTYPE_t delta_time, ctime = self.time
         cdef int j, r = 0
         
         for j in range(max_iterations):
             if self.time > time:
                 break
             
-            delta_time = self.delta_time()
-            r += self.step(delta_time)
+            r += self.step(self.delta_time())
             if r == 0:
-                self.time += delta_time
+                pass
             else:
                 break
         
-        self.time = ctime
         return r
     
