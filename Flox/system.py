@@ -113,7 +113,7 @@ class System2D(HasNonDimensonals, HasInitialValues):
     @ComputedUnitsProperty
     def npa(self):
         """(n * pi / a)"""
-        return np.arange(1, self.nx+1) * np.pi / self.aspect
+        return np.arange(self.nx).astype(np.float) * np.pi / self.aspect
         
     @classmethod
     def get_parameter_list(cls):
