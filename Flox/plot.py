@@ -45,11 +45,11 @@ class EvolutionView(object):
     
     def ydata(self, system):
         """Return the y-data values."""
-        return getattr(system, self.variable)
+        return getattr(system, self.variable)[...,:system.it]
     
     def initialize(self, system):
         """Set up the plot."""
-        self.line, = self.ax.plot(system.Time, self.ydata(system), 'ko-')
+        self.line, = self.ax.plot(system.Time[:system.it], self.ydata(system), 'k-')
         self.ax.set_ylabel(getattr(type(system), self.variable).latex)
         self.ax.set_xlabel(type(system).Time.latex)
         
@@ -57,8 +57,26 @@ class EvolutionView(object):
         """Update the view."""
         if self.line is None:
             self.initialize(system)
-        self.line.set_data(system.Time, self.ydata(system))
+        self.line.set_data(system.Time[:system.it], self.ydata(system))
         
+    
+class EvolutionViewAllModes(EvolutionView):
+    """Watch a variable evolve for all fourier modes."""
+    
+    def initialize(self, system):
+        """Set up the plot."""
+        self.line = []
+        for i in range(self.ydata(system).shape[1]):
+            self.line.append(self.ax.plot(system.Time[:system.it], np.mean(self.ydata(system)[:,i,:], axis=0), 'k-')[0])
+        self.ax.set_ylabel(getattr(type(system), self.variable).latex)
+        self.ax.set_xlabel(type(system).Time.latex)
+    
+    def update(self, system):
+        """Update the view."""
+        if self.line is None:
+            self.initialize(system)
+        for i, line in enumerate(self.line):
+            line.set_data(system.Time[:system.it], np.mean(self.ydata(system)[:,i,:], axis=0))
     
 class EvolutionViewSingleMode(EvolutionView):
     """Watch a variable evolve for a single fourier mode."""
@@ -69,7 +87,7 @@ class EvolutionViewSingleMode(EvolutionView):
     
     def ydata(self, system):
         """Return the y-data values."""
-        return np.mean(getattr(system, self.variable)[:,self.nmode], axis=0)
+        return np.mean(getattr(system, self.variable)[:,self.nmode,:system.it], axis=0)
         
 
 
