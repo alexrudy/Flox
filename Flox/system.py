@@ -13,17 +13,17 @@ import abc
 import six
 import numpy as np
 import astropy.units as u
-from pyshell.astron.units import HasNonDimensonals, HasInitialValues, NonDimensionalProperty, ComputedUnitsProperty, InitialValueProperty
+from .units import HasUnitsProperties, ComputedUnitsProperty, UnitsProperty
 from pyshell.util import setup_kwargs
 
 from .input import FloxConfiguration
 
-class ArrayProperty(InitialValueProperty):
+class ArrayProperty(UnitsProperty):
     """Custom subclass used to assist with Array allocation."""
     pass
 
 @six.add_metaclass(abc.ABCMeta)
-class System2D(HasNonDimensonals, HasInitialValues):
+class System2D(HasUnitsProperties):
     """An abstract 2D Fluid box, with some basic properties."""
     
     nx = 0
@@ -122,11 +122,12 @@ class System2D(HasNonDimensonals, HasInitialValues):
         
     def _setup_standard_bases(self):
         """Set the standard, non-dimensional bases"""
-        temperature_unit = u.def_unit("Box delta T", self.deltaT)
-        length_unit = u.def_unit("Box D", self.depth)
-        time_unit = u.def_unit("Box D^2/kappa", self.depth**2 / self.primary_viscosity)
-        self._nondimensional_bases = set([temperature_unit, length_unit, time_unit])
-        self._bases = u.si
+        self.add_bases("standard", set([u.K, u.m, u.s]))
+        with self.bases("standard"):
+            temperature_unit = u.def_unit("Box-delta-T", self.deltaT)
+            length_unit = u.def_unit("Box-D", self.depth)
+            time_unit = u.def_unit("Box-D^2/kappa", self.depth**2 / self.primary_viscosity)
+            self.add_bases("nondimensional", set([temperature_unit, length_unit, time_unit]))
         
     @classmethod
     def from_params(cls, parameters):
@@ -174,13 +175,13 @@ class NDSystem2D(System2D):
         self._setup_standard_bases()
         
         
-    deltaT = NonDimensionalProperty("deltaT", u.K, latex=r"$\Delta T$")
-    depth = NonDimensionalProperty("depth", u.m, latex=r"$D$")
-    aspect = NonDimensionalProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
+    deltaT = UnitsProperty("deltaT", u.K, latex=r"$\Delta T$")
+    depth = UnitsProperty("depth", u.m, latex=r"$D$")
+    aspect = UnitsProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
     
-    kinematic_viscosity = NonDimensionalProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
-    Prandtl = NonDimensionalProperty("Prandtl", u.dimensionless_unscaled, latex=r"$Pr$")
-    Reynolds = NonDimensionalProperty("Reynolds", u.dimensionless_unscaled, latex=r"$Re$")
+    kinematic_viscosity = UnitsProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
+    Prandtl = UnitsProperty("Prandtl", u.dimensionless_unscaled, latex=r"$Pr$")
+    Reynolds = UnitsProperty("Reynolds", u.dimensionless_unscaled, latex=r"$Re$")
     
     @ComputedUnitsProperty
     def thermal_diffusivity(self):
@@ -225,14 +226,14 @@ class PhysicalSystem2D(System2D):
         self._setup_standard_bases()
         
         
-    deltaT = NonDimensionalProperty("deltaT", u.K, latex=r"$\Delta T$")
-    depth = NonDimensionalProperty("depth", u.m, latex=r"$D$")
-    aspect = NonDimensionalProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
+    deltaT = UnitsProperty("deltaT", u.K, latex=r"$\Delta T$")
+    depth = UnitsProperty("depth", u.m, latex=r"$D$")
+    aspect = UnitsProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
     
-    kinematic_viscosity = NonDimensionalProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
-    thermal_diffusivity = NonDimensionalProperty("thermal diffusivity", u.m**2.0 / u.s, latex=r"$\nu$")
-    thermal_expansion = NonDimensionalProperty("thermal expansion", 1.0 / u.K, latex=r"$\alpha$")
-    gravitaional_acceleration = NonDimensionalProperty("gravitational acceleration", u.m / u.s**2.0, latex=r"$g$")
+    kinematic_viscosity = UnitsProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
+    thermal_diffusivity = UnitsProperty("thermal diffusivity", u.m**2.0 / u.s, latex=r"$\nu$")
+    thermal_expansion = UnitsProperty("thermal expansion", 1.0 / u.K, latex=r"$\alpha$")
+    gravitaional_acceleration = UnitsProperty("gravitational acceleration", u.m / u.s**2.0, latex=r"$g$")
     
     @ComputedUnitsProperty
     def width(self):
