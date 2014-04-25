@@ -25,7 +25,6 @@ cdef class Solver:
         self.nx = nx
         self.nz = nz
         self.V_curr = curr
-        self.V_next = np.empty((nz, nx), dtype=np.float)
         self.G_curr = np.empty((nz, nx), dtype=np.float)
         self.G_prev = np.empty((nz, nx), dtype=np.float)
         
@@ -40,8 +39,17 @@ cdef class Solver:
         
         for k in range(self.nx):
             for j in range(self.nz):
-                self.V_next[j,k] = self.V_curr[j,k] + deltaT / 2.0 * (3.0 * self.G_curr[j,k] - self.G_prev[j,k])
+                self.V_curr[j,k] = self.V_curr[j,k] + deltaT / 2.0 * (3.0 * self.G_curr[j,k] - self.G_prev[j,k])
                 self.G_prev[j,k] = self.G_curr[j,k]
+                
+        
+        return 0
+        
+    cpdef int get_state(self, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] G_curr, DTYPE_t[:,:] G_prev):
+        
+        V_curr[...] = self.V_curr
+        G_curr[...] = self.G_curr
+        G_prev[...] = self.G_prev
         
         return 0
         
