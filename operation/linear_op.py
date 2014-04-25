@@ -34,12 +34,6 @@ if __name__ == '__main__':
     iterations = int(Config["iterations"])
     Writer = HDF5Writer(filename(".hdf5"))
     LE = LinearEvolver.from_grids(System)
-    # print("Starting Evolution...")
-    # start = time.clock()
-    # LE.evolve(iterations*LE.delta_time(), iterations)
-    # end = time.clock()
-    # per_loop = (end-start)/iterations
-    # print("Finished {} iterations in {}s ({}s per loop)".format(iterations, (end-start), per_loop))
     LE.to_grids(System, 1)
     LE.evolve_many(System, Config['time'], iterations)
     print(System.Temperature[...,System.it])
