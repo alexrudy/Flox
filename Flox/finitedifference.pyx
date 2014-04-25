@@ -36,11 +36,20 @@ cpdef int clear_values(int J, DTYPE_t[:] val):
 
 cpdef int second_derivative2D(int J, int K, DTYPE_t[:,:] ddf, DTYPE_t[:,:] f, DTYPE_t dz, DTYPE_t f_p, DTYPE_t f_m, DTYPE_t factor):
     
-    cdef int k, r = 0
+    cdef DTYPE_t dzs
+    cdef int k, j, r = 0
+    dzs = dz * dz
     
     for k in range(K):
-        r += second_derivative(J, ddf[:,k], f[:,k], dz, f_p, f_m, factor)
-    return r
+        j = 0
+        ddf[j,k] += factor * (f[j+1,k] - 2.0 * f[j,k] + f_m)/(dzs)
+    
+        for j in range(1, J-1):
+            ddf[j,k] += factor * (f[j+1,k] - 2.0 * f[j,k] + f[j-1,k])/(dzs)
+        
+        j = J-1
+        ddf[j,k] += factor * (f_p - 2.0 * f[j,k] + f[j-1,k])/(dzs)
+    return 0
 
 
 cpdef int second_derivative(int J, DTYPE_t[:] ddf, DTYPE_t[:] f, DTYPE_t dz, DTYPE_t f_p, DTYPE_t f_m, DTYPE_t factor):
