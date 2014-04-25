@@ -27,9 +27,14 @@ class LinearEvolver(_LinearEvolver):
     def from_grids(cls, grids):
         """Load the grid parameters into the LE"""
         with grids.in_nondimensional():
-            return cls(grids.Temperature[...,grids.it].value, grids.Vorticity[...,grids.it].value, 
-                grids.npa.value, grids.Prandtl.value, grids.Reynolds.value, grids.dz.value, 
+            return cls(grids.Temperature[...,grids.it].value.copy(), grids.Vorticity[...,grids.it].value.copy(), 
+                grids.npa.value.copy(), grids.Prandtl.value, grids.Reynolds.value, grids.dz.value, 
                 grids.Time[grids.it].value)
+        
+    def update_from_grids(self, grids):
+        """Update the state from a set of grids."""
+        with grids.in_nondimensional():
+            self.set_state(grids.Temperature[...,grids.it].value.copy(), grids.Vorticity[...,grids.it].value.copy(), grids.Time[grids.it].value)
         
     def to_grids(self, grids, iteration):
         """Load the LE data back into a grid set."""

@@ -30,6 +30,7 @@ if __name__ == '__main__':
     
     Config = FloxConfiguration.fromfile(filename(".yml"))
     System = NDSystem2D.from_params(Config["system"])
+    print(System.npa.shape)
     iterations = int(Config["iterations"])
     Writer = HDF5Writer(filename(".hdf5"))
     LE = LinearEvolver.from_grids(System)
@@ -41,4 +42,5 @@ if __name__ == '__main__':
     print("Finished {} iterations in {}s ({}s per loop)".format(iterations, (end-start), per_loop))
     LE.to_grids(System, 1)
     print(System)
+    print(System.Temperature[...,1])
     Writer.write(System,'main')

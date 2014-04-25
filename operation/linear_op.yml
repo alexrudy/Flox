@@ -5,7 +5,7 @@ system:
   deltaT: !quantity '10 K'
   depth: !quantity '1 m'
   kinematic_viscosity: !quantity '1 St'
-  nx: 100
-  nz: 100
+  nx: 3
+  nz: 10
   nt: 100
 iterations: 20000

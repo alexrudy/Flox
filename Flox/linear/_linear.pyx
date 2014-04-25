@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # 
-#  _tridiagonal.pyx
+#  _linear.pyx
 #  Flox
 #  
-#  Created by Alexander Rudy on 2014-04-17.
-#  Copyright 2014 Alexander Rudy. All rights reserved.
+#  Created by Alexander Rudy on 2014-04-24.
+#  Copyright 2014 University of California. All rights reserved.
 # 
 
 from __future__ import division
@@ -21,11 +21,10 @@ from Flox._solve cimport Solver, Evolver
 cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa):
     
     cdef int j, k
-    
     # The last term in equation (2.10)
     # This resets the values in T_next
-    for k in range(0, K):
-        for j in range(0, J):
+    for k in range(K):
+        for j in range(J):
             d_T[j,k] = T_curr[j,k] * npa[k] * npa[k]
     
     # The second last term in equation (2.10)
@@ -47,8 +46,8 @@ cpdef int vorticity(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] V_curr, DTYPE_t
     cdef int j, k
     
     # The second term and fourth in equation (2.11)
-    for k in range(0, K):
-        for j in range(0, J):
+    for k in range(K):
+        for j in range(J):
             d_V[j,k] = (Ra * Pr * npa[k] * T_curr[j,k]) - (Pr * npa[k] * npa[k] * V_curr[j,k])
         
     # The second last term in equation (2.11)
@@ -84,8 +83,8 @@ cdef class LinearEvolver(Evolver):
     
     cpdef int get_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity):
         
-        Temperature = self.Temperature.V_curr
-        Vorticity = self.Vorticity.V_curr
+        Temperature[...] = self.Temperature.V_curr
+        Vorticity[...] = self.Vorticity.V_curr
         return 0
     
     cpdef int set_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t time):
