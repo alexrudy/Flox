@@ -51,6 +51,11 @@ class System2D(HasNonDimensonals, HasInitialValues):
         except NotImplementedError:
             return super(System2D, self).__repr__()
     
+    def infer_iteration(self):
+        """Infer the iteration number from loaded data."""
+        # TODO Ensure Time is sorted!
+        self.it = np.argmax(self.Time)
+    
     @abc.abstractproperty
     def Prandtl(self):
         """Prandtl number."""
@@ -142,7 +147,7 @@ class System2D(HasNonDimensonals, HasInitialValues):
         
     def initialize_arrays(self):
         """Initialize data arrays"""
-        shape = (self.nx, self.nz, self.nt)
+        shape = (self.nz, self.nx, self.nt)
         for attr_name in self.list_arrays():
             setattr(self, attr_name, np.zeros(shape, dtype=self.dtype))
         self.Time = np.zeros((self.nt,), dtype=self.dtype)

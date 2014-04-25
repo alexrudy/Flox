@@ -58,6 +58,7 @@ class HDF5Writer(GridWriter):
             group = file_context.require_group(name)
             for array_name in group.keys():
                 self.read_array(group, data, array_name)
+        data.infer_iteration()
     
     def read_array(self, group, data, array_name):
         """Read the dataset."""
