@@ -33,14 +33,14 @@ def filename(extension=".yml", base=None):
 if __name__ == '__main__':
     ipydb()
     
-    Config = FloxConfiguration.fromfile(filename(".yml"))
+    Config = FloxConfiguration.fromfile(filename(".yml", base="linear_op"))
     System = NDSystem2D.from_params(Config["system"])
-    Writer = HDF5Writer(filename(".hdf5"))
+    Writer = HDF5Writer(filename(".hdf5", base="linear_op"))
     Writer.read(System, 'main')
     print(System)
-    
+    # System.it = 4
     fig = plt.figure()
-    EVSM = EvolutionViewSingleMode("Temperature", 1)
+    EVSM = EvolutionViewSingleMode("Temperature", 0)
     EVSM.ax = fig.add_subplot(111)
     EVSM.update(System)
     plt.show()

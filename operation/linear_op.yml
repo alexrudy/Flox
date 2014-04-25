@@ -1,11 +1,12 @@
 system:
-  Prandtl: !quantity '1.0 '
-  Reynolds: !quantity '1.0 '
+  Prandtl: !quantity '1 '
+  Reynolds: !quantity '10000 '
   aspect: !quantity '1 '
-  deltaT: !quantity '10 K'
+  deltaT: !quantity '1 K'
   depth: !quantity '1 m'
-  kinematic_viscosity: !quantity '1 St'
-  nx: 3
+  kinematic_viscosity: !quantity '0.01 St'
+  nx: 10
   nz: 10
-  nt: 100
-iterations: 20000
+  nt: 10000
+iterations: 2
+time: !quantity '5 d'
