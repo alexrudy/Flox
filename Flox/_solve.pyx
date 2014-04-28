@@ -7,6 +7,9 @@
 #  Copyright 2014 University of California. All rights reserved.
 # 
 
+# cython: profile=True
+
+
 from __future__ import division
 
 import numpy as np
