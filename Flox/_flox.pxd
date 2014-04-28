@@ -7,8 +7,6 @@
 #  Copyright 2014 University of California. All rights reserved.
 # 
 
-# cython: profile=True
-
 import numpy as np
 cimport numpy as np
 

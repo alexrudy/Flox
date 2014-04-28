@@ -7,8 +7,10 @@
 #  Copyright 2014 University of California. All rights reserved.
 # 
 
-# cython: profile=True
-
+#cython: overflowcheck=False
+#cython: wraparound=False
+#cython: boundscheck=False
+#cython: cdivision=True
 
 from __future__ import division
 

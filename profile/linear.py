@@ -41,3 +41,7 @@ if __name__ == '__main__':
     cProfile.runctx("LE.evolve(time, iterations)", globals(), locals(), filename(".prof"))
     s = pstats.Stats(filename(".prof"))
     s.strip_dirs().sort_stats("time").print_stats()
+    s = pstats.Stats(filename("-old.prof"))
+    s.strip_dirs().sort_stats("time").print_stats()
+    
+    
