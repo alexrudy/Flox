@@ -10,34 +10,37 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 import abc
+import collections
 import six
 import numpy as np
 import astropy.units as u
-from .units import HasUnitsProperties, ComputedUnitsProperty, UnitsProperty
-from pyshell.util import setup_kwargs
+from pyshell.astron.units import UnitsProperty, HasUnitsProperties, recompose, ComputedUnitsProperty
+from pyshell.util import setup_kwargs, configure_class, resolve
 
 from .input import FloxConfiguration
+from .array import ArrayProperty, ArrayEngine
 
-class ArrayProperty(UnitsProperty):
-    """Custom subclass used to assist with Array allocation."""
-    pass
 
 @six.add_metaclass(abc.ABCMeta)
 class System2D(HasUnitsProperties):
     """An abstract 2D Fluid box, with some basic properties."""
     
-    nx = 0
-    nz = 0
-    nt = 0
-    it = 0
+    # nx = 0
+    # nz = 0
+    # nt = 0
+    # it = 0
+    _bases = {}
+    _engine = None
     
-    def __init__(self, nx, nz, nt, it=0, dtype=np.float):
+    def __init__(self, nx, nz, nt, it=0, engine=ArrayEngine, dtype=np.float):
         super(System2D, self).__init__()
         self.nx = nx
         self.nz = nz
         self.nt = nt
         self.it = it
         self.dtype = dtype
+        self._bases = {}
+        self.engine = engine
         self.initialize_arrays()
         
     
@@ -48,13 +51,29 @@ class System2D(HasUnitsProperties):
             Re = self.Reynolds
             time = self.Time[self.it]
             return "<{0} with Re={1.value} and Pr={2.value} at {3}>".format(self.__class__.__name__, Re, Pr, time)
-        except NotImplementedError:
+        except NotImplementedError, IndexError:
             return super(System2D, self).__repr__()
     
     def infer_iteration(self):
         """Infer the iteration number from loaded data."""
         # TODO Ensure Time is sorted!
         self.it = np.argmax(self.Time)
+    
+    @property
+    def engine(self):
+        """Get the engine property."""
+        return self._engine
+        
+    @engine.setter
+    def engine(self, engine):
+        """Set the engine property."""
+        if isinstance(engine, collections.Mapping):
+            engine = configure_class(engine)
+        elif isinstance(engine, six.text_type):
+            engine = resolve(engine)()
+        if not isinstance(engine, ArrayEngine):
+            raise ValueError("Can't set an array engine to a non-subclass of {0}: {1!r}".format(ArrayEngine, engine))
+        self._engine = engine
     
     @abc.abstractproperty
     def Prandtl(self):
@@ -84,7 +103,7 @@ class System2D(HasUnitsProperties):
         
     @abc.abstractproperty
     def aspect(self):
-        """docstring for aspect"""
+        """The aspect ratio of the box."""
         raise NotImplementedError()
     
     @ComputedUnitsProperty
@@ -118,21 +137,32 @@ class System2D(HasUnitsProperties):
     @classmethod
     def get_parameter_list(cls):
         """Get a list of the parameters which can be changed/modified directly"""
-        return ['nx', 'ny']
+        return ['nz', 'nx', 'nt', 'engine']
         
     def _setup_standard_bases(self):
         """Set the standard, non-dimensional bases"""
-        self.add_bases("standard", set([u.K, u.m, u.s]))
-        with self.bases("standard"):
-            temperature_unit = u.def_unit("Box-delta-T", self.deltaT)
-            length_unit = u.def_unit("Box-D", self.depth)
-            time_unit = u.def_unit("Box-D^2/kappa", self.depth**2 / self.primary_viscosity)
-            self.add_bases("nondimensional", set([temperature_unit, length_unit, time_unit]))
+        temperature_unit = u.def_unit("Box-delta-T", self.deltaT)
+        length_unit = u.def_unit("Box-D", self.depth)
+        time_unit = u.def_unit("Box-D^2/kappa", self.depth**2 / self.primary_viscosity)
+        self._bases['nondimensional'] = { unit.physical_type:unit for unit in [temperature_unit, length_unit, time_unit] }
+        
+        temperature_unit = self.deltaT.unit
+        length_unit = self.depth.unit
+        time_unit = self.time.unit
+        self._bases['standard'] = { unit.physical_type:unit for unit in [temperature_unit, length_unit, time_unit] }
+        
+    def nondimensionalize(self, quantity):
+        """Nondimensionalize a given quantity for use somewhere."""
+        return recompose(quantity, set(self._bases['nondimensional'].values()))
+        
+    def dimensionalize(self, quantity):
+        """Dimensionalize a given quantity."""
+        pass
         
     @classmethod
     def from_params(cls, parameters):
         """Load a box from a parameter file."""
-        return cls(**setup_kwargs(cls.__init__,parameters))
+        return cls(**parameters)
         
     def to_params(self):
         """Create a parameter file."""
@@ -148,24 +178,26 @@ class System2D(HasUnitsProperties):
         
     def initialize_arrays(self):
         """Initialize data arrays"""
-        shape = (self.nz, self.nx, self.nt)
         for attr_name in self.list_arrays():
-            setattr(self, attr_name, np.zeros(shape, dtype=self.dtype))
-        self.Time = np.zeros((self.nt,), dtype=self.dtype)
+            getattr(type(self), attr_name).allocate(self)
     
-    Time = ArrayProperty("Time", u.s, latex=r"$t$")
-    Temperature = ArrayProperty("Temperature", u.K, latex=r"$T$")
-    Vorticity = ArrayProperty("Vorticity", 1.0 / u.s, latex=r"$\omega$")
-    StreamFunction = ArrayProperty("StreamFunction", u.m**2 / u.s, latex=r"$\psi$")
+    @ComputedUnitsProperty
+    def time(self):
+        """The current time of this simulation"""
+        return self.Time[self.it] * type(self).Time.unit(self)
+    
+    Time = ArrayProperty("Time", u.s, shape=tuple(('nt',)), latex=r"$t$")
+    Temperature = ArrayProperty("Temperature", u.K, shape=('nz','nx','nt'), latex=r"$T$")
+    Vorticity = ArrayProperty("Vorticity", 1.0 / u.s, shape=('nz','nx','nt'), latex=r"$\omega$")
+    StreamFunction = ArrayProperty("StreamFunction", u.m**2 / u.s, shape=('nz','nx','nt'), latex=r"$\psi$")
     
     
 
 class NDSystem2D(System2D):
     """A primarily non-dimensional 2D system."""
     def __init__(self,
-        nx=0, nz=0, nt=0,
-        deltaT=0, depth=0, aspect=0, Prandtl=0, Reynolds=0, kinematic_viscosity=0):
-        super(NDSystem2D, self).__init__(nx=nx, nz=nz, nt=nt)
+        deltaT=0, depth=0, aspect=0, Prandtl=0, Reynolds=0, kinematic_viscosity=0, **kwargs):
+        super(NDSystem2D, self).__init__(**kwargs)
         self.deltaT = deltaT
         self.depth = depth
         self.aspect = aspect
@@ -192,8 +224,7 @@ class NDSystem2D(System2D):
     def get_parameter_list(cls):
         """Get a list of the parameters which can be changed/modified directly"""
         import inspect
-        return inspect.getargspec(cls.__init__)[0][1:]
-        
+        return inspect.getargspec(cls.__init__)[0][1:] + super(NDSystem2D, cls).get_parameter_list()
     
 
 class PhysicalSystem2D(System2D):
@@ -209,9 +240,9 @@ class PhysicalSystem2D(System2D):
     
     """
     def __init__(self, deltaT=0, depth=0, aspect=0,
-        nx=0, nz=0, nt=0,
-        kinematic_viscosity=0, thermal_diffusivity=0, thermal_expansion=0, gravitaional_acceleration=0):
-        super(PhysicalSystem2D, self).__init__(nx=nx, nz=nz, nt=nt)
+        kinematic_viscosity=0, thermal_diffusivity=0, thermal_expansion=0, gravitaional_acceleration=0,
+        **kwargs):
+        super(PhysicalSystem2D, self).__init__(**kwargs)
         
         # Box Physical Variables
         self.deltaT = deltaT
@@ -254,7 +285,6 @@ class PhysicalSystem2D(System2D):
     def get_parameter_list(cls):
         """Get a list of the parameters which can be changed/modified directly"""
         import inspect
-        return inspect.getargspec(cls.__init__)[0][1:]
-        
+        return inspect.getargspec(cls.__init__)[0][1:] + super(PhysicalSystem2D, cls).get_parameter_list()        
     
         

@@ -9,3 +9,5 @@ nz: 100
 nt: 100
 thermal_diffusivity: !quantity '1.0 St'
 thermal_expansion: !quantity '1.0 1 / K'
+engine:
+  '()': 'Flox.array.NumpyArrayEngine'
