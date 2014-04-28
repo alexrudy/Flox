@@ -14,11 +14,11 @@ import collections
 import six
 import numpy as np
 import astropy.units as u
-from pyshell.astron.units import UnitsProperty, HasUnitsProperties, recompose, ComputedUnitsProperty
+from pyshell.astron.units import UnitsProperty, HasUnitsProperties, recompose, ComputedUnitsProperty, recompose_unit
 from pyshell.util import setup_kwargs, configure_class, resolve
 
 from .input import FloxConfiguration
-from .array import ArrayProperty, ArrayEngine
+from .array import SpectralArrayProperty, ArrayEngine, ArrayProperty
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -71,6 +71,8 @@ class System2D(HasUnitsProperties):
             engine = configure_class(engine)
         elif isinstance(engine, six.text_type):
             engine = resolve(engine)()
+        elif issubclass(engine, ArrayEngine):
+            engine = engine()
         if not isinstance(engine, ArrayEngine):
             raise ValueError("Can't set an array engine to a non-subclass of {0}: {1!r}".format(ArrayEngine, engine))
         self._engine = engine
@@ -110,6 +112,11 @@ class System2D(HasUnitsProperties):
     def width(self):
         """The box width."""
         return self.aspect * self.depth
+        
+    @ComputedUnitsProperty
+    def dx(self):
+        """x grid spacing."""
+        return self.width / self.nx
     
     @abc.abstractproperty
     def kinematic_viscosity(self):
@@ -143,21 +150,41 @@ class System2D(HasUnitsProperties):
         """Set the standard, non-dimensional bases"""
         temperature_unit = u.def_unit("Box-delta-T", self.deltaT)
         length_unit = u.def_unit("Box-D", self.depth)
-        time_unit = u.def_unit("Box-D^2/kappa", self.depth**2 / self.primary_viscosity)
-        self._bases['nondimensional'] = { unit.physical_type:unit for unit in [temperature_unit, length_unit, time_unit] }
+        viscosity_unit = u.def_unit("kappa", self.primary_viscosity)
+        time_unit = length_unit**2 / viscosity_unit
+        self._bases['nondimensional'] = { unit.physical_type:unit for unit in [temperature_unit, length_unit, viscosity_unit, time_unit] }
         
         temperature_unit = self.deltaT.unit
         length_unit = self.depth.unit
         time_unit = self.time.unit
-        self._bases['standard'] = { unit.physical_type:unit for unit in [temperature_unit, length_unit, time_unit] }
+        viscosity_unit = length_unit**2 / time_unit
+        self._bases['standard'] = { unit.physical_type:unit for unit in [temperature_unit, length_unit, time_unit, viscosity_unit] }
         
     def nondimensionalize(self, quantity):
         """Nondimensionalize a given quantity for use somewhere."""
-        return recompose(quantity, set(self._bases['nondimensional'].values()))
+        return recompose(quantity, list(self._bases['nondimensional'].values()))
         
     def dimensionalize(self, quantity):
-        """Dimensionalize a given quantity."""
-        pass
+        """Dimensionalize a given quantity or value."""
+        return recompose(quantity, list(self._bases['standard'].values()))
+    
+    def dimesnional_array(self, name):
+        """Return a dimensionalized array"""
+        array_desc = getattr(type(self), name)
+        array_dunit = array_desc.unit(self)
+        array_ndunit = self.nondimensional_unit(array_dunit)
+        return (array_desc.get(self) * array_ndunit).to(array_dunit)
+        
+    def nondimensional_unit(self, unit):
+        """Create a nondimensional unit for this system."""
+        return recompose_unit(unit, set(self._bases['nondimensional'].values()))
+        
+    def transformed_array(self, name):
+        """Return a transformed array for a given name"""
+        array_desc = getattr(type(self), name)
+        array_dunit = array_desc.unit(self)
+        array_ndunit = self.nondimensional_unit(array_dunit)
+        return (array_desc.itransform(self) * array_ndunit).to(array_dunit)
         
     @classmethod
     def from_params(cls, parameters):
@@ -187,9 +214,9 @@ class System2D(HasUnitsProperties):
         return self.Time[self.it] * type(self).Time.unit(self)
     
     Time = ArrayProperty("Time", u.s, shape=tuple(('nt',)), latex=r"$t$")
-    Temperature = ArrayProperty("Temperature", u.K, shape=('nz','nx','nt'), latex=r"$T$")
-    Vorticity = ArrayProperty("Vorticity", 1.0 / u.s, shape=('nz','nx','nt'), latex=r"$\omega$")
-    StreamFunction = ArrayProperty("StreamFunction", u.m**2 / u.s, shape=('nz','nx','nt'), latex=r"$\psi$")
+    Temperature = SpectralArrayProperty("Temperature", u.K, func=np.cos, shape=('nz','nx','nt'), latex=r"$T$")
+    Vorticity = SpectralArrayProperty("Vorticity", 1.0 / u.s, func=np.sin, shape=('nz','nx','nt'), latex=r"$\omega$")
+    StreamFunction = SpectralArrayProperty("StreamFunction", u.m**2 / u.s, func=np.sin, shape=('nz','nx','nt'), latex=r"$\psi$")
     
     
 

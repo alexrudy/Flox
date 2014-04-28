@@ -30,7 +30,6 @@ if __name__ == '__main__':
     
     Config = FloxConfiguration.fromfile(filename(".yml"))
     System = NDSystem2D.from_params(Config["system"])
-    print(System.npa.shape)
     iterations = int(Config["iterations"])
     Writer = HDF5Writer(filename(".hdf5"))
     LE = LinearEvolver.from_grids(System)

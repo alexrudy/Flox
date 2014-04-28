@@ -89,6 +89,20 @@ class ArrayProperty(UnitsProperty):
         """Get this object."""
         return getattr(obj, self._engine)[self._attr]
         
+class SpectralArrayProperty(ArrayProperty):
+    """An array with spectral property support"""
+    def __init__(self, name, unit, func, **kwargs):
+        super(SpectralArrayProperty, self).__init__(name, unit, **kwargs)
+        self._func = func
+        
+    def itransform(self, obj):
+        """Perform the inverse transform."""
+        x = np.linspace(0, obj.width, obj.nx)
+        cs = self._func(obj.npa * x)
+        data = self.get(obj)
+        return np.sum(data[:,:,np.newaxis,:] * cs[np.newaxis, np.newaxis, :, np.newaxis], axis=1)
+        
+        
 class NumpyArrayEngine(ArrayYAMLSupport, dict, ArrayEngine):
     """A numpy-based array engine"""
     
