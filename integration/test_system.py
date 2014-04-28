@@ -42,6 +42,7 @@ def create_system():
     my_system = PhysicalSystem2D(
         nx = 100,
         nz = 100,
+        nt = 100,
         deltaT = 10,
         depth = 1,
         aspect = 1,
@@ -49,6 +50,7 @@ def create_system():
         thermal_diffusivity = 1,
         thermal_expansion = 1,
         gravitaional_acceleration = g0,
+        engine = 'Flox.array.NumpyArrayEngine',
     )
     return my_system
     
@@ -84,6 +86,7 @@ def test_make_ND_parameter_file():
         kinematic_viscosity = 1,
         Prandtl = 1.0,
         Reynolds = 1.0,
+        engine = 'Flox.array.NumpyArrayEngine',
         )
     my_system.to_params().save(make_parameter_filename)
     

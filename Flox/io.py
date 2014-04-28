@@ -64,7 +64,7 @@ class HDF5Writer(GridWriter):
         """Read the dataset."""
         array_obj = getattr(type(data), array_name)
         dataset = group[array_name]
-        array_data = dataset[...] * u.Unit(dataset.attrs['unit'])
+        array_data = dataset[...] # * u.Unit(dataset.attrs['unit'])
         setattr(data, array_name, array_data)
         
         
