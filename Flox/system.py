@@ -57,7 +57,12 @@ class System2D(HasUnitsProperties):
     def infer_iteration(self):
         """Infer the iteration number from loaded data."""
         # TODO Ensure Time is sorted!
-        self.it = np.argmax(self.Time)
+        self.it = self.nit
+        
+    @property
+    def nit(self):
+        """Get the total number of iterations."""
+        return np.argmax(self.Time)
     
     @property
     def engine(self):
