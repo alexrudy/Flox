@@ -1,5 +1,5 @@
 # Configuration: /Users/jaberwocky/Dropbox/Courses/EART275/Flox/integration/test_system-read.yml
-aspect: !quantity '1.0 '
+aspect: 2.0
 deltaT: !quantity '10.0 K'
 depth: !quantity '1.0 m'
 gravitaional_acceleration: !constant 'g0'
