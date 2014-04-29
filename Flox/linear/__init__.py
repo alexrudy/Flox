@@ -31,10 +31,12 @@ class LinearEvolver(_LinearEvolver):
         start_time = grids.dimensionalize(self.time * grids.nondimensional_unit(total_time.unit))
         end_time = self.time + grids.nondimensionalize(total_time).value
         for i in ProgressBar(chunks):
-            self.evolve(end_time, chunksize)
-            self.to_grids(grids, grids.it+1)
-            if (grids.time - start_time) > total_time:
+            if grids.time >= total_time:
                 break
+            else:
+                self.evolve(end_time, chunksize)
+                self.to_grids(grids, grids.it+1)
+
         
     
     @classmethod
