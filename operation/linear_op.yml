@@ -1,13 +1,13 @@
 system:
   Prandtl: !quantity '1 '
-  Reynolds: !quantity '10000 '
+  Reynolds: !quantity '1 '
   aspect: !quantity '1 '
   deltaT: !quantity '1 K'
   depth: !quantity '1 m'
   kinematic_viscosity: !quantity '0.01 St'
-  nx: 10
-  nz: 10
+  nx: 100
+  nz: 100
   nt: 10000
   engine: 'Flox.array.NumpyArrayEngine'
 iterations: 2
-time: !quantity '5 hr'
+time: !quantity '1 min'

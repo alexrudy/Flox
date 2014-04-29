@@ -9,6 +9,8 @@
 
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
+import abc
+import six
 from matplotlib.gridspec import GridSpec
 import numpy as np
 
@@ -35,7 +37,39 @@ class MultiViewController(object):
         """Force the figure to re-draw."""
         self.figure.canvas.draw()
 
-class EvolutionView(object):
+@six.add_metaclass(abc.ABCMeta)
+class View(object):
+    """A view controller"""
+    
+    @abc.abstractmethod
+    def update(self, system):
+        """Update this view."""
+        pass
+
+class GridView(View):
+    """View this object on a grid."""
+    def __init__(self, variable):
+        super(GridView, self).__init__()
+        self.variable = variable
+        self.ax = None
+        self.image = None
+        
+    def data(self, system):
+        """Return the transformed data"""
+        return system.transformed_array(self.variable, (Ellipsis, system.it))
+        
+    def initialize(self, system):
+        """Initialize the system."""
+        self.image = self.ax.imshow(self.data(system).value, cmap='jet')
+        
+    def update(self, system):
+        """Update the view"""
+        if self.image is None:
+            self.initialize(system)
+        else:
+            self.image.set_data(self.data(system).value)
+
+class EvolutionView(View):
     """An object view showing the time-evolution of a parameter."""
     def __init__(self, variable):
         super(EvolutionView, self).__init__()

@@ -20,7 +20,7 @@ from Flox.system import NDSystem2D
 from Flox.input import FloxConfiguration
 from Flox.linear import LinearEvolver
 from Flox.io import HDF5Writer
-from Flox.plot import EvolutionViewSingleMode
+from Flox.plot import EvolutionViewSingleMode, GridView
 from pyshell.util import ipydb
 
 def filename(extension=".yml", base=None):
@@ -38,9 +38,12 @@ if __name__ == '__main__':
     Writer = HDF5Writer(filename(".hdf5", base="linear_op"))
     Writer.read(System, 'main')
     print(System)
-    # System.it = 4
     fig = plt.figure()
+    GV = GridView("Temperature")
     EVSM = EvolutionViewSingleMode("Temperature", 0)
-    EVSM.ax = fig.add_subplot(111)
+    EVSM.ax = fig.add_subplot(121)
+    GV.ax = fig.add_subplot(122)
     EVSM.update(System)
+    GV.update(System)
+    print("Showing...")
     plt.show()
