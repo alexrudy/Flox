@@ -126,5 +126,5 @@ class NumpyArrayEngine(ArrayYAMLSupport, dict, ArrayEngine):
         
     def allocate(self, name, shape):
         """Allocate arrays with empty numpy arrays"""
-        self[name] = np.empty(shape, dtype=self._dtype)
+        self[name] = np.zeros(shape, dtype=self._dtype)
         

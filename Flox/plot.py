@@ -67,6 +67,7 @@ class GridView(View):
         if self.image is None:
             self.initialize(system)
         else:
+            self.initialize(system)
             self.image.set_data(self.data(system).value)
 
 class EvolutionView(View):

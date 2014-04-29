@@ -49,7 +49,7 @@ class System2D(HasUnitsProperties):
         try:
             Pr = self.Prandtl
             Re = self.Reynolds
-            time = self.Time[self.it]
+            time = self.time
             return "<{0} with Re={1.value} and Pr={2.value} at {3}>".format(self.__class__.__name__, Re, Pr, time)
         except NotImplementedError, IndexError:
             return super(System2D, self).__repr__()
@@ -156,7 +156,7 @@ class System2D(HasUnitsProperties):
         
         temperature_unit = self.deltaT.unit
         length_unit = self.depth.unit
-        time_unit = self.time.unit
+        time_unit = type(self).Time.unit(self)
         viscosity_unit = length_unit**2 / time_unit
         self._bases['standard'] = { unit.physical_type:unit for unit in [temperature_unit, length_unit, time_unit, viscosity_unit] }
         
@@ -211,7 +211,7 @@ class System2D(HasUnitsProperties):
     @ComputedUnitsProperty
     def time(self):
         """The current time of this simulation"""
-        return self.Time[self.it] * type(self).Time.unit(self)
+        return self.dimensionalize(self.Time[self.it] * self.nondimensional_unit(type(self).Time.unit(self)))
     
     Time = ArrayProperty("Time", u.s, shape=tuple(('nt',)), latex=r"$t$")
     Temperature = SpectralArrayProperty("Temperature", u.K, func=np.cos, shape=('nz','nx','nt'), latex=r"$T$")

@@ -36,7 +36,7 @@ cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE
     # Boundary Conditions:
     # T(z=0) = 1.0
     # T(z=1) = 0.0
-    r1 = second_derivative2D(J, K, d_T, T_curr, dz, 0.0, 1.0, 1.0)
+    r1 = second_derivative2D(J, K, d_T, T_curr, dz, 1.0, 0.0, 1.0)
     
     return r1
 
@@ -106,6 +106,7 @@ cdef class LinearEvolver(Evolver):
         
     cpdef int step(self, DTYPE_t delta_time):
         
+        cdef DTYPE_t time = self.time
         # Compute the derivatives
         self.Temperature.compute(self.dz, self.npa)
         self.Vorticity.compute(self.Temperature.V_curr, self.dz, self.npa, self.Pr, self.Ra)
@@ -114,7 +115,7 @@ cdef class LinearEvolver(Evolver):
         self.Temperature.advance(delta_time)
         self.Vorticity.advance(delta_time)
         
-        self.time += delta_time
+        self.time = time + delta_time
         
         return 0
     
