@@ -23,30 +23,32 @@ from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D
 from Flox._solve cimport Solver, Evolver
 
-cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa):
+cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t[:] f_p, DTYPE_t[:] f_m):
     
     cdef int j, k
     # The last term in equation (2.10)
     # This resets the values in T_next
     for k in range(K):
         for j in range(J):
-            d_T[j,k] = T_curr[j,k] * npa[k] * npa[k]
+            d_T[j,k] = -1.0 * T_curr[j,k] * npa[k] * npa[k]
     
     # The second last term in equation (2.10)
-    # Boundary Conditions:
-    # T(z=0) = 1.0
-    # T(z=1) = 0.0
-    r1 = second_derivative2D(J, K, d_T, T_curr, dz, 1.0, 0.0, 1.0)
+    r1 = second_derivative2D(J, K, d_T, T_curr, dz, f_p, f_m, 1.0)
     
     return r1
 
 cdef class TemperatureSolver(Solver):
     
+    def __cinit__(self, int nz, int nx, DTYPE_t[:,:] curr):
+        # Boundary Conditions:
+        # T(n=0,z=0) = 1.0
+        self.V_m[0] = 1.0
+    
     cpdef int compute(self, DTYPE_t dz, DTYPE_t[:] npa):
         
-        return temperature(self.nz, self.nx, self.G_curr, self.V_curr, dz, npa)
+        return temperature(self.nz, self.nx, self.G_curr, self.V_curr, dz, npa, self.V_p, self.V_m)
 
-cpdef int vorticity(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra):
+cpdef int vorticity(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t[:] f_p, DTYPE_t[:] f_m):
     
     cdef int j, k
     
@@ -59,7 +61,7 @@ cpdef int vorticity(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] V_curr, DTYPE_t
     # Boundary Conditions:
     # w(z=0) = 0.0
     # w(z=1) = 0.0
-    r1 = second_derivative2D(J, K, d_V, V_curr, dz, 0.0, 0.0, Pr)
+    r1 = second_derivative2D(J, K, d_V, V_curr, dz, f_p, f_m, Pr)
     
     return r1
     
@@ -68,12 +70,12 @@ cdef class VorticitySolver(Solver):
     
     cpdef int compute(self, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra):
         
-        return vorticity(self.nz, self.nx, self.G_curr, self.V_curr, T_curr, dz, npa, Pr, Ra)
+        return vorticity(self.nz, self.nx, self.G_curr, self.V_curr, T_curr, dz, npa, Pr, Ra, self.V_p, self.V_m)
     
     
 cdef class LinearEvolver(Evolver):
     
-    def __cinit__(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t dz, DTYPE_t time):
+    def __cinit__(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t dz, DTYPE_t time, DTYPE_t safety):
         
         nz = Temperature.shape[0]
         nx = Temperature.shape[1]
@@ -84,6 +86,7 @@ cdef class LinearEvolver(Evolver):
         self.Pr = Pr
         self.Ra = Ra
         self.dz = dz
+        self.safety = safety
         
     
     cpdef int get_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity):
@@ -102,7 +105,7 @@ cdef class LinearEvolver(Evolver):
     
     cpdef DTYPE_t delta_time(self):
         
-        return (self.dz * self.dz) / 4.0
+        return (self.dz * self.dz) / 4.0 * self.safety
         
     cpdef int step(self, DTYPE_t delta_time):
         

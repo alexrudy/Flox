@@ -9,6 +9,6 @@
 
 from Flox._flox cimport DTYPE_t
 
-cpdef int second_derivative2D(int J, int K, DTYPE_t[:,:] ddf, DTYPE_t[:,:] f, DTYPE_t dz, DTYPE_t f_p, DTYPE_t f_m, DTYPE_t factor)
+cpdef int second_derivative2D(int J, int K, DTYPE_t[:,:] ddf, DTYPE_t[:,:] f, DTYPE_t dz, DTYPE_t[:] f_p, DTYPE_t[:] f_m, DTYPE_t factor)
 
 cpdef int second_derivative(int J, DTYPE_t[:] ddf, DTYPE_t[:] f, DTYPE_t dz, DTYPE_t f_p, DTYPE_t f_m, DTYPE_t factor)

@@ -50,6 +50,7 @@ class LinearEvolver(_LinearEvolver):
             grids.nondimensionalize(grids.Reynolds).value,
             grids.nondimensionalize(grids.dz).value, 
             grids.nondimensionalize(grids.time).value,
+            0.5
             )
         
     def update_from_grids(self, grids):

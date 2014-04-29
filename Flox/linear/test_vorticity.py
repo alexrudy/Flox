@@ -18,7 +18,9 @@ def w_dvorticity(V, T, dz, npa, Ra, Pr):
     nz = V.shape[0]
     nx = V.shape[1]
     dV = np.zeros_like(V)
-    rv = vorticity(nz, nx, dV, V, T, dz, npa, Pr, Ra)
+    fp = np.zeros(nx, np.float)
+    fm = np.zeros(nx, np.float)
+    rv = vorticity(nz, nx, dV, V, T, dz, npa, Pr, Ra, fp, fm)
     return dV
 
 def w_vorticity(V, T, dz, dt, npa, Ra, Pr):
@@ -59,7 +61,7 @@ def test_vorticity_derivative():
     assert np.allclose(dV[1:-1,:], dVc[1:-1,:])
 
 def test_vorticity_solver():
-    """Solver for temperature."""
+    """Solver for vorticity."""
     dz = 0.1
     dt = 1.0
     a = 0.5

@@ -18,7 +18,9 @@ def w_dtemperature(T, dz, npa):
     nz = T.shape[0]
     nx = T.shape[1]
     dT = np.zeros_like(T)
-    rv = temperature(nz, nx, dT, T, dz, npa)
+    fp = np.zeros(nx, np.float)
+    fm = np.zeros(nx, np.float)
+    rv = temperature(nz, nx, dT, T, dz, npa, fp, fm)
     return dT
 
 def w_temperature(T, dz, dt, npa):
@@ -41,7 +43,7 @@ def s_temperature(nx, nz, dz, dt, a=1.0):
     npa = np.tile(np.arange(1,nx+1).T, (nz, 1)).astype(np.float)
     T = z**3 + 2 * z**2
     ddT = 6 * z + 4
-    dT = T * npa * npa + ddT
+    dT = -T * npa * npa + ddT
     Tn = dt/2.0 * 3.0 * dT + T
     return T, dT, Tn, npa[0,:]
     
