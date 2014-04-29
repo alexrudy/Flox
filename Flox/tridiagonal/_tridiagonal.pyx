@@ -111,7 +111,6 @@ cdef class TridiagonalSolver:
         self.dia = clone(array('d'), self.J, False)
         self.sup = clone(array('d'), self.J, False)
         
-        print("__cinit__")
     
     cpdef int warm(self, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup):
         self.sub = sub
