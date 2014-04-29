@@ -26,7 +26,7 @@ def w_2d_second_derivative(f, dz, f_p, f_m, factor=1.0):
     ddf = np.zeros_like(f)
     J = f.shape[0]
     K = f.shape[1]
-    rval = second_derivative2D(J, K, ddf, f, dz, f_p, f_m, factor)
+    rval = second_derivative2D(J, K, ddf, f, dz, np.array([f_p]*K), np.array([f_m]*K), factor)
     return ddf
 
 def test_simple_secondderivative():
