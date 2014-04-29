@@ -179,12 +179,12 @@ class System2D(HasUnitsProperties):
         """Create a nondimensional unit for this system."""
         return recompose_unit(unit, set(self._bases['nondimensional'].values()))
         
-    def transformed_array(self, name):
+    def transformed_array(self, name, _slice=slice(None)):
         """Return a transformed array for a given name"""
         array_desc = getattr(type(self), name)
         array_dunit = array_desc.unit(self)
         array_ndunit = self.nondimensional_unit(array_dunit)
-        return (array_desc.itransform(self) * array_ndunit).to(array_dunit)
+        return (array_desc.itransform(self, _slice) * array_ndunit).to(array_dunit)
         
     @classmethod
     def from_params(cls, parameters):

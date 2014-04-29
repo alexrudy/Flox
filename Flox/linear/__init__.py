@@ -29,7 +29,7 @@ class LinearEvolver(_LinearEvolver):
         """Evolve over many iterations with a given total time."""
         self.update_from_grids(grids)
         start_time = grids.dimensionalize(self.time * grids.nondimensional_unit(total_time.unit))
-        end_time = self.time + grids.nondimensionalize(total_time)
+        end_time = self.time + grids.nondimensionalize(total_time).value
         for i in ProgressBar(chunks):
             self.evolve(end_time, chunksize)
             self.to_grids(grids, grids.it+1)

@@ -95,14 +95,17 @@ class SpectralArrayProperty(ArrayProperty):
         super(SpectralArrayProperty, self).__init__(name, unit, **kwargs)
         self._func = func
         
-    def itransform(self, obj):
+    def itransform(self, obj, _slice=slice(None)):
         """Perform the inverse transform."""
-        x = np.linspace(0, obj.width, obj.nx)
-        cs = self._func(obj.npa * x)
-        data = self.get(obj)
-        return np.sum(data[:,:,np.newaxis,:] * cs[np.newaxis, np.newaxis, :, np.newaxis], axis=1)
+        x = np.linspace(0, obj.width.value, obj.nx)
+        cs = self._func(obj.npa.value * x)
+        data = self.get(obj)[_slice]
+        result = np.zeros_like(data)
+        for i in range(data.shape[1]):
+            result[:,:,...] += cs[np.newaxis,:] * data[:,i,np.newaxis,...]
+        return result
         
-        
+
 class NumpyArrayEngine(ArrayYAMLSupport, dict, ArrayEngine):
     """A numpy-based array engine"""
     
