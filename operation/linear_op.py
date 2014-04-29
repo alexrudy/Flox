@@ -13,6 +13,7 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 import os, os.path
 import time
 
+import numpy as np
 from Flox.system import NDSystem2D
 from Flox.input import FloxConfiguration
 from Flox.linear import LinearEvolver
@@ -33,9 +34,10 @@ if __name__ == '__main__':
     iterations = int(Config["iterations"])
     chunks = System.nt - System.it - 1
     Writer = HDF5Writer(filename(".hdf5"))
-    System.Temperature[:,:,System.it] = 0.1
-    System.Temperature[:,0,System.it] = 0.5
+    System.Temperature[:,:,System.it] = 0.05 * np.power(np.arange(System.nx), -1/3) * np.random.randn(System.nx)
+    System.Temperature[:,0,System.it] = 0.0
     print(System)
+    print(System.Temperature[...,System.it])
     LE = LinearEvolver.from_grids(System)
     LE.evolve_many(System, Config['time'], iterations, chunks)
     print(System.Temperature[...,System.it])

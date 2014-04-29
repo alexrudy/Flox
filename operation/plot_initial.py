@@ -24,7 +24,6 @@ from Flox.plot import GridView, MultiViewController
 from pyshell.util import ipydb
 from matplotlib import animation
 from matplotlib import rcParams
-from matplotlib.colors import SymLogNorm
 
 def filename(extension=".yml", base=None):
     """Filenames related to this file!"""
@@ -42,16 +41,10 @@ if __name__ == '__main__':
     Writer.read(System, 'main')
     print(System)
     fig = plt.figure()
-    MVC = MultiViewController(fig, 2, 1)
-    MVC[0,0] = GridView("Temperature", vmin=0.0, vmax=System.deltaT.value)
-    MVC[1,0] = GridView("Vorticity", cmap='Blues', vmin=-1e-7, vmax=1e-7, norm=SymLogNorm(1e-9))
-    System.it = 2
+    MVC = MultiViewController(fig, 1, 1)
+    MVC[0,0] = GridView("Temperature")
+    System.it = 1
+    print(System.transformed_array("Temperature",(Ellipsis, 1)))
     MVC.update(System)
-    System.infer_iteration()
-    def update(i):
-        System.it = i
-        MVC.update(System)
-    
-    anim = animation.FuncAnimation(fig, update, frames=System.it, interval=1)
     plt.show()
     

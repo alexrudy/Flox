@@ -1,13 +1,13 @@
 system:
-  Prandtl: 1.0e-6
-  Reynolds: 1.0e+10
-  aspect: !quantity '1 '
-  deltaT: !quantity '1 K'
-  depth: !quantity '1 m'
-  kinematic_viscosity: !quantity '0.01 St'
-  nx: 100
+  Prandtl: 1.0
+  Reynolds: 1.0
+  aspect: 5.0
+  deltaT: !quantity '10 K'
+  depth: !quantity '0.1 m'
+  kinematic_viscosity: !quantity '0.001 St'
+  nx: 50
   nz: 100
   nt: 1001
   engine: 'Flox.array.NumpyArrayEngine'
-iterations: 2
-time: !quantity '2 hr'
+iterations: 5
+time: !quantity '6 hr'
