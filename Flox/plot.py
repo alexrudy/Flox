@@ -48,11 +48,12 @@ class View(object):
 
 class GridView(View):
     """View this object on a grid."""
-    def __init__(self, variable):
+    def __init__(self, variable, **kwargs):
         super(GridView, self).__init__()
         self.variable = variable
         self.ax = None
         self.image = None
+        self.im_kwargs = kwargs
         
     def data(self, system):
         """Return the transformed data"""
@@ -60,9 +61,12 @@ class GridView(View):
         
     def initialize(self, system):
         """Initialize the system."""
-        self.image = self.ax.imshow(self.data(system).value, cmap='hot')
+        self.im_kwargs.setdefault('cmap','hot')
+        self.im_kwargs['aspect'] = 1.0 / system.aspect
+        self.image = self.ax.imshow(self.data(system).value, **self.im_kwargs)
         self.ax.figure.colorbar(self.image, ax=self.ax)
-        self.title = self.ax.set_title("{}".format(system.it))
+        self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
+        self.counter = self.ax.text(0.05, 1.05, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit), transform=self.ax.transAxes)
         
     def update(self, system):
         """Update the view"""
@@ -70,7 +74,7 @@ class GridView(View):
             self.initialize(system)
         else:
             self.image.set_data(self.data(system).value)
-            self.title.set_text("{}".format(system.it))
+            self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
             
 
 class EvolutionView(View):
