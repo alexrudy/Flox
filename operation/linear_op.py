@@ -31,9 +31,13 @@ if __name__ == '__main__':
     Config = FloxConfiguration.fromfile(filename(".yml"))
     System = NDSystem2D.from_params(Config["system"])
     iterations = int(Config["iterations"])
+    chunks = System.nt - System.it - 1
     Writer = HDF5Writer(filename(".hdf5"))
+    System.Temperature[:,:,System.it] = 0.1
+    System.Temperature[:,0,System.it] = 0.5
+    print(System)
     LE = LinearEvolver.from_grids(System)
-    LE.to_grids(System, 1)
-    LE.evolve_many(System, Config['time'], iterations)
+    LE.evolve_many(System, Config['time'], iterations, chunks)
     print(System.Temperature[...,System.it])
+    print(System)
     Writer.write(System,'main')
