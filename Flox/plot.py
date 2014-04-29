@@ -60,15 +60,18 @@ class GridView(View):
         
     def initialize(self, system):
         """Initialize the system."""
-        self.image = self.ax.imshow(self.data(system).value, cmap='jet')
+        self.image = self.ax.imshow(self.data(system).value, cmap='hot')
+        self.ax.figure.colorbar(self.image, ax=self.ax)
+        self.title = self.ax.set_title("{}".format(system.it))
         
     def update(self, system):
         """Update the view"""
         if self.image is None:
             self.initialize(system)
         else:
-            self.initialize(system)
             self.image.set_data(self.data(system).value)
+            self.title.set_text("{}".format(system.it))
+            
 
 class EvolutionView(View):
     """An object view showing the time-evolution of a parameter."""
