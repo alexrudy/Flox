@@ -95,14 +95,14 @@ class SpectralArrayProperty(ArrayProperty):
         super(SpectralArrayProperty, self).__init__(name, unit, **kwargs)
         self._func = func
         
-    def itransform(self, obj, _slice=slice(None)):
+    def itransform(self, obj, _slice=Ellipsis):
         """Perform the inverse transform."""
         x = np.linspace(0, obj.width.value, obj.nx)
-        cs = self._func(obj.npa.value * x)
+        cs = self._func(obj.npa.value[:,np.newaxis] * x)
         data = self.get(obj)[_slice]
         result = np.zeros_like(data)
         for i in range(data.shape[1]):
-            result[:,:,...] += cs[np.newaxis,:] * data[:,i,np.newaxis,...]
+            result[:,:,...] += cs[np.newaxis,i,:] * data[:,i,np.newaxis,...]
         return result
         
 
