@@ -25,17 +25,15 @@ cdef class Solver:
     
     def __cinit__(self, int nz, int nx, DTYPE_t[:,:] curr):
         
-        cdef int j
         self.V_curr = curr
         self.nx = nx
         self.nz = nz
         self.V_curr = curr
         self.G_curr = np.empty((nz, nx), dtype=np.float)
-        self.G_prev = np.empty((nz, nx), dtype=np.float)
+        self.G_prev = np.zeros((nz, nx), dtype=np.float)
+        self.V_p = np.zeros((nx,), dtype=np.float)
+        self.V_m = np.zeros((nx,), dtype=np.float)
         
-        for k in range(self.nx):
-            for j in range(self.nz):
-                self.G_prev[j,k] = 0.0
         
         
     cpdef int advance(self, DTYPE_t deltaT):

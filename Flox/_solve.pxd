@@ -22,6 +22,8 @@ cdef class Solver:
     cdef DTYPE_t[:,:] G_curr
     cdef DTYPE_t[:,:] G_prev
     cdef DTYPE_t[:,:] V_curr
+    cdef DTYPE_t[:] V_p
+    cdef DTYPE_t[:] V_m
     
     cpdef int advance(self, DTYPE_t deltaT)
     cpdef int get_state(self, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] G_curr, DTYPE_t[:,:] G_prev)
