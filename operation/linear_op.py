@@ -34,8 +34,10 @@ if __name__ == '__main__':
     iterations = int(Config["iterations"])
     chunks = System.nt - System.it - 1
     Writer = HDF5Writer(filename(".hdf5"))
-    System.Temperature[:,:,System.it] = 0.05 * np.power(np.arange(System.nx), -1/3) * np.random.randn(System.nx)
-    System.Temperature[:,0,System.it] = 0.0
+    System.Temperature[:,:,System.it] = 0.0
+    System.Temperature[:,:,System.it] = np.sin(np.pi * np.arange(System.nz))[:,np.newaxis]
+    #System.Temperature[:,:,System.it] = 0.5 * np.power(np.arange(System.nx), -1/3) * np.random.randn(System.nx)
+    System.Temperature[:,0,System.it] = np.arange(System.nz)[::-1] / System.nz
     print(System)
     print(System.Temperature[...,System.it])
     LE = LinearEvolver.from_grids(System)
