@@ -9,6 +9,7 @@
 
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
+import numpy as np
 from ._tridiagonal import tridiagonal_solver, tridiagonal_from_matrix, tridiagonal_split_matrix, TridiagonalSolver
 
 def tridiagonal_combine_matrix(sub, dia, sup):

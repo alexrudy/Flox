@@ -50,7 +50,7 @@ def test_tridiagonal_solve():
     solar = np.array(sol)[:,0]
     res = np.array(np.zeros_like(sol))[:,0]
     
-    status = tridiagonal_from_matrix(rhs, res, mat)
+    status = tridiagonal_from_matrix(n, rhs, res, mat)
     assert np.allclose(res, solar)
     
 
@@ -72,26 +72,44 @@ def test_tridiagonal_solve_linear():
     solar = np.array(sol)[:,0]
     res = np.array(np.zeros_like(sol))[:,0]
 
-    status = tridiagonal_from_matrix(factor*rhs, res, factor*mat)
+    status = tridiagonal_from_matrix(n, factor*rhs, res, factor*mat)
     assert np.allclose(res, solar)
     
 def test_tridiagonal_object():
     """TridiagonalSolver"""
-    from . import TridiagonalSolver
+    from . import TridiagonalSolver, tridiagonal_split_matrix
     seed = 5
-    n = int(1e2)
+    nz = 10
+    nx = 1
     eps = 1e-2
     
-    mat = assemble_tridiagonal_matrix(n, eps, seed=seed)
-    sol = assemble_solution_matrix(n, seed=seed)
+    mat = assemble_tridiagonal_matrix(nz, eps, seed=seed)
+    sol = assemble_solution_matrix(nz, seed=seed)
     
-    rhs = np.array(mat * sol)[:,0]
-    solar = np.array(sol)[:,0]
-    res = np.array(np.zeros_like(sol))[:,0]
+    rhs = np.empty((nz, nx))
+    solar = np.empty((nz, nx))
+    res = np.zeros((nz, nx))
+    matar = np.empty((nz, nz, nx))
     
-    TS = TridiagonalSolver(n)
-    TS.matrix(mat)
-    TS.solve(rhs, res)    
+    sub = np.empty((nz, nx))
+    dia = np.empty((nz, nx))
+    sup = np.empty((nz, nx))
+    
+    rhs[...] = np.array(mat * sol)[:,0,np.newaxis]
+    solar[...] = np.array(sol)[:,0,np.newaxis]
+    matar[...] = np.array(mat)[...,np.newaxis]
+    
+    # Test some basics before we start.
+    assert matar.shape == (nz, nz, nx)
+    assert rhs.shape == (nz, nx)
+    assert solar.shape == (nz, nx)
+    
+    TS = TridiagonalSolver(nz, nx)
+     
+    assert not TS.matrix(matar)
+    assert not TS.solve(rhs, res)
+    assert np.isfinite(rhs).all()
+    assert np.isfinite(res).all()
     assert np.allclose(res, solar)
     TS.solve(5 * rhs, res)
     assert np.allclose(res, 5 * solar)
