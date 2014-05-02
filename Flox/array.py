@@ -17,6 +17,8 @@ import astropy.units as u
 from pyshell.astron.units import UnitsProperty, HasUnitsProperties, recompose
 from pyshell.util import setup_kwargs
 
+from .transform import spectral_transform
+
 @six.add_metaclass(abc.ABCMeta)
 class ArrayEngine(collections.MutableMapping):
     """An engine for handling array properties behind the scenes.
@@ -97,14 +99,11 @@ class SpectralArrayProperty(ArrayProperty):
         
     def itransform(self, obj, _slice=Ellipsis):
         """Perform the inverse transform."""
-        x = np.linspace(0, obj.width.value, obj.nx)
-        cs = self._func(obj.npa.value[:,np.newaxis] * x)
-        data = self.get(obj)[_slice]
-        result = np.zeros_like(data)
-        for i in range(data.shape[1]):
-            result[:,:,...] += cs[np.newaxis,i,:] * data[:,i,np.newaxis,...]
-        return result
+        return spectral_transform(self._func, self.get(obj)[_slice], obj.width.value, obj.aspect.value)
         
+    def p_itransform(self, obj, _slice=Ellipsis):
+        """Perturbed inverse transform."""
+        return spectral_transform(self._func, self.get(obj)[_slice], obj.width.value, obj.aspect.value, perturbed=True)
 
 class NumpyArrayEngine(ArrayYAMLSupport, dict, ArrayEngine):
     """A numpy-based array engine"""

@@ -51,7 +51,7 @@ class System2D(HasUnitsProperties):
             Re = self.Reynolds
             time = self.time
             return "<{0} with Re={1.value} and Pr={2.value} at {3}>".format(self.__class__.__name__, Re, Pr, time)
-        except NotImplementedError, IndexError:
+        except (NotImplementedError, IndexError):
             return super(System2D, self).__repr__()
     
     def infer_iteration(self):
@@ -184,11 +184,13 @@ class System2D(HasUnitsProperties):
         """Create a nondimensional unit for this system."""
         return recompose_unit(unit, set(self._bases['nondimensional'].values()))
         
-    def transformed_array(self, name, _slice=slice(None)):
+    def transformed_array(self, name, _slice=slice(None), perturbed=False):
         """Return a transformed array for a given name"""
         array_desc = getattr(type(self), name)
         array_dunit = array_desc.unit(self)
         array_ndunit = self.nondimensional_unit(array_dunit)
+        if perturbed:
+            return (array_desc.p_itransform(self, _slice) * array_ndunit).to(array_dunit)
         return (array_desc.itransform(self, _slice) * array_ndunit).to(array_dunit)
         
     @classmethod
