@@ -48,16 +48,17 @@ class View(object):
 
 class GridView(View):
     """View this object on a grid."""
-    def __init__(self, variable, **kwargs):
+    def __init__(self, variable, perturbed=False, **kwargs):
         super(GridView, self).__init__()
         self.variable = variable
         self.ax = None
         self.image = None
         self.im_kwargs = kwargs
+        self.perturbed = perturbed
         
     def data(self, system):
         """Return the transformed data"""
-        return system.transformed_array(self.variable, (Ellipsis, system.it))
+        return system.transformed_array(self.variable, (Ellipsis, system.it), perturbed=self.perturbed)
         
     def initialize(self, system):
         """Initialize the system."""
@@ -75,7 +76,7 @@ class GridView(View):
         else:
             self.image.set_data(self.data(system).value)
             self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
-            
+
 
 class EvolutionView(View):
     """An object view showing the time-evolution of a parameter."""
@@ -88,18 +89,26 @@ class EvolutionView(View):
     def ydata(self, system):
         """Return the y-data values."""
         return getattr(system, self.variable)[...,:system.it]
+        
+    def xdata(self, system):
+        """Return the x-data values."""
+        return system.Time[:system.it]
     
     def initialize(self, system):
         """Set up the plot."""
-        self.line, = self.ax.plot(system.Time[:system.it], self.ydata(system), 'k-')
+        self.line, = self.ax.plot(self.xdata(system), self.ydata(system), 'k-')
         self.ax.set_ylabel(getattr(type(system), self.variable).latex)
         self.ax.set_xlabel(type(system).Time.latex)
+        self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
+        
         
     def update(self, system):
         """Update the view."""
         if self.line is None:
             self.initialize(system)
-        self.line.set_data(system.Time[:system.it], self.ydata(system))
+        self.line.set_data(self.xdata(system), self.ydata(system))
+        self.ax.relim()
+        self.ax.autoscale_view()
         
     
 class EvolutionViewAllModes(EvolutionView):
@@ -109,9 +118,10 @@ class EvolutionViewAllModes(EvolutionView):
         """Set up the plot."""
         self.line = []
         for i in range(self.ydata(system).shape[1]):
-            self.line.append(self.ax.plot(system.Time[:system.it], np.mean(self.ydata(system)[:,i,:], axis=0), 'k-')[0])
+            self.line.append(self.ax.plot(self.xdata(system), np.mean(self.ydata(system)[:,i,:], axis=0), 'k-')[0])
         self.ax.set_ylabel(getattr(type(system), self.variable).latex)
         self.ax.set_xlabel(type(system).Time.latex)
+        self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
     
     def update(self, system):
         """Update the view."""
@@ -123,15 +133,37 @@ class EvolutionViewAllModes(EvolutionView):
 class EvolutionViewSingleMode(EvolutionView):
     """Watch a variable evolve for a single fourier mode."""
     
-    def __init__(self, variable, nmode):
+    def __init__(self, variable, nmode, zmode):
         super(EvolutionViewSingleMode, self).__init__(variable)
         self.nmode = nmode
+        self.zmode = zmode
     
     def ydata(self, system):
         """Return the y-data values."""
-        return np.mean(getattr(system, self.variable)[:,self.nmode,:system.it], axis=0)
+        return getattr(system, self.variable)[self.zmode,self.nmode,:system.it]
         
 
-
+class EvolutionViewStabilityTest(EvolutionView):
+    """Show a varaible's stability test parameter."""
+    def __init__(self, variable, nmode, zmode):
+        super(EvolutionViewStabilityTest, self).__init__(variable)
+        self.nmode = nmode
+        self.zmode = zmode
+        
+    def update(self, system):
+        if system.it <= 1:
+            return
+        super(EvolutionViewStabilityTest, self).update(system)
+        
+    def ydata(self, system):
+        """Return the y-data values."""
+        data = getattr(system, self.variable)[self.zmode,self.nmode,:system.it]
+        ln_data = np.log(np.abs(data))
+        return np.diff(ln_data)
+        
+    def xdata(self, system):
+        """Return the x-data values."""
+        return system.Time[1:system.it]
+        
 
         
