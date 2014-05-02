@@ -27,11 +27,11 @@ extensions = [
         ]
 
 DEPENDENCIES = [
-    'astropy',
-    'pyshell',
-    'six>=1.4.1',
-    'numpy>=1.7.1',
-    'cython'
+    # 'astropy',
+    # 'pyshell',
+    # 'six>=1.4.1',
+    # 'numpy>=1.7.1',
+    # 'cython'
 ]
 DEPENDENCY_LINKS = [
     ''
