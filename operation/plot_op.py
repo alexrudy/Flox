@@ -35,7 +35,6 @@ def filename(extension=".yml", base=None):
 
 if __name__ == '__main__':
     rcParams['text.usetex'] = False
-    plt.ion()
     ipydb()
     Config = FloxConfiguration.fromfile(filename(".yml", base="linear_op"))
     System = NDSystem2D.from_params(Config["system"])
@@ -53,8 +52,6 @@ if __name__ == '__main__':
     def update(i):
         System.it = i
         MVC.update(System)
-    plt.draw()
-    input("...")
     anim = animation.FuncAnimation(fig, update, frames=System.it, interval=1)
     plt.show()
     
