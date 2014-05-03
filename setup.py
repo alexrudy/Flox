@@ -24,6 +24,8 @@ extensions = [
         include_dirs = extension_include_dirs,),
     Extension("*", ["Flox/linear/*.pyx"],
         include_dirs = extension_include_dirs,),
+    Extension("*", ["Flox/nonlinear/*.pyx"],
+        include_dirs = extension_include_dirs,),
         ]
 
 DEPENDENCIES = [
