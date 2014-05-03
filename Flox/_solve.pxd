@@ -18,10 +18,10 @@ from Flox._flox cimport DTYPE_t
 
 cdef class Solver:
     
-    cdef int nz, nx
-    cdef DTYPE_t[:,:] G_curr
-    cdef DTYPE_t[:,:] G_prev
-    cdef DTYPE_t[:,:] V_curr
+    cdef readonly int nz, nx
+    cdef public DTYPE_t[:,:] G_curr
+    cdef public DTYPE_t[:,:] G_prev
+    cdef public DTYPE_t[:,:] V_curr
     cdef DTYPE_t[:] V_p
     cdef DTYPE_t[:] V_m
     

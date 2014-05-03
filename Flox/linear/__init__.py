@@ -30,21 +30,20 @@ class LinearEvolver(_LinearEvolver):
         self.update_from_grids(grids)
         start_time = grids.dimensionalize(self.time * grids.nondimensional_unit(total_time.unit))
         end_time = self.time + grids.nondimensionalize(total_time).value
-        for i in ProgressBar(chunks):
-            if grids.time >= total_time:
-                break
-            else:
-                self.evolve(end_time, chunksize)
-                self.to_grids(grids, grids.it+1)
-
-        
+        with ProgressBar(chunks) as pbar:
+            for i in range(chunks):
+                if grids.time >= total_time:
+                    break
+                else:
+                    self.evolve(end_time, chunksize)
+                    self.to_grids(grids, grids.it+1)
+                    pbar.update(i)
     
     @classmethod
     def from_grids(cls, grids):
         """Load the grid parameters into the LE"""
         return cls(
-            grids.Temperature[...,grids.it].copy(), 
-            grids.Vorticity[...,grids.it].copy(), 
+            grids.nz, grids.nx,
             grids.nondimensionalize(grids.npa).value,
             grids.nondimensionalize(grids.Prandtl).value,
             grids.nondimensionalize(grids.Reynolds).value,
@@ -58,13 +57,14 @@ class LinearEvolver(_LinearEvolver):
         self.set_state(
             grids.Temperature[...,grids.it].copy(),
             grids.Vorticity[...,grids.it].copy(),
+            grids.StreamFunction[...,grids.it].copy(),
             grids.nondimensionalize(grids.time).value
             )
         
     def to_grids(self, grids, iteration):
         """Load the LE data back into a grid set."""
         grids.it = iteration
-        self.get_state(grids.Temperature[...,grids.it], grids.Vorticity[...,grids.it])
+        self.get_state(grids.Temperature[...,grids.it], grids.Vorticity[...,grids.it], grids.StreamFunction[...,grids.it])
         grids.Time[grids.it] = self.time
         
             

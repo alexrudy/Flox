@@ -48,9 +48,11 @@ def test_simple_secondderivative():
 def test_2d_secondderivative():
     """2D second derivative"""
     n = 10
-    dz = 0.1
-    factor = 0.8
-    z = np.tile(np.arange(-n/2 * dz, n/2 * dz, dz), (10, 1)).T
+    nx = 3
+    dz = 1.0
+    factor = 1.0
+    
+    x, z = np.meshgrid(np.arange(nx), np.linspace(-n/2 * dz, n/2 * dz, n+1))
     f = z**3 + 2 * z**2
     z_m = np.min(z) - dz
     z_p = np.max(z) + dz

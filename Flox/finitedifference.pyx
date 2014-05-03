@@ -41,7 +41,6 @@ cpdef int second_derivative2D(int J, int K, DTYPE_t[:,:] ddf, DTYPE_t[:,:] f, DT
     for k in range(K):
         j = 0
         ddf[j,k] += factor * (f[j+1,k] - 2.0 * f[j,k] + f_m[k])/(dzs)
-    
         for j in range(1, J-1):
             ddf[j,k] += factor * (f[j+1,k] - 2.0 * f[j,k] + f[j-1,k])/(dzs)
         

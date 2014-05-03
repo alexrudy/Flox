@@ -23,12 +23,11 @@ from Flox._flox cimport DTYPE_t
 
 cdef class Solver:
     
-    def __cinit__(self, int nz, int nx, DTYPE_t[:,:] curr):
+    def __cinit__(self, int nz, int nx):
         
-        self.V_curr = curr
         self.nx = nx
         self.nz = nz
-        self.V_curr = curr
+        self.V_curr = np.zeros((nz, nx), dtype=np.float)
         self.G_curr = np.empty((nz, nx), dtype=np.float)
         self.G_prev = np.zeros((nz, nx), dtype=np.float)
         self.V_p = np.zeros((nx,), dtype=np.float)
