@@ -46,7 +46,7 @@ class LinearEvolver(_LinearEvolver):
             grids.nz, grids.nx,
             grids.nondimensionalize(grids.npa).value,
             grids.nondimensionalize(grids.Prandtl).value,
-            grids.nondimensionalize(grids.Reynolds).value,
+            grids.nondimensionalize(grids.Rayleigh).value,
             grids.nondimensionalize(grids.dz).value, 
             grids.nondimensionalize(grids.time).value,
             0.5

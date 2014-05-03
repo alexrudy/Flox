@@ -48,9 +48,9 @@ class System2D(HasUnitsProperties):
         """Represent this object!"""
         try:
             Pr = self.Prandtl
-            Re = self.Reynolds
+            Ra = self.Rayleigh
             time = self.time
-            return "<{0} with Re={1.value} and Pr={2.value} at {3}>".format(self.__class__.__name__, Re, Pr, time)
+            return "<{0} with Ra={1.value} and Pr={2.value} at {3}>".format(self.__class__.__name__, Ra, Pr, time)
         except (NotImplementedError, IndexError):
             return super(System2D, self).__repr__()
     
@@ -89,8 +89,8 @@ class System2D(HasUnitsProperties):
         
     
     @abc.abstractproperty
-    def Reynolds(self):
-        """Reynolds number."""
+    def Rayleigh(self):
+        """Rayleigh number."""
         raise NotImplementedError()
         
     @abc.abstractproperty
@@ -252,13 +252,13 @@ class System2D(HasUnitsProperties):
 class NDSystem2D(System2D):
     """A primarily non-dimensional 2D system."""
     def __init__(self,
-        deltaT=0, depth=0, aspect=0, Prandtl=0, Reynolds=0, kinematic_viscosity=0, **kwargs):
+        deltaT=0, depth=0, aspect=0, Prandtl=0, Rayleigh=0, kinematic_viscosity=0, **kwargs):
         super(NDSystem2D, self).__init__(**kwargs)
         self.deltaT = deltaT
         self.depth = depth
         self.aspect = aspect
         self.Prandtl = Prandtl
-        self.Reynolds = Reynolds
+        self.Rayleigh = Rayleigh
         self.kinematic_viscosity = kinematic_viscosity
         self._setup_standard_bases()
         
@@ -269,7 +269,7 @@ class NDSystem2D(System2D):
     
     kinematic_viscosity = UnitsProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
     Prandtl = UnitsProperty("Prandtl", u.dimensionless_unscaled, latex=r"$Pr$")
-    Reynolds = UnitsProperty("Reynolds", u.dimensionless_unscaled, latex=r"$Re$")
+    Rayleigh = UnitsProperty("Rayleigh", u.dimensionless_unscaled, latex=r"$Re$")
     
     @ComputedUnitsProperty
     def thermal_diffusivity(self):
@@ -333,8 +333,8 @@ class PhysicalSystem2D(System2D):
         return (self.thermal_diffusivity / self.kinematic_viscosity)
     
     @ComputedUnitsProperty
-    def Reynolds(self):
-        """The Reynolds number."""
+    def Rayleigh(self):
+        """The Rayleigh number."""
         return (self.gravitaional_acceleration * self.thermal_expansion * self.deltaT * self.depth**3.0) / (self.thermal_diffusivity * self.kinematic_viscosity)
     
     @classmethod

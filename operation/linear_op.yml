@@ -1,6 +1,6 @@
 system:
   Prandtl: 1.0
-  Reynolds: 8000
+  Rayleigh: 800
   aspect: 1.0
   deltaT: !quantity '1 K'
   depth: !quantity '1 m'
