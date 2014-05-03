@@ -63,11 +63,11 @@ class GridView(View):
     def initialize(self, system):
         """Initialize the system."""
         self.im_kwargs.setdefault('cmap','hot')
-        self.im_kwargs['aspect'] = 1.0 / system.aspect
+        self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
         self.image = self.ax.imshow(self.data(system).value, **self.im_kwargs)
         self.ax.figure.colorbar(self.image, ax=self.ax)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
-        self.counter = self.ax.text(0.05, 1.05, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit), transform=self.ax.transAxes)
+        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit), transform=self.ax.transAxes)
         
     def update(self, system):
         """Update the view"""
@@ -92,7 +92,7 @@ class EvolutionView(View):
         
     def xdata(self, system):
         """Return the x-data values."""
-        return system.Time[:system.it]
+        return system.dimesnional_array("Time")[:system.it]
     
     def initialize(self, system):
         """Set up the plot."""
@@ -138,22 +138,29 @@ class EvolutionViewSingleMode(EvolutionView):
         self.nmode = nmode
         self.zmode = zmode
     
+    def initialize(self, system):
+        """Setup a single mode"""
+        super(EvolutionViewSingleMode, self).initialize(system)
+        self.ax.title.set_text("[N={}, z={}] {} ({})".format(self.nmode, self.zmode, getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
+    
     def ydata(self, system):
         """Return the y-data values."""
         return getattr(system, self.variable)[self.zmode,self.nmode,:system.it]
         
 
-class EvolutionViewStabilityTest(EvolutionView):
+class EvolutionViewStabilityTest(EvolutionViewSingleMode):
     """Show a varaible's stability test parameter."""
-    def __init__(self, variable, nmode, zmode):
-        super(EvolutionViewStabilityTest, self).__init__(variable)
-        self.nmode = nmode
-        self.zmode = zmode
         
     def update(self, system):
         if system.it <= 1:
             return
         super(EvolutionViewStabilityTest, self).update(system)
+        
+    def initialize(self, system):
+        """Setup the y-axis label"""
+        super(EvolutionViewStabilityTest, self).initialize(system)
+        latex = getattr(type(system), self.variable).latex[1:-1]
+        self.ax.yaxis.label.set_text(r"$\log({latex:s}_t) - \ln({latex:s}_{{t-1}})$".format(latex=latex))
         
     def ydata(self, system):
         """Return the y-data values."""
@@ -163,7 +170,7 @@ class EvolutionViewStabilityTest(EvolutionView):
         
     def xdata(self, system):
         """Return the x-data values."""
-        return system.Time[1:system.it]
+        return system.dimesnional_array("Time")[1:system.it]
         
 
         
