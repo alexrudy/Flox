@@ -18,6 +18,7 @@ from Flox.system import NDSystem2D
 from Flox.input import FloxConfiguration
 from Flox.linear import LinearEvolver
 from Flox.io import HDF5Writer
+from Flox.ic import stable_temperature_gradient, standard_linear_perturbation, single_mode_linear_perturbation
 from pyshell.util import ipydb
 
 def filename(extension=".yml"):
@@ -34,14 +35,13 @@ if __name__ == '__main__':
     iterations = int(Config["iterations"])
     chunks = System.nt - System.it - 1
     Writer = HDF5Writer(filename(".hdf5"))
-    System.Temperature[:,:,System.it] = 0.0
-    System.Temperature[:,:,System.it] = np.sin(np.pi * np.arange(System.nz))[:,np.newaxis]
-    #System.Temperature[:,:,System.it] = 0.5 * np.power(np.arange(System.nx), -1/3) * np.random.randn(System.nx)
-    System.Temperature[:,0,System.it] = np.arange(System.nz)[::-1] / System.nz
+    stable_temperature_gradient(System)
+    single_mode_linear_perturbation(System, mode=1)
     print(System)
-    print(System.Temperature[...,System.it])
+    print(System.diagnostic_string())
     LE = LinearEvolver.from_grids(System)
     LE.evolve_many(System, Config['time'], iterations, chunks)
-    print(System.Temperature[...,System.it])
+    print("")
     print(System)
+    print(System.diagnostic_string())
     Writer.write(System,'main')

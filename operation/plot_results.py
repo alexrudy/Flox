@@ -22,7 +22,6 @@ from Flox.linear import LinearEvolver
 from Flox.io import HDF5Writer
 from Flox.plot import GridView, MultiViewController, EvolutionViewStabilityTest
 from pyshell.util import ipydb
-from matplotlib import animation
 from matplotlib import rcParams
 from matplotlib.colors import SymLogNorm
 
@@ -41,18 +40,13 @@ if __name__ == '__main__':
     Writer = HDF5Writer(filename(".hdf5", base="linear_op"))
     Writer.read(System, 'main')
     print(System)
+    print(System.diagnostic_string())
     fig = plt.figure(figsize=(10, 10))
     MVC = MultiViewController(fig, 2, 2)
     MVC[0,0] = GridView("Temperature")
     MVC[1,0] = EvolutionViewStabilityTest("Temperature", 1, 33)
     MVC[0,1] = GridView("Vorticity", cmap='Blues', vmin=-1e-7, vmax=1e-7, norm=SymLogNorm(1e-9), perturbed=True)
     MVC[1,1] = EvolutionViewStabilityTest("Vorticity", 1, 33)
-    System.it = 2
     MVC.update(System)
-    System.infer_iteration()
-    def update(i):
-        System.it = i
-        MVC.update(System)
-    anim = animation.FuncAnimation(fig, update, frames=System.it, interval=1)
     plt.show()
     

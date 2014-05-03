@@ -20,10 +20,10 @@ from Flox.system import NDSystem2D
 from Flox.input import FloxConfiguration
 from Flox.linear import LinearEvolver
 from Flox.io import HDF5Writer
-from Flox.plot import GridView, MultiViewController
+from Flox.plot import GridView, MultiViewController, EvolutionViewStabilityTest
 from pyshell.util import ipydb
-from matplotlib import animation
 from matplotlib import rcParams
+from matplotlib.colors import SymLogNorm
 
 def filename(extension=".yml", base=None):
     """Filenames related to this file!"""
@@ -39,12 +39,15 @@ if __name__ == '__main__':
     System = NDSystem2D.from_params(Config["system"])
     Writer = HDF5Writer(filename(".hdf5", base="linear_op"))
     Writer.read(System, 'main')
+    System.it = 0
     print(System)
-    fig = plt.figure()
-    MVC = MultiViewController(fig, 1, 1)
+    print(System.diagnostic_string())
+    fig = plt.figure(figsize=(10, 10))
+    MVC = MultiViewController(fig, 2, 2)
     MVC[0,0] = GridView("Temperature")
-    System.it = 1
-    print(System.transformed_array("Temperature",(Ellipsis, 1)))
+    MVC[1,0] = EvolutionViewStabilityTest("Temperature", 1, 33)
+    MVC[0,1] = GridView("Vorticity", cmap='Blues', vmin=-1e-7, vmax=1e-7, norm=SymLogNorm(1e-9), perturbed=True)
+    MVC[1,1] = EvolutionViewStabilityTest("Vorticity", 1, 33)
     MVC.update(System)
     plt.show()
     
