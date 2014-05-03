@@ -99,11 +99,12 @@ class SpectralArrayProperty(ArrayProperty):
         
     def itransform(self, obj, _slice=Ellipsis):
         """Perform the inverse transform."""
-        return spectral_transform(self._func, self.get(obj)[_slice], obj.width.value, obj.aspect.value)
+        # The width here is 1.0, because this function takes ND variables.
+        return spectral_transform(self._func, self.get(obj)[_slice], 1.0, obj.aspect.value)
         
     def p_itransform(self, obj, _slice=Ellipsis):
         """Perturbed inverse transform."""
-        return spectral_transform(self._func, self.get(obj)[_slice], obj.width.value, obj.aspect.value, perturbed=True)
+        return spectral_transform(self._func, self.get(obj)[_slice], 1.0, obj.aspect.value, perturbed=True)
 
 class NumpyArrayEngine(ArrayYAMLSupport, dict, ArrayEngine):
     """A numpy-based array engine"""
