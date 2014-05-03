@@ -16,10 +16,10 @@ import numpy as np
 
 class MultiViewController(object):
     """A controller which manages many views."""
-    def __init__(self, figure, nr, nc):
+    def __init__(self, figure, nr, nc, **kwargs):
         super(MultiViewController, self).__init__()
         self.figure = figure
-        self.gs = GridSpec(nr, nc)
+        self.gs = GridSpec(nr, nc, **kwargs)
         self.views = []
         
     def __setitem__(self, key, view):
@@ -75,6 +75,7 @@ class GridView(View):
             self.initialize(system)
         else:
             self.image.set_data(self.data(system).value)
+            self.image.autoscale()
             self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
 
 
@@ -160,7 +161,7 @@ class EvolutionViewStabilityTest(EvolutionViewSingleMode):
         """Setup the y-axis label"""
         super(EvolutionViewStabilityTest, self).initialize(system)
         latex = getattr(type(system), self.variable).latex[1:-1]
-        self.ax.yaxis.label.set_text(r"$\log({latex:s}_t) - \ln({latex:s}_{{t-1}})$".format(latex=latex))
+        self.ax.yaxis.label.set_text(r"$\ln({latex:s}_t) - \ln({latex:s}_{{t-1}})$".format(latex=latex))
         
     def ydata(self, system):
         """Return the y-data values."""
