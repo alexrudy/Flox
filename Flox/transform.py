@@ -15,7 +15,7 @@ def spectral_transform(func, data, x_width=1.0, a=1.0, perturbed=False):
     """Do a function transform along the 1st index."""
     data = np.asanyarray(data)
     
-    x = np.arange(data.shape[1]) * x_width
+    x = np.arange(data.shape[1])/data.shape[1] * x_width
     n = np.arange(data.shape[1])
     
     # This array is n * x large.
