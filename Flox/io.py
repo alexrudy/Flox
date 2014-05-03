@@ -41,6 +41,11 @@ class HDF5Writer(GridWriter):
             group = file_context.require_group(name)
             for array_name in data.list_arrays():
                 self.create_array(group, data, array_name)
+            for param, value in data.to_params().items():
+                if isinstance(value, u.Quantity):
+                    group.attrs[param] = value.value
+                elif isinstance(value, six.string_types):
+                    group.attrs[param] = value
     
     def create_array(self, group, data, array_name):
         """Write the array object"""
@@ -58,6 +63,8 @@ class HDF5Writer(GridWriter):
             group = file_context.require_group(name)
             for array_name in group.keys():
                 self.read_array(group, data, array_name)
+            for param, value in group.attrs.items():
+                setattr(data, param, value)
         data.infer_iteration()
     
     def read_array(self, group, data, array_name):
