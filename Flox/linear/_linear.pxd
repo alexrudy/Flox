@@ -22,6 +22,10 @@ cdef class VorticitySolver(Solver):
 cdef class TemperatureSolver(Solver):
     cpdef int compute(self, DTYPE_t[:,:] P_curr, DTYPE_t dz, DTYPE_t[:] npa)
     
+cdef class StreamSolver(TridiagonalSolver):
+    cdef DTYPE_t[:,:] V_curr
+    cpdef int setup(self, DTYPE_t dz, DTYPE_t[:] npa)
+    
 cdef class LinearEvolver(Evolver):
     cdef readonly DTYPE_t Pr
     cdef readonly DTYPE_t Ra
@@ -30,7 +34,7 @@ cdef class LinearEvolver(Evolver):
     cdef DTYPE_t[:] npa
     cdef VorticitySolver Vorticity
     cdef TemperatureSolver Temperature
-    cdef TridiagonalSolver Stream
+    cdef StreamSolver Stream
     
     cpdef int get_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t[:,:] Stream)
     cpdef int set_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t[:,:] Stream, DTYPE_t time)

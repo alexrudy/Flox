@@ -76,8 +76,6 @@ cdef class VorticitySolver(Solver):
 
 cdef class StreamSolver(TridiagonalSolver):
     
-    cdef DTYPE_t[:,:] V_curr 
-    
     cpdef int setup(self, DTYPE_t dz, DTYPE_t[:] npa):
         
         cdef int j, k
@@ -92,9 +90,9 @@ cdef class StreamSolver(TridiagonalSolver):
                 self.sub[j,k] = dzI
                 self.sup[j,k] = dzI
                 self.dia[j,k] = npa[k] * npa[k] + 2.0/dzs
-            self.sub[j,self.K] = 0.0
-            self.sup[j,self.K] = dzI
-            self.dia[j,self.K] = 1.0
+            self.sub[j,self.K-1] = 0.0
+            self.sup[j,self.K-1] = dzI
+            self.dia[j,self.K-1] = 1.0
         
         return self._warm_work()
         
@@ -105,14 +103,14 @@ cdef class LinearEvolver(Evolver):
     def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t dz, DTYPE_t time, DTYPE_t safety):
         
         self.time = time
-        self.Temperature = TemperatureSolver(nz, nx)
-        self.Vorticity = VorticitySolver(nz, nx)
-        self.Stream = TridiagonalSolver(nz, nx)
-        self.Stream.setup()
         self.npa = npa
         self.Pr = Pr
         self.Ra = Ra
         self.dz = dz
+        self.Temperature = TemperatureSolver(nz, nx)
+        self.Vorticity = VorticitySolver(nz, nx)
+        self.Stream = StreamSolver(nz, nx)
+        self.Stream.setup(self.dz, self.npa)
         self.safety = safety
         
     
