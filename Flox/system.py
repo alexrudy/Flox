@@ -193,6 +193,28 @@ class System2D(HasUnitsProperties):
             return (array_desc.p_itransform(self, _slice) * array_ndunit).to(array_dunit)
         return (array_desc.itransform(self, _slice) * array_ndunit).to(array_dunit)
         
+    def diagnostic_string(self, z=None, n=None):
+        """A longer diagnostic string."""
+        if n is None:
+            n = slice(0,3)
+            ns = np.arange(self.nx)[n]
+        if z is None:
+            z = self.nz // 3
+            zs = np.arange(self.nz)[z]
+        
+        output = []
+        output.append("At mode n={} and z={}".format(ns, zs))
+        output.append("    Time: {}".format(self.time))
+        for array_name in self.list_arrays():
+            if getattr(self, array_name).ndim == 3:
+                output.append("    {name:15.15s}: [{value}]".format(
+                    name = array_name,
+                    value = ",".join([ "{:12.8g}".format(x) for x in getattr(self, array_name)[z,n,self.it]])
+                ))
+        
+        return "\n".join(output)
+        
+        
     @classmethod
     def from_params(cls, parameters):
         """Load a box from a parameter file."""
