@@ -11,6 +11,7 @@
 #cython: wraparound=False
 #cython: boundscheck=False
 #cython: cdivision=True
+#cython: profile=True
 
 from __future__ import division
 
@@ -20,6 +21,7 @@ cimport cython
 from cpython.array cimport array, clone
 
 from Flox._flox cimport DTYPE_t
+from Flox.finitedifference import first_derivative2D
 
 cdef class Solver:
     
@@ -28,12 +30,15 @@ cdef class Solver:
         self.nx = nx
         self.nz = nz
         self.V_curr = np.zeros((nz, nx), dtype=np.float)
-        self.G_curr = np.empty((nz, nx), dtype=np.float)
+        self.G_curr = np.zeros((nz, nx), dtype=np.float)
         self.G_prev = np.zeros((nz, nx), dtype=np.float)
+        self.dVdz = np.zeros((nz, nx), dtype=np.float)
         self.V_p = np.zeros((nx,), dtype=np.float)
         self.V_m = np.zeros((nx,), dtype=np.float)
         
+    cpdef int prepare(self, DTYPE_t dz):
         
+        return first_derivative2D(self.nz, self.nx, self.dVdz, self.V_curr, dz, self.V_p, self.V_m, 1.0)
         
     cpdef int advance(self, DTYPE_t deltaT):
         

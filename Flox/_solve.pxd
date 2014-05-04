@@ -22,9 +22,11 @@ cdef class Solver:
     cdef public DTYPE_t[:,:] G_curr
     cdef public DTYPE_t[:,:] G_prev
     cdef public DTYPE_t[:,:] V_curr
+    cdef public DTYPE_t[:,:] dVdz
     cdef DTYPE_t[:] V_p
     cdef DTYPE_t[:] V_m
     
+    cpdef int prepare(self, DTYPE_t dz)
     cpdef int advance(self, DTYPE_t deltaT)
     cpdef int get_state(self, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] G_curr, DTYPE_t[:,:] G_prev)
     

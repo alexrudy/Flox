@@ -11,6 +11,7 @@
 #cython: wraparound=False
 #cython: boundscheck=False
 #cython: cdivision=True
+#cython: profile=True
 
 from __future__ import division
 
@@ -46,6 +47,23 @@ cpdef int second_derivative2D(int J, int K, DTYPE_t[:,:] ddf, DTYPE_t[:,:] f, DT
         
         j = J-1
         ddf[j,k] += factor * (f_p[k] - 2.0 * f[j,k] + f[j-1,k])/(dzs)
+    return 0
+
+cpdef int first_derivative2D(int J, int K, DTYPE_t[:,:] df, DTYPE_t[:,:] f, DTYPE_t dz, DTYPE_t[:] f_p, DTYPE_t[:] f_m, DTYPE_t factor):
+
+    cdef DTYPE_t dzs
+    cdef int k, j, r = 0
+    dzs = 2.0 * dz
+
+    for k in range(K):
+        j = 0
+        df[j,k] += factor * (f[j+1,k] - f_m[k])/(dzs)
+        for j in range(1, J-1):
+            df[j,k] += factor * (f[j+1,k] - f[j-1,k])/(dzs)
+        
+        j = J-1
+        df[j,k] += factor * (f_p[k] - f[j-1,k])/(dzs)
+    
     return 0
 
 
