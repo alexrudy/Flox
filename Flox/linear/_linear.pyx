@@ -31,7 +31,7 @@ cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE
     # This resets the values in T_next
     for k in range(K):
         for j in range(J):
-            d_T[j,k] = npa[k] * P_curr[j,k] -  T_curr[j,k] * npa[k] * npa[k]
+            d_T[j,k] =  -T_curr[j,k] * npa[k] * npa[k]
     
     # The second last term in equation (2.10)
     r1 = second_derivative2D(J, K, d_T, T_curr, dz, f_p, f_m, 1.0)
@@ -47,7 +47,16 @@ cdef class TemperatureSolver(Solver):
     
     cpdef int compute(self, DTYPE_t[:,:] P_curr, DTYPE_t dz, DTYPE_t[:] npa):
         
-        return temperature(self.nz, self.nx, self.G_curr, self.V_curr, P_curr, dz, npa, self.V_p, self.V_m)
+        cdef int r
+        cdef DTYPE_t npa_i
+        r = temperature(self.nz, self.nx, self.G_curr, self.V_curr, P_curr, dz, npa, self.V_p, self.V_m)
+        
+        for k in range(self.nx):
+            npa_i = npa[k]
+            for j in range(self.nz):
+                self.G_curr[j, k] += npa_i * P_curr[j,k]
+        
+        return r
 
 cpdef int vorticity(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t[:] f_p, DTYPE_t[:] f_m):
     

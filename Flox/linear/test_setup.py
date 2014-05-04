@@ -95,6 +95,12 @@ class AnalyticalSystem(object):
     def d_Temperature(self):
         """Derivative of temperature."""
         return self.npa * self.Stream + self.dd_Temperature - self.Temperature * self.npa * self.npa
+        
+    @property
+    def d_Temperature_simple(self):
+        """Simple temperature derivative."""
+        return self.dd_Temperature - self.Temperature * self.npa * self.npa
+    
     
     @property
     def d_Vorticity(self):

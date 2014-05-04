@@ -48,7 +48,7 @@ def test_temperature_derivative():
     )
     dTc = w_dtemperature(System)
     # This test cuts out the boundary points, and doesn't care about them.
-    assert np.allclose(System.d_Temperature[1:-1,:], dTc[1:-1,:])
+    assert np.allclose(System.d_Temperature_simple[1:-1,:], dTc[1:-1,:])
 
 def test_temperature_solver():
     """Solver for temperature."""

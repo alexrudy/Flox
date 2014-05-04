@@ -23,7 +23,6 @@ cdef class TemperatureSolver(Solver):
     cpdef int compute(self, DTYPE_t[:,:] P_curr, DTYPE_t dz, DTYPE_t[:] npa)
     
 cdef class StreamSolver(TridiagonalSolver):
-    cdef DTYPE_t[:,:] V_curr
     cpdef int setup(self, DTYPE_t dz, DTYPE_t[:] npa)
     
 cdef class LinearEvolver(Evolver):
