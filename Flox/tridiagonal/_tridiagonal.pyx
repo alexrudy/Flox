@@ -10,7 +10,11 @@
 # Look into array allocation here:
 # http://stackoverflow.com/questions/18462785/what-is-the-recommended-way-of-allocating-memory-for-a-typed-memory-view
 
-
+#cython: overflowcheck=False
+#cython: wraparound=False
+#cython: boundscheck=False
+#cython: cdivision=True
+#cython: profile=True
 
 from __future__ import division
 
@@ -20,6 +24,7 @@ cimport cython
 from cpython.array cimport array, clone
 
 from Flox._flox cimport DTYPE_t
+from Flox._solve cimport Solver
 
 cpdef int tridiagonal_split_matrix(int J, DTYPE_t[:,:] mat, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup):
     
@@ -88,7 +93,7 @@ cpdef int tridiagonal_from_work(int J, DTYPE_t[:] rhs, DTYPE_t[:] sol, DTYPE_t[:
     return 0
     
 
-cdef class TridiagonalSolver:
+cdef class TridiagonalSolver(Solver):
     
     def __cinit__(self, int nz, int nx):
         
