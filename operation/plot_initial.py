@@ -14,7 +14,7 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 import os, os.path
 import time
 import matplotlib.pyplot as plt
-
+import argparse
 
 from Flox.system import NDSystem2D
 from Flox.input import FloxConfiguration
@@ -33,13 +33,16 @@ def filename(extension=".yml", base=None):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('base', nargs="?", default='linear_op')
+    opt = parser.parse_args()
     rcParams['text.usetex'] = False
     ipydb()
-    Config = FloxConfiguration.fromfile(filename(".yml", base="linear_op"))
+    Config = FloxConfiguration.fromfile(filename(".yml", base=opt.base))
     System = NDSystem2D.from_params(Config["system"])
-    Writer = HDF5Writer(filename(".hdf5", base="linear_op"))
+    Writer = HDF5Writer(filename(".hdf5", base=opt.base))
     Writer.read(System, 'main')
-    System.it = 0
+    System.it = 1
     print(System)
     print(System.diagnostic_string())
     fig = plt.figure(figsize=(10, 10))
