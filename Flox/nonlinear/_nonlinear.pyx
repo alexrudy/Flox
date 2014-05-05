@@ -7,10 +7,11 @@
 #  Copyright 2014 University of California. All rights reserved.
 # 
 
-#cython: overflowcheck=True
+#cython: overflowcheck=False
 #cython: wraparound=False
-#cython: boundscheck=True
+#cython: boundscheck=False
 #cython: cdivision=True
+#cython: profile=True
 
 from __future__ import division
 
@@ -22,21 +23,9 @@ from cpython.array cimport array, clone
 from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D
 from Flox._solve cimport Solver, Evolver
-from Flox.tridiagonal._tridiagonal cimport TridiagonalSolver
+from Flox.linear._linear cimport vorticity, temperature, StreamSolver
 
-cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t[:,:] P_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t[:] f_p, DTYPE_t[:] f_m):
-    
-    cdef int j, k
-    # The last term in equation (2.10)
-    # This resets the values in T_next
-    for k in range(K):
-        for j in range(J):
-            d_T[j,k] = npa[k] * P_curr[j,k] -  T_curr[j,k] * npa[k] * npa[k]
-    
-    # The second last term in equation (2.10)
-    r1 = second_derivative2D(J, K, d_T, T_curr, dz, f_p, f_m, 1.0)
-    
-    return r1
+cdef DTYPE_t pi = np.pi
 
 cdef class TemperatureSolver(Solver):
     
@@ -45,68 +34,78 @@ cdef class TemperatureSolver(Solver):
         # T(n=0,z=0) = 1.0
         self.V_m[0] = 1.0
     
-    cpdef int compute(self, DTYPE_t[:,:] P_curr, DTYPE_t dz, DTYPE_t[:] npa):
+    cpdef int compute(self, DTYPE_t[:,:] P_curr, DTYPE_t[:,:] dPdz, DTYPE_t dz, DTYPE_t a, DTYPE_t[:] npa):
         
-        return temperature(self.nz, self.nx, self.G_curr, self.V_curr, P_curr, dz, npa, self.V_p, self.V_m)
+        cdef int r, j, k, kp, kpp
+        cdef DTYPE_t p2a = pi / (2.0 * a)
+        # This equation handles the linear terms. It is only slightly modified from the linear version.
+        r = temperature(self.nz, self.nx, self.G_curr, self.V_curr, P_curr, dz, npa, self.V_p, self.V_m)
+        # Now we do the non-linear terms from equation 4.6
+        for j in range(self.nz):
+            for k in range(self.nx):
+                # n=0 special case.
+                self.G_curr[j,0] += -p2a * k * self.V_curr[j, k] * dPdz[j, k] + P_curr[j, k] * self.dVdz[j, k]
+                
+                # Terms applied everywhere.
+                self.G_curr[j,k] += -npa[k] * P_curr[j, k] * self.dVdz[j, 0]
+                for kp in range(1, self.nx):
+                    # 2nd term, 2nd Delta
+                    kpp = kp - k
+                    if 0 < kpp < self.nx:
+                        self.G_curr[j, k] += -p2a * (kp * dPdz[j,kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                        
+                    # 2nd term, 1st Delta
+                    kpp = kp + k
+                    if 0 < kpp < self.nx:
+                        self.G_curr[j, k] += -p2a * (kp * dPdz[j,kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                    
+                    # 1st term, 1st Delta
+                    kpp = k - kp
+                    if 0 < kpp < self.nx:
+                        self.G_curr[j, k] += p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+        
+        return r
 
-cpdef int vorticity(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t[:] f_p, DTYPE_t[:] f_m):
-    
-    cdef int j, k
-    
-    # The second term and fourth in equation (2.11)
-    for k in range(K):
-        for j in range(J):
-            d_V[j,k] = (Ra * Pr * npa[k] * T_curr[j,k]) - (Pr * npa[k] * npa[k] * V_curr[j,k])
-        
-    # The second last term in equation (2.11)
-    # Boundary Conditions:
-    # w(z=0) = 0.0
-    # w(z=1) = 0.0
-    r1 = second_derivative2D(J, K, d_V, V_curr, dz, f_p, f_m, Pr)
-    
-    return r1
-    
 
 cdef class VorticitySolver(Solver):
     
-    cpdef int compute(self, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra):
+    cpdef int compute(self, DTYPE_t[:,:] T_curr, DTYPE_t[:,:] P_curr, DTYPE_t[:,:] dPdz, DTYPE_t dz, DTYPE_t a, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra):
         
-        return vorticity(self.nz, self.nx, self.G_curr, self.V_curr, T_curr, dz, npa, Pr, Ra, self.V_p, self.V_m)
-    
-
-cdef class StreamSolver(TridiagonalSolver):
-    
-    cpdef int setup(self, DTYPE_t dz, DTYPE_t[:] npa):
+        cdef int r, j, k, kp, kpp
+        cdef DTYPE_t p2a = pi / (2.0 * a)
         
-        cdef int j, k
-        cdef DTYPE_t dzs = dz * dz
-        cdef DTYPE_t dzI = -1.0 / dzs
+        r = vorticity(self.nz, self.nx, self.G_curr, self.V_curr, T_curr, dz, npa, Pr, Ra, self.V_p, self.V_m)
         
-        for j in range(self.J):
-            self.sub[j,0] = dzI
-            self.sup[j,0] = 0.0
-            self.dia[j,0] = 1.0
-            for k in range(1, self.K-1):
-                self.sub[j,k] = dzI
-                self.sup[j,k] = dzI
-                self.dia[j,k] = npa[k] * npa[k] + 2.0/dzs
-            self.sub[j,self.K-1] = 0.0
-            self.sup[j,self.K-1] = dzI
-            self.dia[j,self.K-1] = 1.0
+        for j in range(self.nz):
+            for k in range(self.nx):
+                for kp in range(1, self.nx):
+                    # 2nd term, 2nd delta
+                    kpp = kp - k
+                    if 0 < kpp < self.nx:
+                        self.G_curr[j, k] += -p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                    # 2nd term, 1st delta
+                    kpp = kp + k
+                    if 0 < kpp < self.nx:
+                        self.G_curr[j, k] += p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                    
+                    # 1st term, 1st delta
+                    kpp = k - kp
+                    if 0 < kpp < self.nx:
+                        self.G_curr[j, k] += p2a * (-kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
         
-        return self._warm_work()
-        
+        return r
     
     
 cdef class NonlinearEvolver(Evolver):
     
-    def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t dz, DTYPE_t time, DTYPE_t safety):
+    def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t dz, DTYPE_t a, DTYPE_t time, DTYPE_t safety):
         
         self.time = time
         self.npa = npa
         self.Pr = Pr
         self.Ra = Ra
         self.dz = dz
+        self.a = a
         self.Temperature = TemperatureSolver(nz, nx)
         self.Vorticity = VorticitySolver(nz, nx)
         self.Stream = StreamSolver(nz, nx)
@@ -132,19 +131,27 @@ cdef class NonlinearEvolver(Evolver):
     
     cpdef DTYPE_t delta_time(self):
         
-        return (self.dz * self.dz) / 4.0 * self.safety
+        return 3.6e-6
+        # return (self.dz * self.dz) / 4.0 * self.safety
         
     cpdef int step(self, DTYPE_t delta_time):
         
         cdef DTYPE_t time = self.time
+        # Prepare the computation
+        self.Temperature.prepare(self.dz)
+        self.Vorticity.prepare(self.dz)
+        self.Stream.prepare(self.dz)
+        
         # Compute the derivatives
-        self.Temperature.compute(self.Stream.V_curr, self.dz, self.npa)
-        self.Vorticity.compute(self.Temperature.V_curr, self.dz, self.npa, self.Pr, self.Ra)
-        self.Stream.solve(self.Vorticity.V_curr, self.Stream.V_curr)
+        self.Temperature.compute(self.Stream.V_curr, self.Stream.dVdz, self.dz, self.a, self.npa)
+        self.Vorticity.compute(self.Temperature.V_curr, self.Stream.V_curr, self.Stream.dVdz, self.dz, self.a, self.npa, self.Pr, self.Ra)
         
         # Advance the derivatives
         self.Temperature.advance(delta_time)
         self.Vorticity.advance(delta_time)
+        
+        # Advance the stream function
+        self.Stream.solve(self.Vorticity.V_curr, self.Stream.V_curr)
         
         self.time = time + delta_time
         

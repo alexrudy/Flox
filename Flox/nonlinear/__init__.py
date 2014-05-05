@@ -47,9 +47,10 @@ class NonlinearEvolver(_NonlinearEvolver):
             grids.nondimensionalize(grids.npa).value,
             grids.nondimensionalize(grids.Prandtl).value,
             grids.nondimensionalize(grids.Rayleigh).value,
-            grids.nondimensionalize(grids.dz).value, 
+            grids.nondimensionalize(grids.dz).value,
+            grids.nondimensionalize(grids.aspect).value,
             grids.nondimensionalize(grids.time).value,
-            0.5
+            0.8
             )
         
     def update_from_grids(self, grids):

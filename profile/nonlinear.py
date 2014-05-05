@@ -20,7 +20,7 @@ import astropy.units as u
 
 from Flox.system import NDSystem2D
 from Flox.input import FloxConfiguration
-from Flox.linear import LinearEvolver
+from Flox.nonlinear import NonlinearEvolver
 # from pyshell.util import ipydb
 
 def filename(extension=".yml"):
@@ -35,9 +35,9 @@ if __name__ == '__main__':
     System = NDSystem2D.from_params(Config["system"])
     iterations = int(Config["iterations"])
     time = Config["time"].to(u.s).value / 100
-    LE = LinearEvolver.from_grids(System)
-    LE.to_grids(System, 1)
-    cProfile.runctx("LE.evolve(time, iterations)", globals(), locals(), filename(".prof"))
+    NLE = NonlinearEvolver.from_grids(System)
+    NLE.to_grids(System, 1)
+    cProfile.runctx("NLE.evolve(time, iterations)", globals(), locals(), filename(".prof"))
     s = pstats.Stats(filename(".prof"))
     s.strip_dirs().sort_stats("time").print_stats()
     if os.path.exists(filename("-old.prof")):

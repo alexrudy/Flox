@@ -31,3 +31,7 @@ def standard_linear_perturbation(System):
     System.Temperature[:,1:,System.it] = np.sin(np.pi * np.arange(System.nz)/System.nz)[:,np.newaxis]
     
 
+def standard_nonlinear_perturbation(System, eps=1e-5):
+    """Apply the standard nonlinear perturbation from Ch. 4"""
+    import numpy.random
+    System.Temperature[:,1:,System.it] = eps * 2 * (np.random.rand(System.nx - 1)[np.newaxis,:] - 0.5) * np.sin(np.pi * np.arange(System.nz)/System.nz)[:,np.newaxis]
