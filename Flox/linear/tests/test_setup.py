@@ -91,6 +91,11 @@ class AnalyticalSystem(object):
         """Return the analytic Stream."""
         pass
         
+    @abc.abstractproperty
+    def dd_Stream(self):
+        """Return an analytic second derivative of Stream."""
+        pass
+        
     @property
     def d_Temperature(self):
         """Derivative of temperature."""
@@ -106,6 +111,11 @@ class AnalyticalSystem(object):
     def d_Vorticity(self):
         """The derivative of vorticity, given the analytic components."""
         return (self.Ra * self.Pr * self.Temperature * self.npa) - (self.Pr * self.npa * self.npa * self.Vorticity) + self.Pr * self.dd_Vorticity
+        
+    
+    def vorticity_from_stream(self, stream, dd_stream):
+        """Compute the round-trip vorticity from the stream function."""
+        return dd_stream - self.npa**2 * stream
         
     def evolved(self, variable):
         """Evolved variable"""
@@ -139,8 +149,46 @@ class PolynomialSystem(AnalyticalSystem):
     @property
     def Stream(self):
         """Return the analytic Stream."""
-        return self.z**4 - 2 * self.z
+        return self.z**3 - 2 * self.z
         
+    @property
+    def dd_Stream(self):
+        """Second derivative of the stream function"""
+        return 6 * self.z
+    
+class ConstantSystem(AnalyticalSystem):
+    """A polynomial based, analytically solved system."""
+    
+    @property
+    def Temperature(self):
+        """Return the analytic temperature."""
+        return self.z
+        
+    @property
+    def dd_Temperature(self):
+        """Return an analytic second derivative of temperature."""
+        return 0
+        
+    @property
+    def Vorticity(self):
+        """Return the analytic Vorticity."""
+        return self.z
+        
+        
+    @property
+    def dd_Vorticity(self):
+        """Return an analytic second derivative of Vorticity."""
+        return 0
+        
+    @property
+    def Stream(self):
+        """Return the analytic Stream."""
+        return self.z
+        
+    @property
+    def dd_Stream(self):
+        """Second derivative of the stream function"""
+        return 0
     
 def test_polynomial_system_shapes():
     """System array shapes"""
@@ -155,7 +203,6 @@ def test_polynomial_system_shapes():
     )
     
     for prop in ["z", "Temperature", "Vorticity", "Stream"]:
-        print(prop, getattr(System, prop).shape)
         assert getattr(System, prop).shape == (System.nz, System.nx)
 
 
