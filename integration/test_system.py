@@ -71,9 +71,11 @@ def test_make_data_file():
 def test_read_data_file():
     """Read a data file."""
     from Flox.io import HDF5Writer
+    from astropy.constants import g0
     system = create_system()
     writer = HDF5Writer(read_data_filename)
     writer.read(system,'main')
+    assert system.Rayleigh == (10 * g0).value
     
 def test_make_ND_parameter_file():
     """Non-dimensional Parameter File"""
