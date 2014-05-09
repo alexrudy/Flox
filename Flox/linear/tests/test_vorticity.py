@@ -11,7 +11,7 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 
 import numpy as np
 import nose.tools as nt
-from .test_setup import PolynomialSystem
+from .system import PolynomialSystem
 
 use_simple = True
 
@@ -40,7 +40,7 @@ def system(simple=False):
 
 def w_dvorticity(System):
     """Derivative of vorticity solver."""
-    from ._linear import vorticity
+    from .._linear import vorticity
     dV = np.zeros_like(System.Vorticity)
     fp = np.zeros(System.nx, np.float)
     fm = np.zeros(System.nx, np.float)
@@ -49,7 +49,7 @@ def w_dvorticity(System):
 
 def w_vorticity(System):
     """TempeartureSolver Wrapper."""
-    from ._linear import VorticitySolver
+    from .._linear import VorticitySolver
     Vn = np.zeros_like(System.Vorticity)
     dVn = np.zeros_like(System.Vorticity)
     dVo = np.zeros_like(System.Vorticity)

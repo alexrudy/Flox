@@ -12,7 +12,8 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 
 import numpy as np
 import nose.tools as nt
-from .test_setup import PolynomialSystem, ConstantSystem
+from .system import PolynomialSystem, ConstantSystem
+from ...tests.test_finitedifference import w_2d_second_derivative
 
 def test_stream_solver():
     """Solver for the stream function."""
@@ -36,7 +37,7 @@ def dd_stream(System, stream):
     
 def w_stream(System):
     """Compute the stream function from the vorticity."""
-    from ._linear import StreamSolver
+    from .._linear import StreamSolver
     
     stream = np.zeros_like(System.Vorticity)
     

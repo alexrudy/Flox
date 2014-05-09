@@ -11,11 +11,11 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 
 import numpy as np
 import nose.tools as nt
-from .test_setup import PolynomialSystem
+from .system import PolynomialSystem
 
 def w_dtemperature(System):
     """Derivative of temperature solver."""
-    from ._linear import temperature
+    from .._linear import temperature
     dT = np.zeros_like(System.Temperature)
     fp = np.zeros(System.nx, np.float)
     fm = np.zeros(System.nx, np.float)
@@ -24,7 +24,7 @@ def w_dtemperature(System):
 
 def w_temperature(System):
     """TemperatureSolver Wrapper."""
-    from ._linear import TemperatureSolver
+    from .._linear import TemperatureSolver
     Tn = np.zeros_like(System.Temperature)
     dTn = np.zeros_like(System.Temperature)
     dTo = np.zeros_like(System.Temperature)
