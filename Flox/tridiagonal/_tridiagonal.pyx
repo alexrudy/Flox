@@ -12,7 +12,7 @@
 
 #cython: overflowcheck=False
 #cython: wraparound=False
-#cython: boundscheck=False
+#cython: boundscheck=True
 #cython: cdivision=True
 #cython: profile=True
 
@@ -83,13 +83,13 @@ cpdef int tridiagonal_from_work(int J, DTYPE_t[:] rhs, DTYPE_t[:] sol, DTYPE_t[:
     
     cdef int j
     
-    sol[0] = rhs[0] * wk1[0]
+    j = 0
+    sol[j] = rhs[j] * wk1[j]
     for j in range(1, J):
         sol[j] = (rhs[j] - sub[j] * sol[j-1]) * wk1[j]
-    
+        
     for j in range(J-2, -1, -1):
         sol[j] = sol[j] - wk2[j] * sol[j+1]
-        
     return 0
     
 
@@ -105,6 +105,8 @@ cdef class TridiagonalSolver(Solver):
         self.sub = np.zeros((nz, nx), dtype=np.float)
         self.dia = np.zeros((nz, nx), dtype=np.float)
         self.sup = np.zeros((nz, nx), dtype=np.float)
+        self.t_sol = np.zeros((nz), dtype=np.float)
+        self.t_rhs = np.zeros((nz), dtype=np.float)
         
     
     cpdef int warm(self, DTYPE_t[:,:] sub, DTYPE_t[:,:] dia, DTYPE_t[:,:] sup):
@@ -131,11 +133,11 @@ cdef class TridiagonalSolver(Solver):
     cpdef int solve(self, DTYPE_t[:,:] rhs, DTYPE_t[:,:] sol):
         
         cdef int k, rv = 0
-        cdef DTYPE_t[:] t_sol = clone(array('d'), self.J, False)
         
         for k in range(self.K):
-            rv += tridiagonal_from_work(self.J, rhs[:,k], t_sol, self.wk1[:,k], self.wk2[:,k], self.sub[:,k])
-            sol[:,k] = t_sol
+            self.t_rhs[...] = rhs[:,k]
+            rv += tridiagonal_from_work(self.J, self.t_rhs, self.t_sol, self.wk1[:,k], self.wk2[:,k], self.sub[:,k])
+            sol[:,k] = self.t_sol
         
         return rv
     
@@ -146,7 +148,6 @@ cdef class TridiagonalSolver(Solver):
         cdef DTYPE_t[:] t_sup = clone(array('d'), self.J, False)
 
         for k in range(self.K):
-            print(self.K)
             r1 += tridiagonal_split_matrix(self.J, mat[:,:,k], t_sub, t_dia, t_sup)
             self.sub[:,k] = t_sub
             self.dia[:,k] = t_dia
