@@ -196,14 +196,14 @@ class System2D(HasUnitsProperties):
     def diagnostic_string(self, z=None, n=None):
         """A longer diagnostic string."""
         if n is None:
-            n = slice(0,3)
+            n = [0, 1, 2, -3, -2, -1]
             ns = np.arange(self.nx)[n]
         if z is None:
             z = self.nz // 3
             zs = np.arange(self.nz)[z]
         
         output = []
-        output.append("At mode n={} and z={}".format(ns, zs))
+        output.append("At mode n={} and z={} (it={})".format(ns, zs, self.it))
         output.append("    Time: {}".format(self.time))
         for array_name in self.list_arrays():
             if getattr(self, array_name).ndim == 3:
