@@ -129,10 +129,10 @@ cdef class LinearEvolver(Evolver):
         self.Pr = Pr
         self.Ra = Ra
         self.dz = dz
-        self.Temperature = TemperatureSolver(nz, nx)
-        self.Vorticity = VorticitySolver(nz, nx)
-        self.Stream = StreamSolver(nz, nx)
-        self.Stream.setup(self.dz, self.npa)
+        self._Temperature = TemperatureSolver(nz, nx)
+        self._Vorticity = VorticitySolver(nz, nx)
+        self._Stream = StreamSolver(nz, nx)
+        self._Stream.setup(self.dz, self.npa)
         self.safety = safety
     
     cpdef int get_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t[:,:] Stream):
@@ -159,17 +159,65 @@ cdef class LinearEvolver(Evolver):
         
         cdef DTYPE_t time = self.time
         # Compute the derivatives
-        self.Temperature.compute(self.Stream.V_curr, self.dz, self.npa)
-        self.Vorticity.compute(self.Temperature.V_curr, self.dz, self.npa, self.Pr, self.Ra)
+        self._Temperature.compute(self._Stream.V_curr, self.dz, self.npa)
+        self._Vorticity.compute(self._Temperature.V_curr, self.dz, self.npa, self.Pr, self.Ra)
         
         # Advance the derivatives
-        self.Temperature.advance(delta_time)
-        self.Vorticity.advance(delta_time)
-        self.Stream.solve(self.Vorticity.V_curr, self.Stream.V_curr)
+        self._Temperature.advance(delta_time)
+        self._Vorticity.advance(delta_time)
+        self._Stream.solve(self._Vorticity.V_curr, self._Stream.V_curr)
         
         self.time = time + delta_time
         
         return 0
     
+    property Temperature:
+        
+        """Temperature"""
+        
+        def __get__(self):
+            return np.asanyarray(self._Temperature.V_curr)
+            
+        def __set__(self, value):
+            self._Temperature.V_curr = np.asanyarray(value)
+            
+    property dTemperature:
+        
+        """Derivative of Temperature with Time"""
+        
+        def __get__(self):
+            return np.asanyarray(self._Temperature.G_prev)
     
+        def __set__(self, value):
+            self._Temperature.G_prev = np.asanyarray(value)
     
+    property Vorticity:
+
+        """Vorticity"""
+
+        def __get__(self):
+            return np.asanyarray(self._Vorticity.V_curr)
+    
+        def __set__(self, value):
+            self._Vorticity.V_curr = np.asanyarray(value)
+ 
+    property dVorticity:
+
+        """Derivative of Vorticity with Time"""
+
+        def __get__(self):
+            return np.asanyarray(self._Vorticity.G_prev)
+
+        def __set__(self, value):
+            self._Vorticity.G_prev = np.asanyarray(value)
+            
+    property Stream:
+        
+        """Stream function"""
+        
+        def __get__(self):
+            return np.asanyarray(self._Stream.V_curr)
+
+        def __set__(self, value):
+            self._Stream.V_curr = np.asanyarray(value)
+     

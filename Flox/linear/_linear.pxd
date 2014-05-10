@@ -31,9 +31,9 @@ cdef class LinearEvolver(Evolver):
     cdef readonly DTYPE_t dz
     cdef readonly DTYPE_t safety
     cdef DTYPE_t[:] npa
-    cdef VorticitySolver Vorticity
-    cdef TemperatureSolver Temperature
-    cdef StreamSolver Stream
+    cdef VorticitySolver _Vorticity
+    cdef TemperatureSolver _Temperature
+    cdef StreamSolver _Stream
     
     cpdef int get_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t[:,:] Stream)
     cpdef int set_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t[:,:] Stream, DTYPE_t time)
