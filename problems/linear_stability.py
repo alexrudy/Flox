@@ -97,16 +97,17 @@ def plot(opt):
     fig = plt.figure(figsize=(11, 8.5))
     
     for i,system in enumerate("stable critical unstable".split()):
-        MVC = MultiViewController(fig, 3, 3, wspace=0.6, hspace=0.3)
+        MVC = MultiViewController(fig, 3, 3, wspace=0.6, hspace=0.4)
         System = NDSystem2D.from_params(Config["system"])
         Writer.read(System, system)
         print(System)
         MVC[0,i] = EvolutionViewStabilityTest("Temperature", opt.mode, System.nz//3)
         MVC[1,i] = EvolutionViewStabilityTest("Vorticity", opt.mode, System.nz//3)
         MVC[2,i] = EvolutionViewStabilityTest("StreamFunction", opt.mode, System.nz//3)
+        MVC.views[0].ax.text(0.5, 1.25, system.capitalize(), transform=MVC.views[0].ax.transAxes, ha='center')
         MVC.update(System)
     
-    fig.savefig(opt.plot)
+    fig.savefig(opt.plot, dpi=300)
     
 def animate(opt):
     """Animate the data sets."""
@@ -120,7 +121,7 @@ def animate(opt):
     Plots = []
     
     for i,system in enumerate("stable critical unstable".split()):
-        MVC = MultiViewController(fig, 3, 3, wspace=0.6, hspace=0.3)
+        MVC = MultiViewController(fig, 3, 3, wspace=0.6, hspace=0.4)
         System = NDSystem2D.from_params(Config["system"])
         Writer.read(System, system)
         print(System)
@@ -140,8 +141,8 @@ def animate(opt):
             pbar.update(i)
         
         anim = animation.FuncAnimation(fig, update, frames=int(System.nit), interval=0.1)
-        # anim.save(opt.movie, writer='ffmpeg')
-        plt.show()
+        anim.save(opt.movie, writer='ffmpeg')
+        # plt.show()
     
 def analyze(opt):
     """Analyze the data, showing the late time values of the stability criterion."""
