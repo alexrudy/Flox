@@ -29,7 +29,7 @@ class PacketInterface(object):
     """The interface for packet consumers and producers."""
     
     @abc.abstractmethod
-    def get_packet_list(cls):
+    def get_packet_list(self):
         """Return the parameter list."""
         return []
     
@@ -43,4 +43,4 @@ class PacketInterface(object):
     def read_packet(self, packet):
         """Read an imcoming packet"""
         for variable in packet.keys():
-            setattr(self, variable, packet[variable].copy())
+            setattr(self, variable, packet[variable])

@@ -124,7 +124,7 @@ cdef class LinearEvolver(Evolver):
     
     def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t dz, DTYPE_t time, DTYPE_t safety):
         
-        self.time = time
+        self.Time = time
         self.npa = npa
         self.Pr = Pr
         self.Ra = Ra
@@ -134,21 +134,6 @@ cdef class LinearEvolver(Evolver):
         self._Stream = StreamSolver(nz, nx)
         self._Stream.setup(self.dz, self.npa)
         self.safety = safety
-    
-    cpdef int get_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t[:,:] Stream):
-        
-        Temperature[...] = self.Temperature.V_curr
-        Vorticity[...] = self.Vorticity.V_curr
-        Stream[...] =  self.Stream.V_curr
-        return 0
-    
-    cpdef int set_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t[:,:] Stream, DTYPE_t time):
-        
-        self.Temperature.V_curr = Temperature
-        self.Vorticity.V_curr = Vorticity
-        self.Stream.V_curr = Stream
-        self.time = time
-        return 0
         
     
     cpdef DTYPE_t delta_time(self):
@@ -157,7 +142,7 @@ cdef class LinearEvolver(Evolver):
         
     cpdef int step(self, DTYPE_t delta_time):
         
-        cdef DTYPE_t time = self.time
+        cdef DTYPE_t time = self.Time
         # Compute the derivatives
         self._Temperature.compute(self._Stream.V_curr, self.dz, self.npa)
         self._Vorticity.compute(self._Temperature.V_curr, self.dz, self.npa, self.Pr, self.Ra)
@@ -167,7 +152,7 @@ cdef class LinearEvolver(Evolver):
         self._Vorticity.advance(delta_time)
         self._Stream.solve(self._Vorticity.V_curr, self._Stream.V_curr)
         
-        self.time = time + delta_time
+        self.Time = time + delta_time
         
         return 0
     

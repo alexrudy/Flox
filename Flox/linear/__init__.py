@@ -19,10 +19,9 @@ class LinearEvolver(Evolver, _LinearEvolver):
         super(LinearEvolver, self).__init__()
         
         
-    @classmethod
-    def get_packet_list(cls):
+    def get_packet_list(self):
         """Variables"""
-        return [ "Temperature", "dTemperature", "Vorticity", "dVorticity", "Stream"]
+        return [ "Temperature", "dTemperature", "Vorticity", "dVorticity", "Stream", "Time"]
         
     @classmethod
     def from_system(cls, system, saftey=0.5):

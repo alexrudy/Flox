@@ -69,10 +69,8 @@ class HDF5Writer(GridWriter):
     
     def read_array(self, group, data, array_name):
         """Read the dataset."""
-        array_obj = getattr(type(data), array_name)
         dataset = group[array_name]
-        array_data = dataset[...] # * u.Unit(dataset.attrs['unit'])
-        setattr(data, array_name, array_data)
+        data.engine[array_name] = dataset[...]
         
         
         

@@ -35,5 +35,3 @@ cdef class LinearEvolver(Evolver):
     cdef TemperatureSolver _Temperature
     cdef StreamSolver _Stream
     
-    cpdef int get_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t[:,:] Stream)
-    cpdef int set_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t[:,:] Stream, DTYPE_t time)

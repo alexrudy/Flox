@@ -30,7 +30,7 @@ cdef class Solver:
     cpdef int advance(self, DTYPE_t deltaT)
     
 cdef class Evolver:
-    cdef readonly DTYPE_t time
+    cdef public DTYPE_t Time
     cpdef DTYPE_t delta_time(self)
     cpdef int step(self, DTYPE_t delta_time)
     cpdef int evolve(self, DTYPE_t time, int max_iterations)

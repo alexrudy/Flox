@@ -154,7 +154,7 @@ class System2D(PacketInterface, HasUnitsProperties):
         
     def get_packet_list(self):
         """Return the packet list."""
-        return [ array for array in self.list_arrays() if array != "Time" ]
+        return self._list_attributes(ArrayProperty)
         
     def _setup_standard_bases(self):
         """Set the standard, non-dimensional bases"""
@@ -185,18 +185,25 @@ class System2D(PacketInterface, HasUnitsProperties):
         array_ndunit = self.nondimensional_unit(array_dunit)
         return (array_desc.get(self) * array_ndunit).to(array_dunit)
         
+    def dimensional_full_array(self, name):
+        """Return a dimensionalized array"""
+        array_desc = getattr(type(self), name)
+        array_dunit = array_desc.unit(self)
+        array_ndunit = self.nondimensional_unit(array_dunit)
+        return (self.engine[name] * array_ndunit).to(array_dunit)
+        
     def nondimensional_unit(self, unit):
         """Create a nondimensional unit for this system."""
         return recompose_unit(unit, set(self._bases['nondimensional'].values()))
         
-    def transformed_array(self, name, _slice=slice(None), perturbed=False):
+    def transformed_array(self, name, perturbed=False):
         """Return a transformed array for a given name"""
         array_desc = getattr(type(self), name)
         array_dunit = array_desc.unit(self)
         array_ndunit = self.nondimensional_unit(array_dunit)
         if perturbed:
-            return (array_desc.p_itransform(self, _slice) * array_ndunit).to(array_dunit)
-        return (array_desc.itransform(self, _slice) * array_ndunit).to(array_dunit)
+            return (array_desc.p_itransform(self) * array_ndunit).to(array_dunit)
+        return (array_desc.itransform(self) * array_ndunit).to(array_dunit)
         
     def diagnostic_string(self, z=None, n=None):
         """A longer diagnostic string."""

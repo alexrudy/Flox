@@ -58,7 +58,7 @@ class GridView(View):
         
     def data(self, system):
         """Return the transformed data"""
-        return system.transformed_array(self.variable, (Ellipsis, system.it), perturbed=self.perturbed)
+        return system.transformed_array(self.variable, perturbed=self.perturbed)
         
     def initialize(self, system):
         """Initialize the system."""
@@ -89,11 +89,11 @@ class EvolutionView(View):
     
     def ydata(self, system):
         """Return the y-data values."""
-        return getattr(system, self.variable)[...,:system.it]
+        return system.engine[self.variable][...,:system.it]
         
     def xdata(self, system):
         """Return the x-data values."""
-        return system.dimesnional_array("Time")[:system.it]
+        return system.dimensional_full_array("Time")[:system.it]
     
     def initialize(self, system):
         """Set up the plot."""
@@ -115,11 +115,16 @@ class EvolutionView(View):
 class EvolutionViewAllModes(EvolutionView):
     """Watch a variable evolve for all fourier modes."""
     
+    def __init__(self, variable, zmode):
+        super(EvolutionViewAllModes, self).__init__(variable)
+        self.zmode = zmode
+        
+    
     def initialize(self, system):
         """Set up the plot."""
         self.line = []
         for i in range(self.ydata(system).shape[1]):
-            self.line.append(self.ax.plot(self.xdata(system), np.mean(self.ydata(system)[:,i,:], axis=0), 'k-')[0])
+            self.line.append(self.ax.plot(self.xdata(system), self.ydata(system)[self.zmode,i,:], 'k-')[0])
         self.ax.set_ylabel(getattr(type(system), self.variable).latex)
         self.ax.set_xlabel(type(system).Time.latex)
         self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
@@ -129,7 +134,7 @@ class EvolutionViewAllModes(EvolutionView):
         if self.line is None:
             self.initialize(system)
         for i, line in enumerate(self.line):
-            line.set_data(system.Time[:system.it], np.mean(self.ydata(system)[:,i,:], axis=0))
+            line.set_data(self.xdata(system), self.ydata(system)[self.zmode,i,:])
     
 class EvolutionViewSingleMode(EvolutionView):
     """Watch a variable evolve for a single fourier mode."""
@@ -146,7 +151,7 @@ class EvolutionViewSingleMode(EvolutionView):
     
     def ydata(self, system):
         """Return the y-data values."""
-        return getattr(system, self.variable)[self.zmode,self.nmode,:system.it]
+        return system.engine[self.variable][self.zmode,self.nmode,:system.it]
         
 
 class EvolutionViewStabilityTest(EvolutionViewSingleMode):
@@ -171,7 +176,7 @@ class EvolutionViewStabilityTest(EvolutionViewSingleMode):
         
     def ydata(self, system):
         """Return the y-data values."""
-        data = getattr(system, self.variable)[self.zmode,self.nmode,:system.it]
+        data = system.engine[self.variable][self.zmode,self.nmode,:system.it]
         ln_data = np.log(np.abs(data))
         return np.diff(ln_data)
         

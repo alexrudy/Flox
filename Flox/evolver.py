@@ -31,9 +31,9 @@ class Evolver(PacketInterface):
         
     def evolve_many(self, system, total_time, chunksize=int(1e3), chunks=1000):
         """Evolve over many iterations with a given total time."""
-        start_time = system.dimensionalize(self.time * system.nondimensional_unit(total_time.unit))
+        start_time = system.dimensionalize(self.Time * system.nondimensional_unit(total_time.unit))
         self.read_packet(system.create_packet())
-        end_time = self.time + system.nondimensionalize(total_time).value
+        end_time = self.Time + system.nondimensionalize(total_time).value
         with ProgressBar(chunks) as pbar:
             for i in range(chunks):
                 if system.time >= total_time:

@@ -86,7 +86,7 @@ cdef class Evolver:
         cdef int j, r = 0
         
         for j in range(max_iterations):
-            if self.time > time:
+            if self.Time > time:
                 break
             
             r += self.step(self.delta_time())
