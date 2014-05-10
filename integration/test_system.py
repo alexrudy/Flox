@@ -22,6 +22,7 @@ make_data_filename = os.path.join(directory_stem, filename_stem+"-make.hdf5")
 read_parameter_filename = os.path.join(directory_stem, filename_stem+"-read.yml")
 read_data_filename = os.path.join(directory_stem, filename_stem+"-read.hdf5")
 pickle_data_filename = os.path.join(directory_stem, filename_stem+"-make.pkl")
+pickle_data_read_filename = os.path.join(directory_stem, filename_stem+"-read.pkl")
 
 def setup():
     """Test setup!"""
@@ -100,7 +101,7 @@ def test_read_parameter_file():
     from Flox.input import FloxConfiguration
     PhysicalSystem2D.from_params(FloxConfiguration.fromfile(read_parameter_filename))
     
-def test_pickle_NDSystem():
+def test_write_pickle_NDSystem():
     """Pickle an NDSystem"""
     from six.moves import cPickle as pickle
     from Flox.system import NDSystem2D
@@ -120,4 +121,22 @@ def test_pickle_NDSystem():
     with open(pickle_data_filename, 'wb') as f:
         pickle.dump(my_system, f)
     
+def test_read_pickle_NDSystem():
+    """Read an NDSystem pickle."""
+    from six.moves import cPickle as pickle
+    from Flox.system import NDSystem2D
+    my_system = NDSystem2D(
+        nx = 100,
+        nz = 100,
+        nt = 100,
+        deltaT = 10,
+        depth = 1,
+        aspect = 1,
+        kinematic_viscosity = 1,
+        Prandtl = 1.0,
+        Rayleigh = 1.0,
+        engine = 'Flox.array.NumpyArrayEngine',
+        )
     
+    with open(pickle_data_read_filename, 'rb') as f:
+        my_system = pickle.load(f)

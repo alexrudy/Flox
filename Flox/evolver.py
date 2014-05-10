@@ -13,7 +13,7 @@ import numpy as np
 import six
 import abc
 
-from .packet import PacketInterface
+from .process.packet import PacketInterface
 
 from astropy.utils.console import ProgressBar
 
@@ -31,7 +31,6 @@ class Evolver(PacketInterface):
         
     def evolve_many(self, system, total_time, chunksize=int(1e3), chunks=1000):
         """Evolve over many iterations with a given total time."""
-        start_time = system.dimensionalize(self.Time * system.nondimensional_unit(total_time.unit))
         self.read_packet(system.create_packet())
         end_time = self.Time + system.nondimensionalize(total_time).value
         with ProgressBar(chunks) as pbar:
@@ -43,4 +42,5 @@ class Evolver(PacketInterface):
                     system.read_packet(self.create_packet())
                     pbar.update(i)
     
+
 

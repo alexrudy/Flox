@@ -20,7 +20,7 @@ from pyshell.util import setup_kwargs, configure_class, resolve
 from .input import FloxConfiguration
 from .array import SpectralArrayProperty, ArrayEngine, ArrayProperty
 
-from .packet import PacketInterface, Packet
+from .process.packet import PacketInterface, Packet
 
 @six.add_metaclass(abc.ABCMeta)
 class System2D(PacketInterface, HasUnitsProperties):
