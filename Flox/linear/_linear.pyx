@@ -27,11 +27,13 @@ from Flox.tridiagonal._tridiagonal cimport TridiagonalSolver
 cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t[:,:] P_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t[:] f_p, DTYPE_t[:] f_m):
     
     cdef int j, k
+    cdef DTYPE_t npa_s
     # The last term in equation (2.10)
     # This resets the values in T_next
     for k in range(K):
+        npa_s = npa[k] * npa[k]
         for j in range(J):
-            d_T[j,k] =  -T_curr[j,k] * npa[k] * npa[k]
+            d_T[j,k] =  -T_curr[j,k] * npa_s
     
     # The second last term in equation (2.10)
     r1 = second_derivative2D(J, K, d_T, T_curr, dz, f_p, f_m, 1.0)
@@ -90,18 +92,20 @@ cdef class StreamSolver(TridiagonalSolver):
         cdef int j, k
         cdef DTYPE_t dzs = dz * dz
         cdef DTYPE_t dzI = -1.0 / dzs
+        cdef DTYPE_t npa_s
         
-        for j in range(self.J):
-            self.sub[j,0] = dzI
-            self.sup[j,0] = 0.0
-            self.dia[j,0] = 1.0
-            for k in range(1, self.K-1):
+        for k in range(self.K):
+            npa_s = (npa[k] * npa[k])
+            self.sub[0,k] = 0.0
+            self.sup[0,k] = 0.0
+            self.dia[0,k] = 1.0
+            for j in range(1, self.J-1):
                 self.sub[j,k] = dzI
                 self.sup[j,k] = dzI
-                self.dia[j,k] = npa[k] * npa[k] + 2.0/dzs
-            self.sub[j,self.K-1] = 0.0
-            self.sup[j,self.K-1] = dzI
-            self.dia[j,self.K-1] = 1.0
+                self.dia[j,k] = 2.0/dzs + npa_s
+            self.sub[self.J-1,k] = 0.0
+            self.sup[self.J-1,k] = 0.0
+            self.dia[self.J-1,k] = 1.0
         
         return self._warm_work()
         
@@ -149,11 +153,11 @@ cdef class LinearEvolver(Evolver):
         # Compute the derivatives
         self.Temperature.compute(self.Stream.V_curr, self.dz, self.npa)
         self.Vorticity.compute(self.Temperature.V_curr, self.dz, self.npa, self.Pr, self.Ra)
-        self.Stream.solve(self.Vorticity.V_curr, self.Stream.V_curr)
         
         # Advance the derivatives
         self.Temperature.advance(delta_time)
         self.Vorticity.advance(delta_time)
+        self.Stream.solve(self.Vorticity.V_curr, self.Stream.V_curr)
         
         self.time = time + delta_time
         
