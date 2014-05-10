@@ -28,7 +28,6 @@ cdef class Solver:
     
     cpdef int prepare(self, DTYPE_t dz)
     cpdef int advance(self, DTYPE_t deltaT)
-    cpdef int get_state(self, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] G_curr, DTYPE_t[:,:] G_prev)
     
 cdef class Evolver:
     cdef readonly DTYPE_t time

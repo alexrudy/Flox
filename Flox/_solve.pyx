@@ -52,13 +52,21 @@ cdef class Solver:
         
         return 0
         
-    cpdef int get_state(self, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] G_curr, DTYPE_t[:,:] G_prev):
+    property Value:
         
-        V_curr[...] = self.V_curr
-        G_curr[...] = self.G_curr
-        G_prev[...] = self.G_prev
-        
-        return 0
+        def __get__(self):
+            return np.asanyarray(self.V_curr)
+            
+        def __set__(self, value):
+            self.V_curr = np.asanyarray(value)
+            
+    property dValuedt:
+
+        def __get__(self):
+            return np.asanyarray(self.G_prev)
+    
+        def __set__(self, value):
+            self.G_prev = np.asanyarray(value)
         
     # User should implement some function which can compute G_curr at each timestep!
     # We don't implement a method here, because its signature will vary greatly!
