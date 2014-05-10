@@ -29,11 +29,10 @@ def w_temperature(System):
     dTn = np.zeros_like(System.Temperature)
     dTo = np.zeros_like(System.Temperature)
     TS = TemperatureSolver(System.nz, System.nx)
-    TS.V_curr = System.Temperature
+    TS.Value = System.Temperature
     TS.compute(System.Stream, System.dz, System.npa[0,:])
     TS.advance(System.dt)
-    TS.get_state(Tn, dTn, dTo)
-    return Tn, dTn, dTo
+    return TS.Value, TS.dValuedt
     
 def test_temperature_derivative():
     """Derivative of temperature."""
@@ -61,7 +60,7 @@ def test_temperature_solver():
         Ra = 10.0,
         Pr = 5.0,
     )
-    Tnc, dTnc, dToc = w_temperature(System)
+    Tnc, dTnc = w_temperature(System)
     assert np.isfinite(Tnc).all()
     assert np.isfinite(dTnc).all()
     assert np.allclose(System.evolved("Temperature")[1:-1,:], Tnc[1:-1,:])

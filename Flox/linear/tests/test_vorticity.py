@@ -54,11 +54,10 @@ def w_vorticity(System):
     dVn = np.zeros_like(System.Vorticity)
     dVo = np.zeros_like(System.Vorticity)
     VS = VorticitySolver(System.nz, System.nx)
-    VS.V_curr = System.Vorticity
+    VS.Value = System.Vorticity
     VS.compute(System.Temperature, System.dz, System.npa[0,:], System.Pr, System.Ra)
     VS.advance(System.dt)
-    VS.get_state(Vn, dVn, dVo)
-    return Vn, dVn, dVo
+    return VS.Value, VS.dValuedt
     
 def test_vorticity_derivative():
     """Derivative of vorticity."""
@@ -70,7 +69,7 @@ def test_vorticity_derivative():
 def test_vorticity_solver():
     """Solver for vorticity."""
     System = system(use_simple)
-    Vnc, dVc, dVo = w_vorticity(System)
+    Vnc, dVc = w_vorticity(System)
     assert np.isfinite(Vnc).all()
     assert np.isfinite(dVc).all()
     assert np.allclose(Vnc[1:-1,:], System.evolved("Vorticity")[1:-1,:])
