@@ -36,7 +36,7 @@ class Evolver(PacketInterface):
         end_time = self.Time + system.nondimensionalize(total_time).value
         with ProgressBar(chunks) as pbar:
             for i in range(chunks):
-                if system.time >= total_time:
+                if self.Time >= end_time:
                     break
                 else:
                     self.evolve(end_time, chunksize)
