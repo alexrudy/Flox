@@ -35,13 +35,10 @@ if __name__ == '__main__':
     System = NDSystem2D.from_params(Config["system"])
     iterations = int(Config["iterations"])
     time = Config["time"].to(u.s).value / 100
-    LE = LinearEvolver.from_grids(System)
-    LE.to_grids(System, 1)
+    LE = LinearEvolver.from_system(System)
+    LE.read_packet(System.create_packet())
     cProfile.runctx("LE.evolve(time, iterations)", globals(), locals(), filename(".prof"))
     s = pstats.Stats(filename(".prof"))
     s.strip_dirs().sort_stats("time").print_stats()
-    if os.path.exists(filename("-old.prof")):
-        s = pstats.Stats(filename("-old.prof"))
-        s.strip_dirs().sort_stats("time").print_stats()
     
     

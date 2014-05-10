@@ -35,12 +35,14 @@ if __name__ == '__main__':
     iterations = int(Config["iterations"])
     chunks = System.nt - System.it - 1
     Writer = HDF5Writer(filename(".hdf5"))
+    System.Rayleigh = 779.27
     stable_temperature_gradient(System)
     single_mode_linear_perturbation(System, mode=1)
     print(System)
     print(System.diagnostic_string())
-    LE = LinearEvolver.from_grids(System)
-    LE.evolve_many(System, Config['time'], iterations, chunks)
+    LE = LinearEvolver.from_system(System)
+    LE.step(LE.delta_time())
+    LE.evolve_system(System, Config['time'], iterations, chunks)
     print("")
     print(System)
     print(System.diagnostic_string())

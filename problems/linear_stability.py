@@ -75,17 +75,17 @@ def run(opt):
     
     print(Stable)
     LE = LinearEvolver.from_grids(Stable)
-    LE.evolve_many(Stable, Config['time'], iterations, chunks)
+    LE.evolve_system(Stable, Config['time'], iterations, chunks)
     Writer.write(Stable, 'stable')
     
     print(Critical)
     LE = LinearEvolver.from_grids(Critical)
-    LE.evolve_many(Critical, Config['time'], iterations, chunks)
+    LE.evolve_system(Critical, Config['time'], iterations, chunks)
     Writer.write(Critical, 'critical')
     
     print(Unstable)
     LE = LinearEvolver.from_grids(Unstable)
-    LE.evolve_many(Unstable, Config['time'], iterations, chunks)
+    LE.evolve_system(Unstable, Config['time'], iterations, chunks)
     Writer.write(Unstable, 'unstable')
     
 def plot(opt):

@@ -25,7 +25,7 @@ class NonlinearEvolver(_NonlinearEvolver):
         except:
             return super(NonlinearEvolver, self).__repr__()
         
-    def evolve_many(self, grids, total_time, chunksize=int(1e3), chunks=1000):
+    def evolve_system(self, grids, total_time, chunksize=int(1e3), chunks=1000):
         """Evolve over many iterations with a given total time."""
         self.update_from_grids(grids)
         start_time = grids.dimensionalize(self.time * grids.nondimensional_unit(total_time.unit))
