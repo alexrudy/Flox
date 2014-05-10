@@ -109,7 +109,16 @@ cdef class StreamSolver(TridiagonalSolver):
         
         return self._warm_work()
         
+    cpdef int solve(self, DTYPE_t[:,:] rhs, DTYPE_t[:,:] sol):
     
+        cdef int k
+    
+        for k in range(self.K):
+            self.t_rhs[...] = rhs[:,k]
+        self.t_rhs[0] = 0.0
+        self.t_rhs[self.J - 1] = 0.0
+        
+        return TridiagonalSolver.solve(self, rhs, sol)
     
 cdef class LinearEvolver(Evolver):
     
@@ -125,7 +134,6 @@ cdef class LinearEvolver(Evolver):
         self.Stream = StreamSolver(nz, nx)
         self.Stream.setup(self.dz, self.npa)
         self.safety = safety
-        
     
     cpdef int get_state(self, DTYPE_t[:,:] Temperature, DTYPE_t[:,:] Vorticity, DTYPE_t[:,:] Stream):
         
