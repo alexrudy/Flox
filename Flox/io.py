@@ -50,7 +50,7 @@ class HDF5Writer(GridWriter):
     def create_array(self, group, data, array_name):
         """Write the array object"""
         array_obj = getattr(type(data), array_name)
-        array_data = getattr(data, array_name)
+        array_data = data.engine[array_name]
         dataset = group.require_dataset(array_name, array_data.shape, dtype=array_data.dtype)
         dataset[...] = array_data
         dataset.attrs['name'] = six.text_type(array_obj.name)

@@ -20,9 +20,10 @@ from pyshell.util import setup_kwargs, configure_class, resolve
 from .input import FloxConfiguration
 from .array import SpectralArrayProperty, ArrayEngine, ArrayProperty
 
+from .packet import PacketInterface, Packet
 
 @six.add_metaclass(abc.ABCMeta)
-class System2D(HasUnitsProperties):
+class System2D(PacketInterface, HasUnitsProperties):
     """An abstract 2D Fluid box, with some basic properties."""
     
     # nx = 0
@@ -62,7 +63,7 @@ class System2D(HasUnitsProperties):
     @property
     def nit(self):
         """Get the total number of iterations."""
-        return np.argmax(self.Time)
+        return np.argmax(self.engine["Time"])
     
     @property
     def engine(self):
@@ -151,6 +152,10 @@ class System2D(HasUnitsProperties):
         """Get a list of the parameters which can be changed/modified directly"""
         return ['nz', 'nx', 'nt', 'engine']
         
+    def get_packet_list(self):
+        """Return the packet list."""
+        return [ array for array in self.list_arrays() if array != "Time" ]
+        
     def _setup_standard_bases(self):
         """Set the standard, non-dimensional bases"""
         temperature_unit = u.def_unit("Box-delta-T", self.deltaT)
@@ -206,10 +211,10 @@ class System2D(HasUnitsProperties):
         output.append("At mode n={} and z={} (it={})".format(ns, zs, self.it))
         output.append("    Time: {}".format(self.time))
         for array_name in self.list_arrays():
-            if getattr(self, array_name).ndim == 3:
+            if getattr(self, array_name).ndim == 2:
                 output.append("    {name:15.15s}: [{value}]".format(
                     name = array_name,
-                    value = ",".join([ "{:12.8g}".format(x) for x in getattr(self, array_name)[z,n,self.it]])
+                    value = ",".join([ "{:12.8g}".format(x) for x in getattr(self, array_name)[z,n]])
                 ))
         
         return "\n".join(output)
@@ -236,18 +241,23 @@ class System2D(HasUnitsProperties):
         """Initialize data arrays"""
         for attr_name in self.list_arrays():
             getattr(type(self), attr_name).allocate(self)
+            
+    def read_packet(self, packet):
+        """Read the packet."""
+        self.it += 1
+        super(System2D, self).read_packet(packet)
     
     @ComputedUnitsProperty
     def time(self):
         """The current time of this simulation"""
-        return self.dimensionalize(self.Time[self.it] * self.nondimensional_unit(type(self).Time.unit(self)))
+        return self.dimensionalize(self.Time * self.nondimensional_unit(type(self).Time.unit(self)))
     
-    Time = ArrayProperty("Time", u.s, shape=tuple(('nt',)), latex=r"$t$")
-    Temperature = SpectralArrayProperty("Temperature", u.K, func=np.cos, shape=('nz','nx','nt'), latex=r"$T$")
-    Vorticity = SpectralArrayProperty("Vorticity", 1.0 / u.s, func=np.sin, shape=('nz','nx','nt'), latex=r"$\omega$")
-    StreamFunction = SpectralArrayProperty("StreamFunction", u.m**2 / u.s, func=np.sin, shape=('nz','nx','nt'), latex=r"$\psi$")
-    
-    
+    Time = ArrayProperty("Time", u.s, shape=tuple(), latex=r"$t$")
+    Temperature = SpectralArrayProperty("Temperature", u.K, func=np.cos, shape=('nz','nx'), latex=r"$T$")
+    Vorticity = SpectralArrayProperty("Vorticity", 1.0 / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\omega$")
+    StreamFunction = SpectralArrayProperty("StreamFunction", u.m**2 / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\psi$")
+    dTemperature = SpectralArrayProperty("dTemperature", u.K / u.s, func=np.cos, shape=('nz','nx'), latex=r"$\frac{d T}{dt}$")
+    dVorticity = SpectralArrayProperty("dVorticity", 1.0 / u.s / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\frac{d \omega}{dt}$")
 
 class NDSystem2D(System2D):
     """A primarily non-dimensional 2D system."""

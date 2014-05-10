@@ -59,11 +59,12 @@ class ArrayProperty(UnitsProperty):
         super(ArrayProperty, self).__init__(name, unit, **kwargs)
         self._shape = shape
         self._engine = engine
+        self._attr = name
     
     
     def shape(self, obj):
         """Retrieve inexplicit shapes"""
-        shape = tuple([self._get_shape_part(obj, part) for part in self._shape])
+        shape = tuple([self._get_shape_part(obj, part) for part in self._shape] + [obj.nt])
         if len(shape) < 1:
             raise ValueError("Got 0-dimensional array: {!r}".format(shape))
         if shape == tuple((0,)):
@@ -77,7 +78,7 @@ class ArrayProperty(UnitsProperty):
         elif isinstance(part, six.string_types):
             return getattr(obj, part)
         else:
-            raise ValueError("Implicit shape '{}' is not valid.".format(part))
+            raise ValueError("Implicit shape '{!r}' is not a valid type: {!r}".format(part, [int, six.string_types]))
         
     def allocate(self, obj):
         """Allocate the array in the proper area, with the proper shape."""
@@ -85,11 +86,11 @@ class ArrayProperty(UnitsProperty):
     
     def set(self, obj, value):
         """Short out the setter so that it doesn't use units, but uses the allocated array space."""
-        getattr(obj, self._engine)[self._attr] = value
+        getattr(obj, self._engine)[self._attr][...,obj.it] = value
         
     def get(self, obj):
         """Get this object."""
-        return getattr(obj, self._engine)[self._attr]
+        return getattr(obj, self._engine)[self._attr][...,obj.it]
         
 class SpectralArrayProperty(ArrayProperty):
     """An array with spectral property support"""

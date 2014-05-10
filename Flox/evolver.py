@@ -13,8 +13,13 @@ import numpy as np
 import six
 import abc
 
+from .packet import PacketInterface
+
+from astropy.utils.console import ProgressBar
+
+
 @six.add_metaclass(abc.ABCMeta)
-class Evolver(object):
+class Evolver(PacketInterface):
     """The python side of the evolver."""
     
     def __repr__(self):
@@ -24,26 +29,18 @@ class Evolver(object):
         except:
             return super(Evolver, self).__repr__()
         
-    def evolve_many(self, grids, total_time, chunksize=int(1e3), chunks=1000):
+    def evolve_many(self, system, total_time, chunksize=int(1e3), chunks=1000):
         """Evolve over many iterations with a given total time."""
-        self.update_from_grids(grids)
-        start_time = grids.dimensionalize(self.time * grids.nondimensional_unit(total_time.unit))
-        end_time = self.time + grids.nondimensionalize(total_time).value
+        start_time = system.dimensionalize(self.time * system.nondimensional_unit(total_time.unit))
+        self.read_packet(system.create_packet())
+        end_time = self.time + system.nondimensionalize(total_time).value
         with ProgressBar(chunks) as pbar:
             for i in range(chunks):
-                if grids.time >= total_time:
+                if system.time >= total_time:
                     break
                 else:
                     self.evolve(end_time, chunksize)
-                    self.to_grids(grids, grids.it+1)
+                    system.read_packet(self.create_packet())
                     pbar.update(i)
     
-    @abc.abstractmethod
-    def create_packet(self):
-        """Create a packet from this evolver."""
-        pass
-        
-    @abc.abstractmethod
-    def read_packet(self, packet):
-        """Read an incoming packet into this system."""
-        pass
+

@@ -10,45 +10,31 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 import astropy.units as u
-from astropy.utils.console import ProgressBar
 from ._linear import LinearEvolver as _LinearEvolver
 from ..evolver import Evolver
-from ..packet import Packet2D
 
 class LinearEvolver(Evolver, _LinearEvolver):
     """Linear evolver"""
     def __init__(self, *args, **kwargs):
         super(LinearEvolver, self).__init__()
         
+        
     @classmethod
-    def from_system(cls, system, saftey):
+    def get_packet_list(cls):
+        """Variables"""
+        return [ "Temperature", "dTemperature", "Vorticity", "dVorticity", "Stream"]
+        
+    @classmethod
+    def from_system(cls, system, saftey=0.5):
         """Load the grid parameters into the LE"""
         return cls(
             system.nz, system.nx,
-            system.nondimensionalize(grids.npa).value,
-            system.nondimensionalize(grids.Prandtl).value,
-            system.nondimensionalize(grids.Rayleigh).value,
-            system.nondimensionalize(grids.dz).value, 
-            system.nondimensionalize(grids.time).value,
-            0.5
+            system.nondimensionalize(system.npa).value,
+            system.nondimensionalize(system.Prandtl).value,
+            system.nondimensionalize(system.Rayleigh).value,
+            system.nondimensionalize(system.dz).value, 
+            system.nondimensionalize(system.time).value,
+            saftey
             )
         
-    def create_packet(self):
-        """Create a packet from the LinearEvolver state."""
-        pass
-        
-    def update_from_grids(self, grids):
-        """Update the state from a set of grids."""
-        self.set_state(
-            grids.Temperature[...,grids.it].copy(),
-            grids.Vorticity[...,grids.it].copy(),
-            grids.StreamFunction[...,grids.it].copy(),
-            grids.nondimensionalize(grids.time).value
-            )
-        
-    def to_grids(self, grids, iteration):
-        """Load the LE data back into a grid set."""
-        grids.it = iteration
-        self.get_state(grids.Temperature[...,grids.it], grids.Vorticity[...,grids.it], grids.StreamFunction[...,grids.it])
-        grids.Time[grids.it] = self.time
     

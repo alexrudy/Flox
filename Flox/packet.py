@@ -13,14 +13,34 @@ import numpy as np
 import abc
 import six
 
-@six.add_metaclass(abc.ABCMeta)
-class Packet2D(dict):
+
+class Packet(dict):
     """A 2D packet, containing the data required for the setup of an evolver."""
     
     def __init__(self):
-        super(Packet2D, self).__init__()
+        super(Packet, self).__init__()
         
     def __setitem__(self, key, value):
-        """Set the item """
-        super(Packet2D, self).__setitem__(key, np.asanyarray(value))
+        """Set the item, converting it to a numpy array in the process."""
+        super(Packet, self).__setitem__(key, np.asanyarray(value))
         
+@six.add_metaclass(abc.ABCMeta)
+class PacketInterface(object):
+    """The interface for packet consumers and producers."""
+    
+    @abc.abstractmethod
+    def get_packet_list(cls):
+        """Return the parameter list."""
+        return []
+    
+    def create_packet(self):
+        """Create a packet from the LinearEvolver state."""
+        packet = Packet()
+        for variable in self.get_packet_list():
+            packet[variable] = getattr(self, variable)
+        return packet
+        
+    def read_packet(self, packet):
+        """Read an imcoming packet"""
+        for variable in packet.keys():
+            setattr(self, variable, packet[variable].copy())
