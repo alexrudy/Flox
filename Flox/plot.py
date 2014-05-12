@@ -79,6 +79,26 @@ class GridView(View):
             self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
 
 
+class ContourView(GridView):
+    """Show countours."""
+    
+    def initialize(self, system):
+        """Initialize the system."""
+        self.im_kwargs.setdefault('cmap','hot')
+        self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
+        self.image = self.ax.contour(self.data(system).value, **self.im_kwargs)
+        self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
+        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit), transform=self.ax.transAxes)
+        
+    def update(self, system):
+        """Update the view"""
+        if self.image is None:
+            self.initialize(system)
+        else:
+            self.image.set_data(self.data(system).value)
+            self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
+    
+
 class EvolutionView(View):
     """An object view showing the time-evolution of a parameter."""
     def __init__(self, variable):
@@ -182,7 +202,7 @@ class EvolutionViewStabilityTest(EvolutionViewSingleMode):
         
     def xdata(self, system):
         """Return the x-data values."""
-        return system.dimesnional_array("Time")[1:system.it]
+        return system.dimensional_full_array("Time")[1:system.it]
         
 
         

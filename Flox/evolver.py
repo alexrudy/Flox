@@ -52,7 +52,7 @@ class Evolver(PacketInterface):
             if self.Time >= total_time:
                 break
             else:
-                self.evolve(end_time, chunksize)
+                self.evolve(total_time - self.Time, chunksize)
                 queue.put(self.create_packet(), block=False)
     
 

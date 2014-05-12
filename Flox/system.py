@@ -240,6 +240,21 @@ class System2D(PacketInterface, HasUnitsProperties):
             parameters[argname] = getattr(self, argname)
         return parameters
         
+    def __getstate__(self):
+        """Get the state for this object."""
+        parameters = {}
+        argnames = self.get_parameter_list()
+        for argname in argnames:
+            if argname != "engine":
+                parameters[argname] = getattr(self, argname)
+        return parameters
+        
+    def __setstate__(self, parameters):
+        """Set the state of this system from pickling."""
+        for param in parameters:
+            setattr(self, param, parameters[param])
+        self._setup_standard_bases()
+        
     def list_arrays(self):
         """Return an iterator over the array property names."""
         return self._list_attributes(ArrayProperty)
@@ -262,7 +277,7 @@ class System2D(PacketInterface, HasUnitsProperties):
     Time = ArrayProperty("Time", u.s, shape=tuple(), latex=r"$t$")
     Temperature = SpectralArrayProperty("Temperature", u.K, func=np.cos, shape=('nz','nx'), latex=r"$T$")
     Vorticity = SpectralArrayProperty("Vorticity", 1.0 / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\omega$")
-    StreamFunction = SpectralArrayProperty("StreamFunction", u.m**2 / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\psi$")
+    Stream = SpectralArrayProperty("Stream", u.m**2 / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\psi$")
     dTemperature = SpectralArrayProperty("dTemperature", u.K / u.s, func=np.cos, shape=('nz','nx'), latex=r"$\frac{d T}{dt}$")
     dVorticity = SpectralArrayProperty("dVorticity", 1.0 / u.s / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\frac{d \omega}{dt}$")
 

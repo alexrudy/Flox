@@ -32,7 +32,6 @@ class LinearEvolver(Evolver, _LinearEvolver):
             system.nondimensionalize(system.Prandtl).value,
             system.nondimensionalize(system.Rayleigh).value,
             system.nondimensionalize(system.dz).value, 
-            system.nondimensionalize(system.time).value,
             saftey
             )
         

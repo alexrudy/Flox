@@ -122,9 +122,8 @@ cdef class StreamSolver(TridiagonalSolver):
     
 cdef class LinearEvolver(Evolver):
     
-    def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t dz, DTYPE_t time, DTYPE_t safety):
+    def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t dz, DTYPE_t safety):
         
-        self.Time = time
         self.npa = npa
         self.Pr = Pr
         self.Ra = Ra
