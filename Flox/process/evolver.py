@@ -31,12 +31,13 @@ class EvolverManager(AsynchronousManager):
 
 class EvolverProcessing(object):
     """An object which manages processing."""
-    def __init__(self, timeout=10):
+    def __init__(self, timeout=10, buffer_length=10):
         super(EvolverProcessing, self).__init__()
         self.async_manager = EvolverManager()
         self.async_manager.name = "Evolver"
         self.queue_manager = mm.SyncManager()
         self.timeout = timeout
+        self.buffer_length = buffer_length
     
     def register_evolver(self, evolver):
         """Register a specific type of evolver."""
@@ -83,20 +84,31 @@ class EvolverProcessing(object):
         import matplotlib.pyplot as plt
         Q = self.evolve_queue(Evolver, System, time, chunks, chunksize)
         with ProgressBar(chunks) as PBar:
-            anim = animation.FuncAnimation(Plotter.figure, self._animate_callback, frames=System.nt-2, interval=1, repeat=False, fargs=(System, Plotter, Q, PBar))
+            anim = animation.FuncAnimation(Plotter.figure, self._animate_callback, self._packet_callback(System, Q), interval=1, fargs=(System, Plotter, PBar))
             plt.show()
             
-    def _animate_callback(self, i, System, Plotter, Queue, PBar=None):
-        """Animation Callback."""
-        try:
-            for j in range(10):
-                packet = Queue.get_nowait()
-                System.read_packet(packet)
-        except queue.Empty:
-            pass
-        if j == 0:
-            packet = Queue.get(timeout=self.timeout)
-            System.read_packet(packet)
+    def _packet_callback(self, System, Queue):
+        """Packet callback method."""
+        def _packet_generator():
+            packet = None
+            try:
+                for j in range(self.buffer_length):
+                    packet = Queue.get_nowait()
+                    System.read_packet(packet)
+            except queue.Empty:
+                pass
+            if packet is None:
+                try:
+                    packet = Queue.get(timeout=self.timeout)
+                    System.read_packet(packet)
+                except queue.Empty:
+                    raise StopIteration
+            yield System.it
+        
+        return _packet_generator
+            
+    def _animate_callback(self, i, System, Plotter, PBar=None):
+        """Animation Callback."""        
         if PBar is not None:
             PBar.update(System.it)
         if System.it > 2:
