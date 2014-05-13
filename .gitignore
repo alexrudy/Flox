@@ -29,3 +29,7 @@ profile/*.prof
 problems/*.hdf5
 problems/*.png
 problems/*.mp4
+
+html/*
+
+multiprocessing/*.hdf5
