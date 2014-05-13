@@ -12,7 +12,7 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 
 from Flox.system import NDSystem2D
 from Flox.input import FloxConfiguration
-from Flox.nonlinear import NonlinearEvolver
+from Flox.linear import LinearEvolver
 from Flox.io import HDF5Writer
 from Flox.ic import stable_temperature_gradient, standard_linear_perturbation, single_mode_linear_perturbation
 
@@ -34,6 +34,7 @@ if __name__ == '__main__':
     
     Config = FloxConfiguration.fromfile(os.path.join(os.path.dirname(__file__),"linear_op.yml"))
     System = NDSystem2D.from_params(Config["system"])
+    System.Rayleigh = 100
     stable_temperature_gradient(System)
     single_mode_linear_perturbation(System, mode)
     
@@ -41,10 +42,10 @@ if __name__ == '__main__':
     MVC = setup_plots(plt.figure(figsize=(10, 10)), stability=mode)
     MVC.update(System)
     
-    EM = EvolverProcessing()
+    EM = EvolverProcessing(timeout=1, buffer_length=0)
     EM.register_evolver(LinearEvolver)
     with EM:
-        EM.animate_evolve(LinearEvolver, System, MVC, Config['time'], System.nt - 1)
+        EM.animate_evolve(LinearEvolver, System, MVC, Config['time'], chunks=System.nt - 1, chunksize=1000)
         print(System)
         print(System.diagnostic_string())
     print("Done!")
