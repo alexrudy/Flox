@@ -12,8 +12,8 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 import numpy as np
 import six
 import abc
-
-from queue import Queue, Empty
+import io
+import sys
 
 from astropy.utils.console import ProgressBar
 
@@ -32,13 +32,14 @@ class Evolver(PacketInterface):
         except:
             return super(Evolver, self).__repr__()
         
-    def evolve_system(self, system, total_time, chunksize=int(1e3), chunks=1000):
+    def evolve_system(self, system, total_time, chunksize=int(1e3), chunks=1000, quiet=False):
         """Evolve over many iterations with a given total time."""
         self.read_packet(system.create_packet())
         end_time = self.Time + system.nondimensionalize(total_time).value
-        with ProgressBar(chunks) as pbar:
+        file = sys.stdout if not quiet else io.StringIO()
+        with ProgressBar(chunks, file=file) as pbar:
             for i in range(chunks):
-                if self.Time >= total_time:
+                if self.Time >= end_time:
                     break
                 else:
                     self.evolve(end_time, chunksize)
