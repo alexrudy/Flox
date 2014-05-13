@@ -29,15 +29,27 @@ from Flox._solve cimport Solver
 cpdef int tridiagonal_split_matrix(int J, DTYPE_t[:,:] mat, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup):
     
     cdef int j
-
-    sup[0] = mat[0,1]
-    dia[0] = mat[0,0]
-    for j in range(1, J-1):
-        sup[j] = mat[j,j+1]
-        dia[j] = mat[j,j]
-        sub[j] = mat[j,j-1]
-    dia[J-1] = mat[J-1,J-1]
-    sub[J-1] = mat[J-1,J-2]
+    
+    j = 0
+    sub[j] = 0.0
+    sup[j] = 0.0
+    dia[j] = 0.0
+    j = 1
+    sub[j] = 0.0
+    sup[j] = mat[j-1,j]
+    dia[j] = mat[j-1,j-1]
+    for j in range(2, J-2):
+        sup[j] = mat[j-1,j]
+        dia[j] = mat[j-1,j-1]
+        sub[j] = mat[j-1,j-2]
+    j = J-2
+    sup[j] = 0.0
+    dia[j] = mat[j-1,j-1]
+    sub[j] = mat[j-1,j-2]
+    
+    dia[J-1] = 0.0
+    sub[J-1] = 0.0
+    sup[J-1] = 0.0
     
     return 0
 
@@ -97,16 +109,16 @@ cdef class TridiagonalSolver(Solver):
     
     def __cinit__(self, int nz, int nx):
         
-        self.J = nz
+        self.J = nz + 2
         self.K = nx
         self.warmed = False
-        self.wk1 = np.zeros((nz, nx), dtype=np.float)
-        self.wk2 = np.zeros((nz, nx), dtype=np.float)
-        self.sub = np.zeros((nz, nx), dtype=np.float)
-        self.dia = np.zeros((nz, nx), dtype=np.float)
-        self.sup = np.zeros((nz, nx), dtype=np.float)
-        self.t_sol = np.zeros((nz), dtype=np.float)
-        self.t_rhs = np.zeros((nz), dtype=np.float)
+        self.wk1 = np.zeros((self.J, self.K), dtype=np.float)
+        self.wk2 = np.zeros((self.J, self.K), dtype=np.float)
+        self.sub = np.zeros((self.J, self.K), dtype=np.float)
+        self.dia = np.zeros((self.J, self.K), dtype=np.float)
+        self.sup = np.zeros((self.J, self.K), dtype=np.float)
+        self.t_sol = np.zeros((self.J,), dtype=np.float)
+        self.t_rhs = np.zeros((self.J,), dtype=np.float)
         
     
     cpdef int warm(self, DTYPE_t[:,:] sub, DTYPE_t[:,:] dia, DTYPE_t[:,:] sup):
@@ -135,9 +147,9 @@ cdef class TridiagonalSolver(Solver):
         cdef int k, rv = 0
         
         for k in range(self.K):
-            self.t_rhs[...] = rhs[:,k]
+            self.t_rhs[1:-1] = rhs[:,k]
             rv += tridiagonal_from_work(self.J, self.t_rhs, self.t_sol, self.wk1[:,k], self.wk2[:,k], self.sub[:,k])
-            sol[:,k] = self.t_sol
+            sol[:,k] = self.t_sol[1:-1]
         
         return rv
     

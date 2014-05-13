@@ -60,10 +60,11 @@ def test_stream_matrix():
     
 def m_stream(System):
     """Extract the matrix components for Stream."""
-    sup = np.empty((System.nz, System.nx))
+    sup = np.empty((System.nz + 2, System.nx))
     sup[...] = -1.0 / (System.dz)**2.0
-    dia = System.npa ** 2.0 + 2.0 / (System.dz) ** 2.0
-    sub = np.empty((System.nz, System.nx))
+    dia = np.empty((System.nz + 2, System.nx))
+    dia[1:-1] = System.npa ** 2.0 + 2.0 / (System.dz) ** 2.0
+    sub = np.empty((System.nz + 2, System.nx))
     sub[...] = -1.0 / (System.dz)**2.0
     
     sub[0] = 0.0
