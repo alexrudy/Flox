@@ -21,7 +21,7 @@ cimport cython
 from cpython.array cimport array, clone
 
 from Flox._flox cimport DTYPE_t
-from Flox.finitedifference import first_derivative2D
+from Flox.finitedifference cimport first_derivative2D
 
 cdef class Solver:
     
