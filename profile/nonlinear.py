@@ -35,8 +35,7 @@ if __name__ == '__main__':
     System = NDSystem2D.from_params(Config["system"])
     iterations = int(Config["iterations"])
     time = Config["time"].to(u.s).value / 100
-    NLE = NonlinearEvolver.from_grids(System)
-    NLE.to_grids(System, 1)
+    NLE = NonlinearEvolver.from_system(System)
     cProfile.runctx("NLE.evolve(time, iterations)", globals(), locals(), filename(".prof"))
     s = pstats.Stats(filename(".prof"))
     s.strip_dirs().sort_stats("time").print_stats()
