@@ -94,7 +94,7 @@ class EvolverProcessing(object):
                 System.read_packet(packet)
         except queue.Empty:
             pass
-        if j = 0:
+        if j == 0:
             packet = Queue.get(timeout=self.timeout)
             System.read_packet(packet)
         if PBar is not None:
