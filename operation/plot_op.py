@@ -37,6 +37,7 @@ def filename(extension=".yml", base=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('base', nargs="?", default='linear_op')
+    parser.add_argument('-s','--stability', type=int, help='Show stability plots')
     opt = parser.parse_args()
     rcParams['text.usetex'] = False
     ipydb()
@@ -46,19 +47,21 @@ if __name__ == '__main__':
     Writer.read(System, 'main')
     print(System)
     fig = plt.figure(figsize=(10, 10))
-    MVC = MultiViewController(fig, 2, 3)
-    MVC[0,0] = GridView("Temperature", perturbed=True)
-    MVC[1,0] = EvolutionViewStabilityTest("Temperature", 1, 33)
+    rows = 2 if opt.stability else 1
+    MVC = MultiViewController(fig, rows, 3)
+    MVC[0,0] = GridView("Temperature", perturbed=False)
     MVC[0,1] = GridView("Vorticity", cmap='Blues')
-    MVC[1,1] = EvolutionViewStabilityTest("Vorticity", 1, 33)
-    MVC[0,2] = GridView("StreamFunction", cmap='Greens')
-    MVC[1,2] = EvolutionViewStabilityTest("StreamFunction", 1, 33)
+    MVC[0,2] = GridView("Stream", cmap='Greens')
+    if opt.stability:
+        MVC[1,0] = EvolutionViewStabilityTest("Temperature", opt.stability, 33)
+        MVC[1,1] = EvolutionViewStabilityTest("Vorticity", opt.stability, 33)
+        MVC[1,2] = EvolutionViewStabilityTest("Stream", opt.stability, 33)
     System.it = 2
     MVC.update(System)
     System.infer_iteration()
     def update(i):
         System.it = i
         MVC.update(System)
-    anim = animation.FuncAnimation(fig, update, frames=System.it, interval=1)
+    anim = animation.FuncAnimation(fig, update, frames=System.nit, interval=1)
     plt.show()
     

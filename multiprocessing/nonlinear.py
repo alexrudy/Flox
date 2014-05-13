@@ -42,10 +42,12 @@ if __name__ == '__main__':
     MVC.update(System)
     
     EM = EvolverProcessing()
-    EM.register_evolver(LinearEvolver)
+    EM.register_evolver(NonlinearEvolver)
     with EM:
-        EM.animate_evolve(LinearEvolver, System, MVC, Config['time'], System.nt - 1)
+        EM.animate_evolve(NonlinearEvolver, System, MVC, Config['time'], System.nt - 1)
         print(System)
         print(System.diagnostic_string())
+    Writer = HDF5Writer(os.path.join(os.path.dirname(__file__),"nonlinear.hdf5"))
+    Writer.write(System, 'nonlinear')
     print("Done!")
         
