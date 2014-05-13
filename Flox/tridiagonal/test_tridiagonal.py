@@ -64,9 +64,10 @@ def test_tridiagonal_solve_linear():
         from numpy import random
         factor = random.randn()
     
-
-    mat = assemble_tridiagonal_matrix(n, eps, seed=seed)
-    sol = assemble_solution_matrix(n, seed=seed)
+    mat = np.matrix(np.zeros((n+2, n+2)))
+    mat[1:-1,1:-1] = assemble_tridiagonal_matrix(n, eps, seed=seed)
+    sol = np.matrix(np.zeros((n+2))).T
+    sol[1:-1] = assemble_solution_matrix(n, seed=seed)
     
     rhs = np.array(mat * sol)[:,0]
     solar = np.array(sol)[:,0]
@@ -83,8 +84,11 @@ def test_tridiagonal_object():
     nx = 50
     eps = 1e-2
     
-    mat = assemble_tridiagonal_matrix(nz, eps, seed=seed)
-    sol = assemble_solution_matrix(nz, seed=seed)
+    mat = np.matrix(np.zeros((nz+2, nz+2)))
+    mat[1:-1,1:-1] = assemble_tridiagonal_matrix(nz, eps, seed=seed)
+    
+    sol = np.matrix(np.zeros((nz+2))).T
+    sol[1:-1] = assemble_solution_matrix(nz, seed=seed)
     
     rhs = np.empty((nz, nx))
     solar = np.empty((nz, nx))
@@ -95,13 +99,13 @@ def test_tridiagonal_object():
     dia = np.empty((nz, nx))
     sup = np.empty((nz, nx))
     
-    assert mat.shape == (nz, nz)
-    assert sol.shape == (nz, 1)
-    assert np.array(mat * sol).shape == (nz,1)
+    assert mat.shape == (nz+2, nz+2)
+    assert sol.shape == (nz+2, 1)
+    assert np.array(mat * sol).shape == (nz+2,1)
     
-    rhs[...] = np.array(mat * sol)[:,0,np.newaxis] * (np.arange(nx)[np.newaxis,:] + 1.0)
-    solar[...] = np.array(sol)[:,0,np.newaxis] #(np.arange(nx)[np.newaxis,:] + 1.0)
-    matar[...] = (np.arange(nx)[np.newaxis,:] + 1.0) * np.array(mat)[...,np.newaxis]
+    rhs[...] = np.array(mat * sol)[1:-1,0,np.newaxis] * (np.arange(nx)[np.newaxis,:] + 1.0)
+    solar[...] = np.array(sol)[1:-1,0,np.newaxis] #(np.arange(nx)[np.newaxis,:] + 1.0)
+    matar[...] = (np.arange(nx)[np.newaxis,:] + 1.0) * np.array(mat)[1:-1,1:-1,np.newaxis]
     
     # Test some basics before we start.
     assert matar.shape == (nz, nz, nx)

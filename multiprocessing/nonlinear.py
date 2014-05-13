@@ -39,12 +39,12 @@ if __name__ == '__main__':
     
     Config = FloxConfiguration.fromfile(os.path.join(os.path.dirname(__file__),"linear_op.yml"))
     System = NDSystem2D.from_params(Config["system"])
-    System.Rayleigh = 1e4
+    System.Rayleigh = 1e1
     System.Prandtl = 0.5
     # System.nz = 300
     # System.nx = 30
     System.aspect = 3
-    System.nt = 100
+    System.nt = 200
     System.initialize_arrays()
     stable_temperature_gradient(System)
     single_mode_linear_perturbation(System, mode, eps=1e-2)
@@ -53,10 +53,11 @@ if __name__ == '__main__':
     MVC = setup_plots(plt.figure(figsize=(10, 10)), stability=1)
     MVC.update(System)
     
-    EM = EvolverProcessing(buffer_length=0, timeout=10)
+    EM = EvolverProcessing(buffer_length=0, timeout=60)
     EM.register_evolver(NonlinearEvolver)
     with EM:
-        EM.animate_evolve(NonlinearEvolver, System, MVC, Config['time'], chunks=System.nt - 1, chunksize=1000)
+        EM.evolve(NonlinearEvolver, System, Config['time'], chunks=System.nt - 1, chunksize=1000)
+        # EM.animate_evolve(NonlinearEvolver, System, MVC, Config['time'], chunks=System.nt - 1, chunksize=1000)
         print(System)
         print(System.diagnostic_string())
     Writer = HDF5Writer(os.path.join(os.path.dirname(__file__),"nonlinear.hdf5"))

@@ -22,7 +22,7 @@ class NonlinearEvolver(_NonlinearEvolver, Evolver):
         return [ "Temperature", "dTemperature", "Vorticity", "dVorticity", "Stream", "Time"]
     
     @classmethod
-    def from_system(cls, system, saftey=0.5):
+    def from_system(cls, system, saftey=0.05):
         """Load the grid parameters into the LE"""
         return cls(
             system.nz, system.nx,

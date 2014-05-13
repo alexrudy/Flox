@@ -111,7 +111,7 @@ cdef class NonlinearEvolver(Evolver):
     
     cpdef DTYPE_t delta_time(self):
         
-        return 3.6e-8 * self.safety
+        return 3.6e-6 * self.safety
         # return (self.dz * self.dz) / 4.0 * self.safety
         
     cpdef int step(self, DTYPE_t delta_time):

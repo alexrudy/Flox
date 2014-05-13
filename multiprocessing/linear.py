@@ -45,7 +45,7 @@ if __name__ == '__main__':
     EM = EvolverProcessing(timeout=1, buffer_length=0)
     EM.register_evolver(LinearEvolver)
     with EM:
-        EM.animate_evolve(LinearEvolver, System, MVC, Config['time'], chunks=System.nt - 1, chunksize=1000)
+        EM.animate_evolve(LinearEvolver, System, MVC, Config['time'], chunks=System.nt - 1, chunksize=10)
         print(System)
         print(System.diagnostic_string())
     print("Done!")
