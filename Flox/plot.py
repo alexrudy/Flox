@@ -187,12 +187,23 @@ class EvolutionViewStabilityTest(EvolutionViewSingleMode):
         super(EvolutionViewStabilityTest, self).initialize(system)
         latex = getattr(type(system), self.variable).latex[1:-1]
         self.ax.yaxis.label.set_text(r"$\ln({latex:s}_t) - \ln({latex:s}_{{t-1}})$".format(latex=latex))
-        self.label = self.ax.text(0.95, 0.95, "{:.2g}".format(self.ydata(system)[-1]), transform=self.ax.transAxes, va='top', ha='right')
+        
+        ydata = self.ydata(system)
+        if len(ydata):
+            value = ydata[-1]
+        else:
+            value = np.nan
+        self.label = self.ax.text(0.95, 0.95, "{:.2g}".format(value), transform=self.ax.transAxes, va='top', ha='right')
         
     def update(self, system):
         """Update."""
         super(EvolutionViewStabilityTest, self).update(system)
-        self.label.set_text("{:.2g}".format(self.ydata(system)[-1]))
+        ydata = self.ydata(system)
+        if len(ydata):
+            value = ydata[-1]
+        else:
+            value = np.nan
+        self.label.set_text("{:.2g}".format(value))
         
     def ydata(self, system):
         """Return the y-data values."""
