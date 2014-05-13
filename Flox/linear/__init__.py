@@ -9,7 +9,6 @@
 
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
-import astropy.units as u
 from ._linear import LinearEvolver as _LinearEvolver
 from ..evolver import Evolver
 
