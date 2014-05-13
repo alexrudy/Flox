@@ -22,9 +22,9 @@ def stable_temperature_gradient(System):
     System.Temperature[:,0] = np.arange(System.nz)[::step] / System.nz
     
 
-def single_mode_linear_perturbation(System, mode=1):
+def single_mode_linear_perturbation(System, mode=1, eps=1):
     """Make a standard mode for this perturbation."""
-    System.Temperature[:,mode] = np.sin(np.pi * np.arange(System.nz)/System.nz)
+    System.Temperature[:,mode] = eps * np.sin(np.pi * np.arange(System.nz)/System.nz)
 
 def standard_linear_perturbation(System):
     """Apply the standard linear perturbation from Ch. 3"""
