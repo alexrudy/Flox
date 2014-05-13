@@ -86,7 +86,10 @@ class ContourView(GridView):
         """Initialize the system."""
         self.im_kwargs.setdefault('cmap','hot')
         self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
-        self.image = self.ax.contour(self.data(system).value, **self.im_kwargs)
+        data = self.data(system).value
+        ptp = np.ptp(data)
+        if np.isfinite(ptp) and ptp != 0.0:        
+            self.image = self.ax.contour(self.data(system).value, **self.im_kwargs)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
         self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit), transform=self.ax.transAxes)
         
@@ -95,7 +98,10 @@ class ContourView(GridView):
         if self.image is None:
             self.initialize(system)
         else:
-            self.image.set_data(self.data(system).value)
+            self.im_kwargs.setdefault('cmap','hot')
+            self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
+            self.ax.cla()
+            self.image = self.ax.contour(self.data(system).value, **self.im_kwargs)
             self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
     
 
