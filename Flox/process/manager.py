@@ -13,53 +13,6 @@ import itertools
 import multiprocessing.managers as mm
 import multiprocessing as mp
 
-class Manager(mm.SyncManager):
-    """A management class for Flox objects."""
-    
-    @classmethod
-    def register_evolver(cls, klass):
-        """Register a specific type of evolver for use with this class."""
-        cls.register(klass.__name__, klass.from_system)
-        
-    
-class AsynchronousManager(mp.Process):
-    """An asynchronous manager, wrapped in a process."""
-    def __init__(self, *args, **kwargs):
-        super(AsynchronousManager, self).__init__(*args, **kwargs)
-        self._input = mp.Queue()
-        self._output = mp.Queue()
-        self._synchronize = mp.Barrier(2)
-        self._proxies = {}
-        self._typecodes = {}
-        self._object_ids = itertools.count()
-    
-    def run(self):
-        """Run the asynchronous process."""
-        worker = AsynchronousWorker(self._typecodes, self._input, self._output)
-        worker.work()
-        
-    def stop(self):
-        """Stop the asynchronous process."""
-        self._input.put(("#ASYNC", "#STOP"))
-        
-    def __getattr__(self, attribute):
-        """Passthrough to registered typecodes."""
-        if attribute not in self._typecodes:
-            raise AttributeError
-        
-        def initializer(*args, **kwargs):
-            """Return a proxy object initialezed."""
-            this_id = next(self._object_ids)
-            self._input.put(("#ASYNC", "#INIT", attribute, this_id, args, kwargs))
-            return self._proxies[attribute](this_id, self._input)
-            
-        return initializer
-        
-    def register(self, typecode, init_func, proxy_type):
-        """Register a typecode."""
-        self._typecodes[typecode] = init_func
-        self._proxies[typecode] = proxy_type
-        
 class AsynchronousProxy(object):
     """A proxy object for Asynchronous worker objects."""
     def __init__(self, referent_id, input_queue):
@@ -90,6 +43,56 @@ class AsynchronousProxy(object):
             _call(method, args, kwargs)
             
         return caller
+
+
+class AsynchronousManager(mp.Process):
+    """An asynchronous manager, wrapped in a process."""
+    
+    _proxies = {}
+    _typecodes = {}
+    
+    def __init__(self, *args, **kwargs):
+        super(AsynchronousManager, self).__init__(*args, **kwargs)
+        self._input = mp.Queue()
+        self._output = mp.Queue()
+        self._object_ids = itertools.count()
+    
+    def run(self):
+        """Run the asynchronous process."""
+        worker = AsynchronousWorker(self._typecodes, self._input, self._output)
+        worker.work()
+        
+    def stop(self):
+        """Stop the asynchronous process."""
+        self._input.put(("#ASYNC", "#STOP"))
+        
+    def __enter__(self):
+        """Enter the context."""
+        self.start()
+        return self
+        
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+        self.join()
+        
+    def __getattr__(self, attribute):
+        """Passthrough to registered typecodes."""
+        if attribute not in self._typecodes:
+            raise AttributeError
+        
+        def initializer(*args, **kwargs):
+            """Return a proxy object initialezed."""
+            this_id = next(self._object_ids)
+            self._input.put(("#ASYNC", "#INIT", attribute, this_id, args, kwargs))
+            return self._proxies[attribute](this_id, self._input)
+            
+        return initializer
+        
+    @classmethod
+    def register(cls, typecode, init_func, proxy_type=AsynchronousProxy):
+        """Register a typecode."""
+        cls._typecodes[typecode] = init_func
+        cls._proxies[typecode] = proxy_type
 
 class AsynchronousWorker(object):
     """A worker for an asynchronous object."""
