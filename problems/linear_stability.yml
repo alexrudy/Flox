@@ -7,7 +7,7 @@ system:
   kinematic_viscosity: !quantity '0.001 St'
   nx: 50
   nz: 100
-  nt: 1001
+  nt: 101
   engine: 'Flox.array.NumpyArrayEngine'
-iterations: 200
+iterations: 10000
 time: !quantity '1 yr'

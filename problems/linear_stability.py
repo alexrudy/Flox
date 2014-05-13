@@ -25,6 +25,7 @@ from matplotlib import animation
 from Flox.system import NDSystem2D
 from Flox.input import FloxConfiguration
 from Flox.linear import LinearEvolver
+from Flox.linear.process import LinearEvolverProcess
 from Flox.io import HDF5Writer
 from Flox.ic import stable_temperature_gradient, single_mode_linear_perturbation
 from Flox.plot import GridView, MultiViewController, EvolutionViewStabilityTest
@@ -66,27 +67,28 @@ def run(opt):
     
     Stable = initialize(Config, opt)
     Stable.Rayleigh = critical_raleigh_number(Stable, opt.mode) * 0.8
+    print(Stable)
+    LE_stable = LinearEvolverProcess(Stable, Writer, ('stable-{:d}'.format(opt.mode),), (Config['time'], iterations, chunks))
+    LE_stable.name = "Stable-LinearEvolver"
+    LE_stable.start()
     
     Critical = initialize(Config, opt)
     Critical.Rayleigh = critical_raleigh_number(Critical, opt.mode)
+    print(Critical)
+    LE_critical = LinearEvolverProcess(Critical, Writer, ('critical-{:d}'.format(opt.mode),), (Config['time'], iterations, chunks))
+    LE_critical.name = "Critical-LinearEvolver"
+    LE_critical.start()
     
     Unstable = initialize(Config, opt)
     Unstable.Rayleigh = critical_raleigh_number(Unstable, opt.mode) * 1.2
-    
-    print(Stable)
-    LE = LinearEvolver.from_grids(Stable)
-    LE.evolve_system(Stable, Config['time'], iterations, chunks)
-    Writer.write(Stable, 'stable')
-    
-    print(Critical)
-    LE = LinearEvolver.from_grids(Critical)
-    LE.evolve_system(Critical, Config['time'], iterations, chunks)
-    Writer.write(Critical, 'critical')
-    
     print(Unstable)
-    LE = LinearEvolver.from_grids(Unstable)
-    LE.evolve_system(Unstable, Config['time'], iterations, chunks)
-    Writer.write(Unstable, 'unstable')
+    LE_unstable = LinearEvolverProcess(Unstable, Writer, ('unstable-{:d}'.format(opt.mode),), (Config['time'], iterations, chunks))
+    LE_unstable.name = "Unstable-LinearEvolver"
+    LE_unstable.start()
+    
+    LE_stable.join()
+    LE_critical.join()
+    LE_unstable.join()
     
 def plot(opt):
     """Plot just the stability criteria."""
@@ -99,11 +101,11 @@ def plot(opt):
     for i,system in enumerate("stable critical unstable".split()):
         MVC = MultiViewController(fig, 3, 3, wspace=0.6, hspace=0.4)
         System = NDSystem2D.from_params(Config["system"])
-        Writer.read(System, system)
+        Writer.read(System, "{}-{:d}".format(system, opt.mode))
         print(System)
         MVC[0,i] = EvolutionViewStabilityTest("Temperature", opt.mode, System.nz//3)
         MVC[1,i] = EvolutionViewStabilityTest("Vorticity", opt.mode, System.nz//3)
-        MVC[2,i] = EvolutionViewStabilityTest("StreamFunction", opt.mode, System.nz//3)
+        MVC[2,i] = EvolutionViewStabilityTest("Stream", opt.mode, System.nz//3)
         MVC.views[0].ax.text(0.5, 1.25, system.capitalize(), transform=MVC.views[0].ax.transAxes, ha='center')
         MVC.update(System)
     
@@ -112,6 +114,8 @@ def plot(opt):
 def animate(opt):
     """Animate the data sets."""
     from astropy.utils.console import ProgressBar
+    import matplotlib
+    matplotlib.rcParams['text.usetex'] = False
     import matplotlib.pyplot as plt
     Config = FloxConfiguration.fromfile(opt.configuration)
     Writer = HDF5Writer(opt.filename)
@@ -123,26 +127,26 @@ def animate(opt):
     for i,system in enumerate("stable critical unstable".split()):
         MVC = MultiViewController(fig, 3, 3, wspace=0.6, hspace=0.4)
         System = NDSystem2D.from_params(Config["system"])
-        Writer.read(System, system)
+        Writer.read(System, "{}-{:d}".format(system, opt.mode))
         print(System)
         MVC[0,i] = EvolutionViewStabilityTest("Temperature", opt.mode, System.nz//3)
         MVC[1,i] = EvolutionViewStabilityTest("Vorticity", opt.mode, System.nz//3)
-        MVC[2,i] = EvolutionViewStabilityTest("StreamFunction", opt.mode, System.nz//3)
-        System.it = 0
+        MVC[2,i] = EvolutionViewStabilityTest("Stream", opt.mode, System.nz//3)
+        System.it = 2
         MVC.update(System)
         Plots.append((MVC, System))
         
-    with ProgressBar(System.nit) as pbar:
+    with ProgressBar(System.nit-2) as pbar:
         def update(i):
             """Animation"""
             for MVC, System in Plots:
-                System.it = i
+                System.it = i+2
                 MVC.update(System)
             pbar.update(i)
         
-        anim = animation.FuncAnimation(fig, update, frames=int(System.nit), interval=0.1)
-        anim.save(opt.movie, writer='ffmpeg')
-        # plt.show()
+        anim = animation.FuncAnimation(fig, update, frames=int(System.nit)-2, repeat=False)
+        # anim.save(opt.movie, writer='ffmpeg')
+        plt.show()
     
 def analyze(opt):
     """Analyze the data, showing the late time values of the stability criterion."""
@@ -152,7 +156,7 @@ def analyze(opt):
     
     for i,system in enumerate("stable critical unstable".split()):
         System = NDSystem2D.from_params(Config["system"])
-        Writer.read(System, system)
+        Writer.read(System, "{}-{:d}".format(system, opt.mode))
         print(System)
         System.it = 0
         for array in System.list_arrays():
