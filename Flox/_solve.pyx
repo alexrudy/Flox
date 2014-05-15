@@ -38,6 +38,8 @@ cdef class Solver:
         
     cpdef int prepare(self, DTYPE_t dz):
         
+        self.dVdz[...] = 0.0
+        
         return first_derivative2D(self.nz, self.nx, self.dVdz, self.V_curr, dz, self.V_p, self.V_m, 1.0)
         
     cpdef int advance(self, DTYPE_t deltaT):
