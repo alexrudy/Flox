@@ -28,6 +28,10 @@ class Packet(dict):
 class PacketInterface(object):
     """The interface for packet consumers and producers."""
     
+    def check_array(self, value, name):
+        """Check an array's value."""
+        pass
+    
     @abc.abstractmethod
     def get_packet_list(self):
         """Return the parameter list."""
@@ -43,4 +47,5 @@ class PacketInterface(object):
     def read_packet(self, packet):
         """Read an imcoming packet"""
         for variable in packet.keys():
+            self.check_array(packet[variable], variable)
             setattr(self, variable, packet[variable])

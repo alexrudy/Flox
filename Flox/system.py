@@ -107,7 +107,7 @@ class System2D(PacketInterface, HasUnitsProperties):
     @ComputedUnitsProperty
     def dz(self):
         """The z-grid spacing"""
-        return self.depth / self.nz
+        return self.depth / (self.nz + 2)
         
     @abc.abstractproperty
     def aspect(self):
@@ -208,7 +208,7 @@ class System2D(PacketInterface, HasUnitsProperties):
     def diagnostic_string(self, z=None, n=None):
         """A longer diagnostic string."""
         if n is None:
-            n = [0, 1, 2, -3, -2, -1]
+            n = [0, 1]
             ns = np.arange(self.nx)[n]
         if z is None:
             z = self.nz // 3
@@ -266,8 +266,17 @@ class System2D(PacketInterface, HasUnitsProperties):
             
     def read_packet(self, packet):
         """Read the packet."""
-        self.it += 1
-        super(System2D, self).read_packet(packet)
+        try:
+            self.it += 1
+            super(System2D, self).read_packet(packet)
+        except Exception as e:
+            self.it -= 1
+            raise e
+        
+        
+    def check_array(self, value, name):
+        """Check an array's value."""
+        assert np.isfinite(value).all(), "{} is not finite.".format(name)
     
     @ComputedUnitsProperty
     def time(self):
