@@ -35,7 +35,7 @@ def filename(extension=".yml", base=None):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('base', nargs="?", default='linear_op')
+    parser.add_argument('base', nargs="?", default='nonlinear')
     parser.add_argument('-s','--stability', type=int, help='Show stability plots')
     opt = parser.parse_args()
     rcParams['text.usetex'] = False

@@ -9,5 +9,5 @@ system:
   nz: 100
   nt: 101
   engine: 'Flox.array.NumpyArrayEngine'
-iterations: 10000
-time: !quantity '1 yr'
+iterations: 1000
+time: !quantity '30 d'

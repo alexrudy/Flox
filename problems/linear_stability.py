@@ -158,12 +158,14 @@ def analyze(opt):
         System = NDSystem2D.from_params(Config["system"])
         Writer.read(System, "{}-{:d}".format(system, opt.mode))
         print(System)
-        System.it = 0
+        print(System.diagnostic_string())
+        print(System.nz//3)
         for array in System.list_arrays():
             if array == "Time":
                 continue
-            data = getattr(System, array)[System.nz//3, 1]
+            data = System.engine[array][System.nz//3, 1]
             ln_data = np.log(np.abs(data))
+            print("{:15.15s}: {}".format(array, data[-5:]))
             print("{:15.15s}: {}".format(array, np.diff(ln_data)[-4:]))
 
 

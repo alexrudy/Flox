@@ -21,7 +21,7 @@ from Flox.nonlinear import NonlinearEvolver
 from Flox.io import HDF5Writer
 from Flox.ic import stable_temperature_gradient, standard_linear_perturbation, single_mode_linear_perturbation
 
-from Flox.nonlinear.plot import setup_plots
+from Flox.nonlinear.plot import setup_plots, setup_plots_watch
 
 import os, os.path
 import queue
@@ -32,6 +32,9 @@ import matplotlib
 from matplotlib import animation
 from Flox.process.evolver import EvolverProcessing
 
+from pyshell.util import ipydb, askip
+
+
 
 if __name__ == '__main__':
     
@@ -39,7 +42,7 @@ if __name__ == '__main__':
     
     Config = FloxConfiguration.fromfile(os.path.join(os.path.dirname(__file__),"linear_op.yml"))
     System = NDSystem2D.from_params(Config["system"])
-    System.Rayleigh = 1e1
+    System.Rayleigh = 1e6
     System.Prandtl = 0.5
     # System.nz = 300
     # System.nx = 30
@@ -47,17 +50,18 @@ if __name__ == '__main__':
     System.nt = 200
     System.initialize_arrays()
     stable_temperature_gradient(System)
-    single_mode_linear_perturbation(System, mode, eps=1e-2)
-    # single_mode_linear_perturbation(System, 3, eps=1e-2)
+    for m in range(1, System.nx//10):
+        single_mode_linear_perturbation(System, m, eps=5e-1)
+    # single_mode_linear_perturbation(System, 1, eps=5e-1)
     matplotlib.rcParams['text.usetex'] = False
-    MVC = setup_plots(plt.figure(figsize=(10, 10)), stability=1)
+    MVC = setup_plots_watch(plt.figure(figsize=(10, 10)), stability=2, zmode=System.nz-1)
     MVC.update(System)
     
     EM = EvolverProcessing(buffer_length=0, timeout=60)
     EM.register_evolver(NonlinearEvolver)
     with EM:
-        EM.evolve(NonlinearEvolver, System, Config['time'], chunks=System.nt - 1, chunksize=1000)
-        # EM.animate_evolve(NonlinearEvolver, System, MVC, Config['time'], chunks=System.nt - 1, chunksize=1000)
+        # EM.evolve(NonlinearEvolver, System, Config['time'], chunks=System.nt - 1, chunksize=100)
+        EM.animate_evolve(NonlinearEvolver, System, MVC, Config['time'], chunks=System.nt - 1, chunksize=1000)
         print(System)
         print(System.diagnostic_string())
     Writer = HDF5Writer(os.path.join(os.path.dirname(__file__),"nonlinear.hdf5"))
