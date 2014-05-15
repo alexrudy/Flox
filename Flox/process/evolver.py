@@ -81,6 +81,8 @@ class EvolverProcessing(object):
     def animate_evolve(self, Evolver, System, Plotter, time, chunks=int(1e3), chunksize=int(1e3), progress=True):
         """Animate an evolver"""
         from matplotlib import animation
+        import matplotlib
+        matplotlib.use('TkAgg')
         import matplotlib.pyplot as plt
         Q = self.evolve_queue(Evolver, System, time, chunks, chunksize)
         with ProgressBar(chunks) as PBar:
