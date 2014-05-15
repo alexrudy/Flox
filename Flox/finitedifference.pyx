@@ -7,11 +7,11 @@
 #  Copyright 2014 University of California. All rights reserved.
 # 
 
-#cython: overflowcheck=True
+#cython: overflowcheck=False
 #cython: wraparound=False
-#cython: boundscheck=True
+#cython: boundscheck=False
 #cython: cdivision=True
-#cython: profile=True
+#cython: profile=False
 
 from __future__ import division
 
