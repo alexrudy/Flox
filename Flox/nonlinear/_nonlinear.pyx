@@ -33,6 +33,7 @@ cdef class TemperatureSolver(Solver):
         # Boundary Conditions:
         # T(n=0,z=0) = 1.0
         self.V_m[0] = 1.0
+        self.V_p[0] = 0.0
     
     cpdef int compute(self, DTYPE_t[:,:] P_curr, DTYPE_t[:,:] dPdz, DTYPE_t dz, DTYPE_t a, DTYPE_t[:] npa):
         
@@ -62,7 +63,7 @@ cdef class TemperatureSolver(Solver):
                     # 1st term, 1st Delta
                     kpp = k - kp
                     if 0 < kpp < self.nx:
-                        self.G_curr[j, k] += p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] - kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                        self.G_curr[j, k] += -p2a * (-kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
         return r
 
 
@@ -89,7 +90,7 @@ cdef class VorticitySolver(Solver):
                     # 1st term, 1st delta
                     kpp = k - kp
                     if 0 < kpp < self.nx:
-                        self.G_curr[j, k] += p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] - kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                        self.G_curr[j, k] += -p2a * (-kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
         return r
     
     
@@ -111,8 +112,8 @@ cdef class NonlinearEvolver(Evolver):
     
     cpdef DTYPE_t delta_time(self):
         
-        return 3.6e-6 * self.safety
-        # return (self.dz * self.dz) / 4.0 * self.safety
+        # return 3.6e-6 * self.safety
+        return (self.dz * self.dz) / 4.0 * self.safety
         
     cpdef int step(self, DTYPE_t delta_time):
         
