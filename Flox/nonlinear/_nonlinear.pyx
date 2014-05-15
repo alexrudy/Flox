@@ -56,17 +56,17 @@ cdef class TemperatureSolver(Solver):
                     # 1st term, 1st Delta
                     kpp = k - kp
                     if 0 < kpp < self.nx:
-                        self.G_curr[j, k] += -p2a * (-kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                        self.G_curr[j, k] += -1.0 * p2a * (-1.0 * kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
                     
                     # 2nd term, 1st Delta
                     kpp = kp + k
                     if 0 < kpp < self.nx:
-                        self.G_curr[j, k] += -p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                        self.G_curr[j, k] += -1.0 * p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
                         
                     # 2nd term, 2nd Delta
                     kpp = kp - k
                     if 0 < kpp < self.nx:
-                        self.G_curr[j, k] += -p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                        self.G_curr[j, k] += -1.0 * p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
 
         return r
 
@@ -86,15 +86,15 @@ cdef class VorticitySolver(Solver):
                     # 1st term, 1st delta
                     kpp = k - kp
                     if 0 < kpp < self.nx:
-                        self.G_curr[j, k] += -p2a * (-kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                        self.G_curr[j, k] += -1.0 * p2a * (-1.0 * kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
                     # 2nd term, 1st delta
                     kpp = kp + k
                     if 0 < kpp < self.nx:
-                        self.G_curr[j, k] += p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                        self.G_curr[j, k] += -1.0 * p2a * ( -1.0 * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp]))
                     # 2nd term, 2nd delta
                     kpp = kp - k
                     if 0 < kpp < self.nx:
-                        self.G_curr[j, k] += -p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                        self.G_curr[j, k] += -1.0 * p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
         return r
     
     
@@ -116,8 +116,14 @@ cdef class NonlinearEvolver(Evolver):
     
     cpdef DTYPE_t delta_time(self):
         
+        cdef DTYPE_t dt_a, dt_b
         # return 3.6e-6 * self.safety
-        return (self.dz * self.dz) / 4.0 * self.safety
+        dt_a =  (self.dz * self.dz) / 4.0
+        dt_b = (2.0 * np.pi) / (50.0 * np.sqrt(self.Ra * self.Pr)) 
+        if dt_a > dt_b:
+            return dt_b * self.safety
+        else:
+            return dt_a * self.safety
         
     cpdef int step(self, DTYPE_t delta_time):
         
@@ -153,7 +159,7 @@ cdef class NonlinearEvolver(Evolver):
             return np.asanyarray(self._Temperature.V_curr)
         
         def __set__(self, value):
-            self._Temperature.V_curr = np.asanyarray(value)
+            self._Temperature.V_curr = np.asanyarray(value).copy()
         
     property dTemperature:
     
@@ -163,7 +169,7 @@ cdef class NonlinearEvolver(Evolver):
             return np.asanyarray(self._Temperature.G_prev)
 
         def __set__(self, value):
-            self._Temperature.G_prev = np.asanyarray(value)
+            self._Temperature.G_prev = np.asanyarray(value).copy()
 
     property Vorticity:
 
@@ -173,7 +179,7 @@ cdef class NonlinearEvolver(Evolver):
             return np.asanyarray(self._Vorticity.V_curr)
 
         def __set__(self, value):
-            self._Vorticity.V_curr = np.asanyarray(value)
+            self._Vorticity.V_curr = np.asanyarray(value).copy()
 
     property dVorticity:
 
@@ -183,7 +189,7 @@ cdef class NonlinearEvolver(Evolver):
             return np.asanyarray(self._Vorticity.G_prev)
 
         def __set__(self, value):
-            self._Vorticity.G_prev = np.asanyarray(value)
+            self._Vorticity.G_prev = np.asanyarray(value).copy()
         
     property Stream:
     
@@ -193,5 +199,5 @@ cdef class NonlinearEvolver(Evolver):
             return np.asanyarray(self._Stream.V_curr)
 
         def __set__(self, value):
-            self._Stream.V_curr = np.asanyarray(value)
+            self._Stream.V_curr = np.asanyarray(value).copy()
     
