@@ -147,9 +147,10 @@ cdef class TridiagonalSolver(Solver):
         cdef int k, rv = 0
         
         for k in range(self.K):
-            self.t_rhs[1:-1] = rhs[:,k]
+            self.t_rhs[1:self.J-1] = rhs[:,k]
+            self.t_sol[:] = 0.0
             rv += tridiagonal_from_work(self.J, self.t_rhs, self.t_sol, self.wk1[:,k], self.wk2[:,k], self.sub[:,k])
-            sol[:,k] = self.t_sol[1:-1]
+            sol[:,k] = self.t_sol[1:self.J-1]
         
         return rv
     
