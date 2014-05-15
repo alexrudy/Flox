@@ -14,6 +14,8 @@ import six
 from matplotlib.gridspec import GridSpec
 import numpy as np
 
+from pyshell.util import askip
+
 class MultiViewController(object):
     """A controller which manages many views."""
     def __init__(self, figure, nr, nc, **kwargs):
@@ -41,76 +43,201 @@ class MultiViewController(object):
 class View(object):
     """A view controller"""
     
+    def __init__(self):
+        """Initializer."""
+        self.ax = None
+        self.initialized = False
+        
+    @abc.abstractmethod
+    def initialize(self, system):
+        """Initialize the view."""
+        self.initialized = True
+    
     @abc.abstractmethod
     def update(self, system):
         """Update this view."""
-        pass
+        if not self.initialized:
+            self.initialize(system)
+        
 
 class GridView(View):
     """View this object on a grid."""
     def __init__(self, variable, perturbed=False, **kwargs):
         super(GridView, self).__init__()
         self.variable = variable
-        self.ax = None
         self.image = None
         self.im_kwargs = kwargs
         self.perturbed = perturbed
         
     def data(self, system):
         """Return the transformed data"""
-        return system.transformed_array(self.variable, perturbed=self.perturbed)
+        return system.transformed_array(self.variable, perturbed=self.perturbed).value
         
     def initialize(self, system):
         """Initialize the system."""
+        super(GridView, self).initialize(system)
         self.im_kwargs.setdefault('cmap','hot')
         self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
-        self.image = self.ax.imshow(self.data(system).value, **self.im_kwargs)
+        self.image = self.ax.imshow(self.data(system), **self.im_kwargs)
         self.ax.figure.colorbar(self.image, ax=self.ax)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
         self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit), transform=self.ax.transAxes)
         
     def update(self, system):
         """Update the view"""
-        if self.image is None:
-            self.initialize(system)
-        else:
-            self.image.set_data(self.data(system).value)
-            self.image.autoscale()
-            self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
+        super(GridView, self).update(system)
+        self.image.set_data(self.data(system))
+        self.image.autoscale()
+        self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
 
+
+class RawGridView(GridView):
+    """RawGridView"""
+    
+    def data(self, system):
+        """Return the transformed data"""
+        return getattr(system, self.variable)
 
 class ContourView(GridView):
     """Show countours."""
     
     def initialize(self, system):
         """Initialize the system."""
+        super(ContourView, self).initialize(system)
         self.im_kwargs.setdefault('cmap','hot')
         self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
         data = self.data(system).value
         ptp = np.ptp(data)
         if np.isfinite(ptp) and ptp != 0.0:        
-            self.image = self.ax.contour(self.data(system).value, **self.im_kwargs)
+            self.image = self.ax.contour(self.data(system), **self.im_kwargs)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
         self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit), transform=self.ax.transAxes)
         
     def update(self, system):
         """Update the view"""
-        if self.image is None:
-            self.initialize(system)
-        else:
-            self.im_kwargs.setdefault('cmap','hot')
-            self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
-            self.ax.cla()
-            self.image = self.ax.contour(self.data(system).value, **self.im_kwargs)
-            self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
+        super(ContourView, self).update(system)
+        self.im_kwargs.setdefault('cmap','hot')
+        self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
+        self.ax.cla()
+        self.image = self.ax.contour(self.data(system), **self.im_kwargs)
+        self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
     
+
+class ProfileView(View):
+    """A profile of a single variable."""
+    def __init__(self, variable):
+        super(ProfileView, self).__init__()
+        self.variable = variable
+        self.line = None
+        
+    @abc.abstractmethod
+    def ydata(self, system):
+        """Get the ydata for this system"""
+        pass
+        
+    @abc.abstractmethod
+    def xdata(self, system):
+        """Return the xdata."""
+        pass
+        
+    def initialize(self, system):
+        """Set up the plot."""
+        super(ProfileView, self).initialize(system)
+        self.line, = self.ax.plot(self.xdata(system), self.ydata(system), 'k-')
+        self.ax.set_ylabel(getattr(type(system), self.variable).latex)
+        
+    def update(self, system):
+        """Update plot."""
+        super(ProfileView, self).update(system)
+        self.line.set_data(self.xdata(system), self.ydata(system))
+        self.ax.relim()
+        self.ax.autoscale_view()
+        
+    
+class MProfileView(ProfileView):
+    """Modal Profile View"""
+    def __init__(self, variable, z=1):
+        super(MProfileView, self).__init__(variable)
+        self.z = z
+        
+    def ydata(self, system):
+        """Return the y-data values."""
+        return getattr(system,self.variable)[self.z,:]
+        
+    def xdata(self, system):
+        """Return the xdata."""
+        return np.arange(system.nx)
+        
+    def initialize(self, system):
+        """Initialize the plot view."""
+        super(MProfileView, self).initialize(system)
+        self.ax.set_title("[z={}] {} ({})".format(self.z, getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
+        self.ax.set_xlabel("Horizontal Mode")
+
+class VProfileView(ProfileView):
+    """docstring for VProfileView"""
+    def __init__(self, variable, mode):
+        super(VProfileView, self).__init__(variable)
+        self.mode = mode
+        
+    def ydata(self, system):
+        """Return the y-data values."""
+        return getattr(system,self.variable)[:,self.mode]
+        
+    def xdata(self, system):
+        """Return the xdata."""
+        return np.arange(system.nz)
+        
+    def initialize(self, system):
+        """Initialize the view."""
+        super(VProfileView, self).initialize(system)
+        self.ax.set_title("[k={}] {} ({})".format(self.mode, getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
+        self.ax.set_xlabel("z")
+
+class V1DProfileView(VProfileView):
+    """2nd Derivative Profile vertically."""
+    
+    def ydata(self, system):
+        """Return the y-data values."""
+        from .finitedifference import first_derivative2D
+        f = getattr(system,self.variable)
+        df = np.zeros_like(f)
+        fm = np.zeros(system.nx)
+        fp = np.zeros(system.nx)
+        if self.variable == "Temperature":
+            fm[0] = 1.0
+        assert not first_derivative2D(system.nz, system.nx, df, f, 1.0/system.nz, fp, fm, 1.0)
+        return df[:,self.mode]
+    
+    def initialize(self, system):
+        super(V1DProfileView, self).initialize(system)
+        self.ax.set_ylabel(r"$\frac{{d{}}}{{d z}}$".format(getattr(type(system), self.variable).latex[1:-1]))
+
+
+class V2DProfileView(VProfileView):
+    """2nd Derivative Profile vertically."""
+    
+    def ydata(self, system):
+        """Return the y-data values."""
+        from .finitedifference import second_derivative2D
+        f = getattr(system,self.variable)
+        ddf = np.zeros_like(f)
+        fm = np.zeros(system.nx)
+        fp = np.zeros(system.nx)
+        if self.variable == "Temperature":
+            fm[0] = 1.0
+        assert not second_derivative2D(system.nz, system.nx, ddf, f, 1.0/system.nz, fp, fm, 1.0)
+        return ddf[:,self.mode]
+    
+    def initialize(self, system):
+        super(V2DProfileView, self).initialize(system)
+        self.ax.set_ylabel(r"$\frac{{d^2{}}}{{d z^2}}$".format(getattr(type(system), self.variable).latex[1:-1]))
 
 class EvolutionView(View):
     """An object view showing the time-evolution of a parameter."""
     def __init__(self, variable):
         super(EvolutionView, self).__init__()
         self.variable = variable
-        self.ax = None
         self.line = None
     
     def ydata(self, system):
@@ -123,6 +250,7 @@ class EvolutionView(View):
     
     def initialize(self, system):
         """Set up the plot."""
+        super(EvolutionView, self).initialize(system)
         self.line, = self.ax.plot(self.xdata(system), self.ydata(system), 'k-')
         self.ax.set_ylabel(getattr(type(system), self.variable).latex)
         self.ax.set_xlabel(type(system).Time.latex)
@@ -131,8 +259,7 @@ class EvolutionView(View):
         
     def update(self, system):
         """Update the view."""
-        if self.line is None:
-            self.initialize(system)
+        super(EvolutionView, self).update(system)
         self.line.set_data(self.xdata(system), self.ydata(system))
         self.ax.relim()
         self.ax.autoscale_view()
@@ -148,6 +275,7 @@ class EvolutionViewAllModes(EvolutionView):
     
     def initialize(self, system):
         """Set up the plot."""
+        super(EvolutionViewAllModes, self).initialize(system)
         self.line = []
         for i in range(self.ydata(system).shape[1]):
             self.line.append(self.ax.plot(self.xdata(system), self.ydata(system)[self.zmode,i,:], 'k-')[0])
@@ -157,8 +285,7 @@ class EvolutionViewAllModes(EvolutionView):
     
     def update(self, system):
         """Update the view."""
-        if self.line is None:
-            self.initialize(system)
+        super(EvolutionViewAllModes, self).update(system)
         for i, line in enumerate(self.line):
             line.set_data(self.xdata(system), self.ydata(system)[self.zmode,i,:])
     
