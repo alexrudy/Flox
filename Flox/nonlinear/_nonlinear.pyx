@@ -51,19 +51,23 @@ cdef class TemperatureSolver(Solver):
                 
                 # Terms applied everywhere.
                 self.G_curr[j,k] += -npa[k] * P_curr[j, k] * self.dVdz[j, 0]
+                
                 for kp in range(1, self.nx):
-                    # 2nd term, 2nd Delta
-                    kpp = kp - k
-                    if 0 < kpp < self.nx:
-                        self.G_curr[j, k] += -p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
-                    # 2nd term, 1st Delta
-                    kpp = kp + k
-                    if 0 < kpp < self.nx:
-                        self.G_curr[j, k] += -p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
                     # 1st term, 1st Delta
                     kpp = k - kp
                     if 0 < kpp < self.nx:
                         self.G_curr[j, k] += -p2a * (-kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                    
+                    # 2nd term, 1st Delta
+                    kpp = kp + k
+                    if 0 < kpp < self.nx:
+                        self.G_curr[j, k] += -p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                        
+                    # 2nd term, 2nd Delta
+                    kpp = kp - k
+                    if 0 < kpp < self.nx:
+                        self.G_curr[j, k] += -p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+
         return r
 
 
@@ -79,18 +83,18 @@ cdef class VorticitySolver(Solver):
         for j in range(self.nz):
             for k in range(self.nx):
                 for kp in range(1, self.nx):
-                    # 2nd term, 2nd delta
-                    kpp = kp - k
-                    if 0 < kpp < self.nx:
-                        self.G_curr[j, k] += -p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
-                    # 2nd term, 1st delta
-                    kpp = kp + k
-                    if 0 < kpp < self.nx:
-                        self.G_curr[j, k] += p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
                     # 1st term, 1st delta
                     kpp = k - kp
                     if 0 < kpp < self.nx:
                         self.G_curr[j, k] += -p2a * (-kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                    # 2nd term, 1st delta
+                    kpp = kp + k
+                    if 0 < kpp < self.nx:
+                        self.G_curr[j, k] += p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
+                    # 2nd term, 2nd delta
+                    kpp = kp - k
+                    if 0 < kpp < self.nx:
+                        self.G_curr[j, k] += -p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
         return r
     
     
