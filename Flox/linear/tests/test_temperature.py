@@ -11,7 +11,19 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 
 import numpy as np
 import nose.tools as nt
-from .system import PolynomialSystem
+from .system import PolynomialSystem, FourierSystem
+
+def get_system():
+    """Get the appropriate system for use with this test."""
+    return FourierSystem(
+        dz = 0.5,
+        dt = 1.0,
+        a = 1.0,
+        nx = 2,
+        nz = 6,
+        Ra = 10.0,
+        Pr = 5.0,
+    )
 
 def w_dtemperature(System):
     """Derivative of temperature solver."""
@@ -36,30 +48,17 @@ def w_temperature(System):
     
 def test_temperature_derivative():
     """Derivative of temperature."""
-    System = PolynomialSystem(
-        dz = 0.8,
-        dt = 0.4,
-        a = 0.25,
-        nx = 2,
-        nz = 6,
-        Ra = 10.0,
-        Pr = 5.0,
-    )
+    System = get_system()
     dTc = w_dtemperature(System)
+    dTa = System.d_Temperature_simple
+    
+    dTr = dTa / dTc
     # This test cuts out the boundary points, and doesn't care about them.
-    assert np.allclose(System.d_Temperature_simple[1:-1,:], dTc[1:-1,:])
+    assert np.allclose(dTa, dTc)
 
 def test_temperature_solver():
     """Solver for temperature."""
-    System = PolynomialSystem(
-        dz = 0.8,
-        dt = 0.4,
-        a = 0.25,
-        nx = 2,
-        nz = 6,
-        Ra = 10.0,
-        Pr = 5.0,
-    )
+    System = get_system()
     Tnc, dTnc = w_temperature(System)
     assert np.isfinite(Tnc).all()
     assert np.isfinite(dTnc).all()

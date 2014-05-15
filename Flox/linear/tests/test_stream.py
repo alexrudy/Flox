@@ -12,12 +12,12 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 
 import numpy as np
 import nose.tools as nt
-from .system import PolynomialSystem, ConstantSystem
+from .system import PolynomialSystem, ConstantSystem, FourierSystem
 from ...tests.test_finitedifference import w_2d_second_derivative
 
-def test_stream_solver():
-    """Solver for the stream function."""
-    System = ConstantSystem(
+def get_system():
+    """Get the currently in use system, with appropriate parameters."""
+    return FourierSystem(
         dz = 0.8,
         dt = 0.4,
         a = 0.25,
@@ -26,6 +26,10 @@ def test_stream_solver():
         Ra = 10.0,
         Pr = 5.0,
     )
+
+def test_stream_solver():
+    """Solver for the stream function."""
+    System = get_system()
     stream = w_stream(System)
     vorticity = w_vorticity(System, stream)
     s_vorticity = System.Vorticity
@@ -34,16 +38,7 @@ def test_stream_solver():
 def test_stream_matrix():
     """Matrix used for the stream solver function."""
     from .._linear import StreamSolver
-    System = ConstantSystem(
-        dz = 0.8,
-        dt = 0.4,
-        a = 0.25,
-        nx = 3,
-        nz = 6,
-        Ra = 10.0,
-        Pr = 5.0,
-    )
-    
+    System = get_system()
     SS = StreamSolver(System.nz, System.nx)
     SS.setup(System.dz, System.npa[0,:])
     

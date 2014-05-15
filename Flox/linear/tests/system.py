@@ -40,8 +40,7 @@ class AnalyticalSystem(object):
         
     def grids(self):
         """Make the grids"""
-        n, z = np.meshgrid(np.arange(self.nx), np.linspace(0, (self.nz-1) * self.dz, self.nz))
-        z = z - (self.nz * self.dz)/2
+        n, z = np.meshgrid(np.arange(self.nx), np.linspace(0, (self.nz) * self.dz, self.nz))
         return n, z
         
     @property
@@ -49,6 +48,16 @@ class AnalyticalSystem(object):
         """The z array"""
         n, z = self.grids()
         return z
+        
+    @property
+    def z_i(self):
+        """The z indicies"""
+        return self.igrids()[1]
+        
+    def igrids(self):
+        """docstring for igrids"""
+        x_i, z_i = np.meshgrid(np.linspace(0, 1, self.nx),np.linspace(0, 1, self.nz+2)[1:-1])
+        return x_i, z_i
         
     @property
     def n(self):
@@ -189,3 +198,39 @@ class ConstantSystem(AnalyticalSystem):
     def dd_Stream(self):
         """Second derivative of the stream function"""
         return 0
+
+class FourierSystem(AnalyticalSystem):
+    """A system expanded in vertical and horizontal fourier modes."""
+    
+    m = 2
+    
+    @property
+    def Temperature(self):
+        """Return the analytic temperature."""
+        return 3 * np.sin((self.m * np.pi)/(self.nz * self.dz) * self.z)
+        
+    @property
+    def dd_Temperature(self):
+        """Return an analytic second derivative of temperature."""
+        return -1 * ((self.m * np.pi)/(self.nz * self.dz))**2.0 * self.Temperature
+        
+    @property
+    def Vorticity(self):
+        """Return the analytic Vorticity."""
+        return 2 * np.sin((self.m * np.pi)/(self.nz * self.dz) * self.z)
+        
+        
+    @property
+    def dd_Vorticity(self):
+        """Return an analytic second derivative of Vorticity."""
+        return -1 * ((self.m * np.pi)/(self.nz * self.dz))**2.0 * self.Vorticity
+        
+    @property
+    def Stream(self):
+        """Return the analytic Stream."""
+        return 4 * np.sin((self.m * np.pi)/(self.nz * self.dz) * self.z)
+        
+    @property
+    def dd_Stream(self):
+        """Second derivative of the stream function"""
+        return -1 * ((self.m * np.pi)/(self.nz * self.dz))**2.0 * self.Stream

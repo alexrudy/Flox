@@ -11,32 +11,19 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 
 import numpy as np
 import nose.tools as nt
-from .system import PolynomialSystem
+from .system import PolynomialSystem, FourierSystem
 
-use_simple = True
-
-def system(simple=False):
-    """Return the simple sys"""
-    if simple:
-        return PolynomialSystem(
-            dz = 1.0,
-            dt = 1.0,
-            a = 1.0,
-            nx = 2,
-            nz = 6,
-            Ra = 1.0,
-            Pr = 1.0,
-        )
-    else:
-        return PolynomialSystem(
-            dz = 0.8,
-            dt = 0.4,
-            a = 0.25,
-            nx = 2,
-            nz = 6,
-            Ra = 10.0,
-            Pr = 5.0,
-        )
+def get_system():
+    """Get the required system for this test."""
+    return FourierSystem(
+        dz = 0.8,
+        dt = 0.4,
+        a = 0.25,
+        nx = 2,
+        nz = 6,
+        Ra = 10.0,
+        Pr = 5.0,
+    )
 
 def w_dvorticity(System):
     """Derivative of vorticity solver."""
@@ -61,14 +48,14 @@ def w_vorticity(System):
     
 def test_vorticity_derivative():
     """Derivative of vorticity."""
-    System = system(use_simple)
+    System = get_system()
     dVc = w_dvorticity(System)
     # This test cuts out the boundary points, and doesn't care about them.
     assert np.allclose(System.d_Vorticity[1:-1,:], dVc[1:-1,:])
     
 def test_vorticity_solver():
     """Solver for vorticity."""
-    System = system(use_simple)
+    System = get_system()
     Vnc, dVc = w_vorticity(System)
     assert np.isfinite(Vnc).all()
     assert np.isfinite(dVc).all()
