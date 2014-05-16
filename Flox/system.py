@@ -19,17 +19,20 @@ from pyshell.util import setup_kwargs, configure_class, resolve
 
 from .input import FloxConfiguration
 from .array import SpectralArrayProperty, ArrayEngine, ArrayProperty
+from .io import WriterInterface
+from .util import fullname
 
 from .process.packet import PacketInterface, Packet
 
+
 @six.add_metaclass(abc.ABCMeta)
-class System2D(PacketInterface, HasUnitsProperties):
+class System2D(PacketInterface, WriterInterface, HasUnitsProperties):
     """An abstract 2D Fluid box, with some basic properties."""
     
     # nx = 0
     # nz = 0
     # nt = 0
-    # it = 0
+    it = 0
     _bases = {}
     _engine = None
     
@@ -247,12 +250,15 @@ class System2D(PacketInterface, HasUnitsProperties):
         for argname in argnames:
             if argname != "engine":
                 parameters[argname] = getattr(self, argname)
+            else:
+                parameters[argname] = fullname(getattr(self, argname))
         return parameters
         
     def __setstate__(self, parameters):
         """Set the state of this system from pickling."""
         for param in parameters:
             setattr(self, param, parameters[param])
+        self.initialize_arrays()
         self._setup_standard_bases()
         
     def list_arrays(self):
