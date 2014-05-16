@@ -32,6 +32,18 @@ class PacketInterface(object):
         """Check an array's value."""
         pass
     
+    def __iter__(self):
+        """Return the iterator for this object."""
+        raise NotImplementedError("Packet interface is not required to support iteration.")
+    
+    def __next__(self):
+        """Support packet iteration."""
+        raise NotImplementedError("Packet interface is not required to support iteration.")
+        
+    def __len__(self):
+        """Support packet iteration."""
+        raise NotImplementedError("Packet interface is not required to support iteration.")
+    
     @abc.abstractmethod
     def get_packet_list(self):
         """Return the parameter list."""
@@ -53,10 +65,33 @@ class PacketInterface(object):
     def read_queue(self, queue, timeout=None):
         """Read the packets off of a queue, consuming that queue."""
         packets = 0
-        try:
-            while True:
-                packets += 1
-                self.read_packet(queue.get(timeout=timeout))
-        except Empty as e:
-            pass
+        for i, q in enumerate(self.iterate_queue(queue, timeout=timeout)):
+            packets = i
         return packets
+        
+    def iterate_queue(self, queue, timeout):
+        """Returns an iterable over a queue."""
+        while True:
+            try:
+                self.read_packet(queue.get(timeout=timeout))
+            except Empty as e:
+                raise StopIteration("Queue is Empty")
+            else:
+                yield self
+        
+    def iterate_queue_buffered(self, queue, timeout, buffer=10):
+        """Iterate over a queue, but buffer the output results if many are available."""
+        try:
+            for b in range(buffer-1):
+                self.read_packet(queue.get_nowait())
+        except Empty as e:
+            # Now the buffer is empty, but do nothing.
+            pass
+        # Wait for the last element to arrive.
+        try:
+            self.read_packet(queue.get(timeout=timeout))
+        except Empty as e:
+            raise StopIteration("Queue is Empty")
+        else:
+            yield self
+        
