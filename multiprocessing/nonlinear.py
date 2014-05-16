@@ -21,7 +21,7 @@ from Flox.nonlinear import NonlinearEvolver
 from Flox.io import HDF5Writer
 from Flox.ic import stable_temperature_gradient, standard_linear_perturbation, single_mode_linear_perturbation
 
-from Flox.nonlinear.plot import setup_plots, setup_plots_watch
+from Flox.nonlinear.plot import setup_plots, setup_plots_watch, setup_movie
 
 import os, os.path
 import queue
@@ -44,27 +44,27 @@ if __name__ == '__main__':
     System = NDSystem2D.from_params(Config["system"])
     System.Rayleigh = 1e6
     System.Prandtl = 0.5
-    # System.nz = 300
-    # System.nx = 30
+    System.nz = 100
+    System.nx = 50
     System.aspect = 3
-    System.nt = 200
+    System.nt = 500
     System.initialize_arrays()
     stable_temperature_gradient(System)
     for m in range(1, System.nx//10):
-        single_mode_linear_perturbation(System, m, eps=5e-1)
+        single_mode_linear_perturbation(System, m, eps=5e-3)
     # single_mode_linear_perturbation(System, 1, eps=5e-1)
     matplotlib.rcParams['text.usetex'] = False
-    MVC = setup_plots_watch(plt.figure(figsize=(10, 10)), stability=2, zmode=System.nz-1)
+    MVC = setup_movie(plt.figure(figsize=(10, 10)))
     MVC.update(System)
     
-    EM = EvolverProcessing(buffer_length=0, timeout=60)
+    EM = EvolverProcessing(buffer_length=0, timeout=300)
     EM.register_evolver(NonlinearEvolver)
     with EM:
         # EM.evolve(NonlinearEvolver, System, Config['time'], chunks=System.nt - 1, chunksize=100)
-        EM.animate_evolve(NonlinearEvolver, System, MVC, Config['time'], chunks=System.nt - 1, chunksize=1000)
+        EM.animate_evolve(NonlinearEvolver, System, MVC, Config['time'], chunks=System.nt - 1, chunksize=50)
         print(System)
         print(System.diagnostic_string())
-    Writer = HDF5Writer(os.path.join(os.path.dirname(__file__),"nonlinear.hdf5"))
+    Writer = HDF5Writer(os.path.expanduser(os.path.join("~/Documents/","nonlinear.hdf5")))
     Writer.write(System, 'nonlinear')
     print("Done!")
         

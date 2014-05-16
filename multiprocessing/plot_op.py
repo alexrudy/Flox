@@ -20,11 +20,12 @@ import argparse
 from Flox.system import NDSystem2D
 from Flox.input import FloxConfiguration
 from Flox.io import HDF5Writer
-from Flox.plot import GridView, MultiViewController, EvolutionViewStabilityTest
+from Flox.nonlinear.plot import setup_movie
 from pyshell.util import ipydb
 from matplotlib import animation
 from matplotlib import rcParams
 from matplotlib.colors import SymLogNorm
+from astropy.utils.console import ProgressBar
 
 def filename(extension=".yml", base=None):
     """Filenames related to this file!"""
@@ -45,22 +46,17 @@ if __name__ == '__main__':
     Writer = HDF5Writer(filename(".hdf5", base=opt.base))
     Writer.read(System, 'nonlinear')
     print(System)
-    fig = plt.figure(figsize=(10, 10))
-    rows = 2 if opt.stability else 1
-    MVC = MultiViewController(fig, rows, 3)
-    MVC[0,0] = GridView("Temperature", perturbed=False)
-    MVC[0,1] = GridView("Vorticity", cmap='Blues')
-    MVC[0,2] = GridView("Stream", cmap='Greens')
-    if opt.stability:
-        MVC[1,0] = EvolutionViewStabilityTest("Temperature", opt.stability, 33)
-        MVC[1,1] = EvolutionViewStabilityTest("Vorticity", opt.stability, 33)
-        MVC[1,2] = EvolutionViewStabilityTest("Stream", opt.stability, 33)
+    fig = plt.figure(figsize=(6,3.5))
+    MVC = setup_movie(fig, kwargs=[dict(cmap="hot", interpolation='bilinear')])
     System.it = 2
     MVC.update(System)
     System.infer_iteration()
-    def update(i):
-        System.it = i
-        MVC.update(System)
-    anim = animation.FuncAnimation(fig, update, frames=System.nit, interval=1)
-    plt.show()
+    with ProgressBar(System.it) as PBar:
+        def update(i):
+            System.it = i
+            MVC.update(System)
+            PBar.update(i)
+        
+        anim = animation.FuncAnimation(fig, update, frames=int(System.nit), interval=1)
+        anim.save("convection.mp4", writer='ffmpeg', dpi=300)
     
