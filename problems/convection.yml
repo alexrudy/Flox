@@ -1,0 +1,37 @@
+system:
+  '()': Flox.system.NDSystem2D
+  Prandtl: 0.5
+  Rayleigh: 1.0e+6
+  aspect: 3.0
+  deltaT: !quantity '1 K'
+  depth: !quantity '1 m'
+  kinematic_viscosity: !quantity '0.001 St'
+  nx: 50
+  nz: 100
+  nt: 1000
+  engine: 'Flox.array.NumpyArrayEngine'
+ic:
+  stable: yes
+  sin:
+    mink: 1
+    maxk: 10
+    random: yes
+    eps: 0.1
+animate:
+  buffer: 1
+  enable: yes
+  plots:
+    T:
+      r: 0
+      c: 0
+      '()': Flox.plot.GridView
+      variable: "Temperature"
+      cmap: "hot"
+evolve:
+  class: Flox.nonlinear.NonlinearEvolver
+  iterations: 50
+  time: !quantity '1 yr'
+write:
+  writer: Flox.io.HDF5Writer
+  filename: ~/Documents/convection.hdf5
+  dataname: convection
