@@ -16,11 +16,12 @@ import io
 import sys
 import collections.abc
 import logging
+import functools
+
 from astropy.utils.console import ProgressBar
 
 from .process.packet import PacketInterface
-
-
+from .util import callback_progressbar_wrapper
 
 @six.add_metaclass(abc.ABCMeta)
 class Evolver(PacketInterface):
@@ -33,33 +34,40 @@ class Evolver(PacketInterface):
         except:
             return super(Evolver, self).__repr__()
         
-    def evolve_system(self, system, total_time, chunksize=int(1e3), chunks=1000, quiet=False):
+    def evolve_system(self, system, total_time, chunksize=int(1e3), chunks=1000, quiet=False, callback=None):
         """Evolve over many iterations with a given total time."""
         self.read_packet(system.create_packet())
         end_time = self.Time + system.nondimensionalize(total_time).value
-        file = sys.stdout if not quiet else io.StringIO()
+        file = None if not quiet else io.StringIO()
+        callback = callback if callback is not None else lambda i,p : system.read_packet(p)
         with ProgressBar(chunks, file=file) as pbar:
-            for i in range(chunks):
-                if self.Time >= end_time:
-                    break
-                else:
-                    self.evolve(end_time, chunksize)
-                    system.read_packet(self.create_packet())
-                    pbar.update(i)
-                    
-    def evolve_async(self, total_time, chunksize=int(1e3), chunks=int(1e3), queue=None):
-        """An event evolution tool, using a queue. The queue should be ready to recieve all
-        of the read packets."""
-        if not isinstance(queue, collections.abc.Iterable):
-            queue = [queue]
+            iters = self.evolve_cb(end_time, chunksize=chunksize, chunks=chunks, callback=callback_progressbar_wrapper(callback, pbar))
+        return iters
+    
+    def evolve_cb(self, total_time, chunksize=int(1e3), chunks=int(1e3), callback=lambda i,p : None):
+        """Run the evolution with a callback."""
         for i in range(chunks):
             if self.Time >= total_time:
                 break
             else:
                 self.evolve(total_time - self.Time, chunksize)
-                packet = self.create_packet()
-                for q in queue:
-                    q.put(packet, block=False)
+                callback(i, self.create_packet())
         return i
     
+    def evolve_queue(self, total_time, chunksize=int(1e3), chunks=int(1e3), queue=None):
+        """An event evolution tool, using a queue. The queue should be ready to receive all
+        of the read packets."""
+        iters = self.evolve_cb(total_time, chunksize=chunksize, chunks=chunks, callback=lambda i,p : queue.put(p))
+        return iters
+    
+    
+    def evolve_queues(self, total_time, chunksize=int(1e3), chunks=int(1e3), queues=None):
+        """An event evolution tool, using queues. The queues should be ready to receive all
+        of the read packets."""
+        def callback(i, p):
+            for q in queues:
+                q.put(p)
+        iters = self.evolve_cb(total_time, chunksize=chunksize, chunks=chunks, callback=callback)
+        return iters
+
 

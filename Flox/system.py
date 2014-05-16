@@ -63,6 +63,17 @@ class System2D(PacketInterface, WriterInterface, HasUnitsProperties):
         # TODO Ensure Time is sorted!
         self.it = self.nit
         
+    def __iter__(self):
+        """Setup this object as an iterator."""
+        self.it = 1
+        for i in range(1, self.nit):
+            self.it = i
+            yield self
+        
+    def __len__(self):
+        """Length of this as an iterator."""
+        return self.nit
+        
     @property
     def nit(self):
         """Get the total number of iterations."""

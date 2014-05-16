@@ -11,7 +11,7 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 
 import argparse
 import six
-
+import copy
 import numpy as np
 import numpy.random
 
@@ -20,10 +20,11 @@ import multiprocessing as mp
 
 from pyshell.util import resolve, ipydb
 
-from Flox.input import FloxConfiguration
-from Flox.process.manager import AsynchronousManager
-from Flox.process.evolver import EvolverManager
-from Flox.process.queue import MultiplexedQueue
+from .ic import InitialConditioner
+from .input import FloxConfiguration
+from .process.manager import AsynchronousManager
+from .process.evolver import EvolverManager
+from .plot import MultiViewController
 
 
 class FloxManager(object):
@@ -32,94 +33,137 @@ class FloxManager(object):
         super(FloxManager, self).__init__()
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument('configfile', type=six.text_type, help="Configuration file name.")
-        self._finish = []
+        self.parser.add_argument('-mp','--multiprocess', action='store_true', help="Use only a single process, do no extra work.")
+        self.parser.add_argument('-n','--no-evolve',action='store_false', dest='evolve', help="Dry run, don't actually evolve.")
+        self.parser.add_argument('-d', '--debug', action='store_true', help='Enable logging and debug mode.')
+        self.parser.add_argument('--movie', action='store_true', help="Create a movie at the end.")
+        self.parser.add_argument('--view', action='store_true', help="View a saved simulation")
+        self.parser.add_argument('--restart', action='store_true', help="Restart the simulation from a partial simulation elsewhere.")
         
     def load_configuration(self):
-        """docstring for fname"""
+        """Load the configuration for this module."""
         self.config = FloxConfiguration.fromfile(self.opt.configfile)
-        
-    def finish(self):
-        """Finish processes."""
-        [ p() for p in self._finish ]
         
     def run(self):
         """Run this management object."""
-        # ipydb()
         self.opt = self.parser.parse_args()
+        # if self.opt.debug:
+        #     ipydb()
         self.load_configuration()
+        
+        # Build the system.
         System_config = self.config["system"]
         System_Class = resolve(System_config.pop("()"))
         System = System_Class.from_params(System_config)
-        self.construct_initial_conditions(System, self.config["ic"])
-        self.processes(System)
-        self.finish()
         
-    def construct_initial_conditions(self, System, config):
-        """Construct configurable initial conditions for a simulation."""
-        from .ic import stable_temperature_gradient, single_mode_linear_perturbation
-        if config.get('stable',False):
-            stable_temperature_gradient(System)
-        if 'sin' in config:
-            for m in range(config['sin'].get('mink',1),config['sin'].get('maxk',2)):
-                eps = config['sin'].get('eps',5e-1)
-                if config['sin'].get('random',False):
-                    eps *= np.random.rand(1)
-                single_mode_linear_perturbation(System, mode=m, eps=eps)
-                
-    def processes(self, System):
+        if self.opt.restart:
+            System.read(**self.config.get('write',{}))
+        else:
+            # Build the initial conditions
+            ICs = InitialConditioner(self.config['ic'])
+            ICs.run(System)
+        
+        if self.opt.evolve:
+            if not self.opt.multiprocess:
+                self.mo_evolve(System, debug=self.opt.debug)
+            else:
+                self.mp_evolve(System, debug=self.opt.debug)
+        else:
+            System.read(**self.config.get('write',{}))
+        
+        if self.opt.movie:
+            self.mo_movie(System, debug=self.opt.debug)
+        if self.opt.view:
+            self.mo_view(System, debug=self.opt.debug)
+    
+    def mo_evolve(self, System, debug=False):
+        """Single process evolver!"""
+        
+        # Set up the evolver object.
+        evolver = resolve(self.config['evolve.class'])
+        EV = evolver.from_system(System)
+        EV.evolve_system(System, self.config['evolve.time'], chunks=int(self.config.get('evolve.nt',System.nt-System.nit-1)), chunksize=int(self.config.get('evolve.iterations',1)))
+        System.write(**self.config.get('write',{}))
+    
+    def mo_movie(self, System, debug=False):
+        """Create a movie."""
+        MVC = MultiViewController.from_config(self.config['animate'].store)
+        MVC.movie(self.config.get('animate.filename','movie.mp4'), System)
+    
+    def mo_view(self, System, debug=False):
+        """Create a movie."""
+        MVC = MultiViewController.from_config(self.config['animate'].store)
+        MVC.animate(System)
+    
+    def mp_evolve(self, System, debug=False):
         """Construct the required processes."""
-        # mp.log_to_stderr()
+        if debug:
+            mp.log_to_stderr()
+        
+        # Launch the necessary managers.
+        
+        # Queue Synchronization Manager
         SM = mm.SyncManager()
-        SM.start()
         
-        AM = AsynchronousManager()
-        AM.name = AM.name.replace("AsynchronousManager","WritingManager")
-        AM.start()
-        
-        EQ = SM.Queue()
-        Qs = [EQ]
-        if 'animate' in self.config and self.config.get('animate.enable', True):
-            AQ = SM.Queue()
-            Qs += [AQ]
-        PSystem = AM.send(System)
-        EM = self.evolve(Qs, System)
-        PSystem.read_queue(EQ, timeout=60)
-        if 'write' in self.config:
-            PSystem.write(**self.config.get('write',{}))
-        if 'animate' in self.config and self.config.get('animate.enable', True):
-            AN = self.animate(AQ, System)
-        EM.stop()
-        AM.stop()
-        AM.join()
-        EM.join()
-        if 'animate' in self.config and self.config.get('animate.enable', True):
-            AN.stop()
-            AN.join()
-        SM.shutdown()
-        
-        
-        
-    def animate(self, queue, system):
-        """Animate evolution"""
-        from Flox.plot import MultiViewController
-        AM = AsynchronousManager()
-        AM.name = AM.name.replace("AsynchronousManager", "AnimationManager")
-        AM.register(MultiViewController.__name__, MultiViewController.from_config)
-        AM.start()
-        MVC = getattr(AM, MultiViewController.__name__)(self.config['animate'].store)
-        MVC.animate(queue, system, buffer_length=self.config.get('animate.buffer'), timeout=2)
-        return AM
-        
-    def evolve(self, queue, system):
-        """Evolve the system forward in time."""
+        # Evolution Manager
         EM = EvolverManager()
         evolver = resolve(self.config['evolve.class'])
         EM.register_evolver(evolver)
-        EM.start()
-        EV = getattr(EM, evolver.__name__)(system, self.config.get('evolve.saftey', 0.1))
-        EV.read_packet(system.create_packet())
-        nd_time = system.nondimensionalize(self.config['evolve.time']).value
-        EV.evolve_async(nd_time, chunks=int(self.config.get('evolve.nt',system.nt-1)), chunksize=int(self.config.get('evolve.iterations',1)), queue=queue)
-        return EM
+        
+        # Output/Writing Manager
+        WM = AsynchronousManager()
+        WM.name = WM.name.replace("AsynchronousManager","WritingManager")
+        
+        # Animation/Display Manager
+        animate = self.config.get('animate.enable', False)
+        if animate:
+            AM = AsynchronousManager()
+            AM.name = AM.name.replace("AsynchronousManager", "AnimationManager")
+            AM.register(MultiViewController.__name__, MultiViewController.from_config)
+        
+        try:
+            # Start all of the processes.
+            SM.start()
+            EM.start()
+            WM.start()
+            Qs = []
+            
+            # Set up animation
+            if animate:
+                AM.start()
+                AQ = SM.Queue()
+                Qs.append(AQ)
+            
+            # Set up writing.
+            WQ = SM.Queue()
+            Qs.append(WQ)
+            WS = WM.send(System)
+            WQ.put(System.create_packet())
+            # Launch the evolver.
+            EV = getattr(EM, evolver.__name__)(System, self.config.get('evolve.saftey', 0.1))
+            EV.read_packet(System.create_packet())
+            nd_time = System.nondimensionalize(self.config['evolve.time'] + System.time).value
+            EV.evolve_queues(nd_time, chunks=int(self.config.get('evolve.nt',System.nt-System.nit-1)), chunksize=int(self.config.get('evolve.iterations',1)), queues=Qs)
+            
+            # Launch the reader
+            WS.read_queue(WQ, timeout=60)
+            
+            # Launch the animator
+            if animate:
+                ASystem = copy.copy(System)
+                ASystem.engine = "Flox.array.NumpyFrameEngine"
+                MVC = getattr(AM, MultiViewController.__name__)(self.config['animate'].store)
+                MVC.animate(System, AQ, buffer=self.config.get('animate.buffer'), timeout=2)
+            
+            WS.write(**self.config.get('write',{}))
+            
+        except Exception as e:
+            raise e
+        finally:
+            if animate:
+                AM.shutdown()
+            WM.shutdown()
+            EM.shutdown()
+            SM.shutdown()
         
         

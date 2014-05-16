@@ -22,6 +22,8 @@ from matplotlib import animation
 
 from pyshell.util import configure_class
 
+from .util import callback_progressbar_wrapper
+
 class MultiViewController(object):
     """A controller which manages many views."""
     def __init__(self, figure, nr, nc, **kwargs):
@@ -56,66 +58,60 @@ class MultiViewController(object):
             mvc[r,c] = configure_class(plot)
         return mvc
         
-    def get_animation(self, system, queue, progressbar=None, buffer_length=10, timeout=60, **kwargs):
+    def get_animation(self, system, queue, progressbar=None, buffer=10, timeout=60, **kwargs):
         """Get the animation object."""
-        if queue is not None:
-            generator = self._packet_callback(system, queue, buffer_length=buffer_length, timeout=timeout)
-        else:
-            generator = self._system_callback(system)
+        generator = self._animation_generator(system, queue=queue, buffer=buffer, timeout=timeout)
+        callback = self._animation_callback(progressbar=progressbar)
         # kwargs.setdefault('repeat', False)
-        return animation.FuncAnimation(self.figure, self._animate_callback, generator, save_count=system.nt,
-            fargs=(system, progressbar), repeat=True, **kwargs)
+        kwargs.setdefault('save_count', system.nt)
+        return animation.FuncAnimation(self.figure, func=callback, frames=generator, init_func=lambda : self.update(system), **kwargs)
         
-    def animate(self, queue, system, progress=True, **kwargs):
+    def _animation_generator(self, system, queue=None, buffer=10, timeout=60):
+        """Get the animation generator."""
+        if queue is not None:
+            generator = lambda : system.iterate_queue_buffered(queue, buffer=buffer, timeout=timeout)
+        else:
+            generator = lambda : iter(system)
+        return generator
+    
+    def _animation_callback(self, progressbar=None):
+        """Get the animator callback."""
+        if progressbar is None:
+            callback = self.update
+        else:
+            # callback_progressbar_wrapper expects arguments of the form iteration, *args
+            # We do this trick to insert the iterations into the arglist, then remove them.
+            _callback = callback_progressbar_wrapper(lambda i, s : self.update(s), progressbar)
+            callback = lambda s : _callback(s.it, s)
+        return callback
+        
+    def animate(self, system, queue=None, progress=True, **kwargs):
         """Animation."""
         import matplotlib
-        matplotlib.rcParams['text.usetex'] = False
         import matplotlib.pyplot as plt
-        if progress:
-            out = None
-        else:
-            out = io.StringIO()
-        with ProgressBar(system.nt, file=out) as PBar:
-            anim = self.get_animation(system, queue, PBar, **kwargs)
+        
+        # Disable LaTeX while animating!
+        matplotlib.rcParams['text.usetex'] = False
+        
+        out = None if progress else io.StringIO()
+        
+        with ProgressBar(system.nt, file=out) as progressbar:
+            anim = self.get_animation(system, queue, progressbar, **kwargs)
             plt.show()
             
         
-    def movie(self, filename, queue, system, progress=True, buffer_length=0, **kwargs):
+    def movie(self, filename, system, queue=None, progress=True, save_kwargs=dict(), **kwargs):
         """Write a movie."""
-        if progress:
-            out = None
-        else:
-            out = io.StringIO()
+        import matplotlib
+        import matplotlib.pyplot as plt
+        
+        # Disable LaTeX while animating!
+        matplotlib.rcParams['text.usetex'] = False
+        
+        out = None if progress else io.StringIO()
         with ProgressBar(system.nt, file=out) as PBar:
-            anim = self.get_animation(system, queue, PBar, buffer_length=0, **kwargs)
-            anim.save(filename)
-        
-    def _packet_callback(self, System, Queue, buffer_length=0, timeout=None):
-        """Packet callback method."""
-        def _packet_generator():
-            try:
-                packet = Queue.get(timeout=timeout)
-                System.read_packet(packet)
-            except queue.Empty:
-                raise StopIteration
-            yield System.it
-        
-        return _packet_generator
-        
-    def _system_callback(self, System):
-        """System callback method."""
-        def _system_generator():
-            for i in range(System.nt):
-                System.it = i
-                yield i
-        return _system_generator
-        
-    def _animate_callback(self, i, System, PBar=None):
-        """Animation Callback."""
-        if PBar is not None:
-            PBar.update(System.it)
-        if System.it > 0:
-            self.update(System)
+            anim = self.get_animation(system, queue, PBar, buffer=0, **kwargs)
+            anim.save(filename, **save_kwargs)
 
 @six.add_metaclass(abc.ABCMeta)
 class View(object):
@@ -181,23 +177,34 @@ class ContourView(GridView):
     
     def initialize(self, system):
         """Initialize the system."""
-        super(ContourView, self).initialize(system)
         self.im_kwargs.setdefault('cmap','hot')
         self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
-        data = self.data(system).value
+        data = self.data(system)
         ptp = np.ptp(data)
         if np.isfinite(ptp) and ptp != 0.0:        
             self.image = self.ax.contour(self.data(system), **self.im_kwargs)
+            self.cb = self.ax.figure.colorbar(self.image, ax=self.ax)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
         self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit), transform=self.ax.transAxes)
+        self.initialized = True
         
     def update(self, system):
         """Update the view"""
-        super(ContourView, self).update(system)
+        if not self.initialized:
+            self.initialize(system)
         self.im_kwargs.setdefault('cmap','hot')
         self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
         self.ax.cla()
-        self.image = self.ax.contour(self.data(system), **self.im_kwargs)
+        data = self.data(system)
+        ptp = np.ptp(data)
+        if np.isfinite(ptp) and ptp != 0.0:
+            self.image = self.ax.contour(self.data(system), **self.im_kwargs)
+            if hasattr(self, 'cb'):
+                self.cb.ax.clear()
+                self.cb = self.ax.figure.colorbar(self.image, ax=self.ax, cax=self.cb.ax)
+            else:
+                self.cb = self.ax.figure.colorbar(self.image, ax=self.ax)
+        self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
         self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
     
 
