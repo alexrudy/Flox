@@ -10,11 +10,11 @@
 # Look into array allocation here:
 # http://stackoverflow.com/questions/18462785/what-is-the-recommended-way-of-allocating-memory-for-a-typed-memory-view
 
-#cython: overflowcheck=False
+#cython: overflowcheck=True
 #cython: wraparound=False
-#cython: boundscheck=False
+#cython: boundscheck=True
 #cython: cdivision=True
-#cython: profile=False
+#cython: profile=True
 
 from __future__ import division
 
