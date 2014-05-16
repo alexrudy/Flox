@@ -12,6 +12,7 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 import itertools
 import multiprocessing.managers as mm
 import multiprocessing as mp
+import queue
 
 logger = mp.get_logger()
 
@@ -22,7 +23,21 @@ class RemoteError(Exception):
         self.msg = "REMOTE ERROR\n" + "-" * 72 + "\n" + msg
         
 
-class AsynchronousProxy(object):
+class LocalMessageReciever(object):
+    """An abstract local message reciever class."""
+    
+    def _handle_message(self, message, code="#RETURN"):
+        """Message handling."""
+        logger.subdebug("Message Recieved: {}".format(message))
+        sync, kind, result = message
+        if kind == "#ERROR":
+            raise RemoteError(result)
+        if kind == "#TRACEBACK":
+            raise result
+        elif kind == code:
+            return result
+
+class AsynchronousProxy(LocalMessageReciever):
     """A proxy object for Asynchronous worker objects."""
     def __init__(self, referent_id, input_queue, output_sync, output_async):
         super(AsynchronousProxy, self).__init__()
@@ -47,17 +62,6 @@ class AsynchronousProxy(object):
         logger.subdebug("Message Sent: {}".format(message))
         return self._handle_message(self._output_sync.get())
         
-    def _handle_message(self, message):
-        """Message handling."""
-        logger.subdebug("Message Recieved: {}".format(message))
-        sync, kind, result = message
-        if kind == "#ERROR":
-            raise RemoteError(result)
-        if kind == "#TRACEBACK":
-            raise result
-        elif kind == "#RETURN":
-            return result
-        
     def __getattr__(self, method):
         """Attribute access """
         if self.async:
@@ -67,12 +71,12 @@ class AsynchronousProxy(object):
         
         def caller(*args, **kwargs):
             """Method caller."""
-            _call(method, args, kwargs)
+            return _call(method, args, kwargs)
             
         return caller
 
 
-class AsynchronousManager(mp.Process):
+class AsynchronousManager(mp.Process, LocalMessageReciever):
     """An asynchronous manager, wrapped in a process."""
     
     _proxies = {}
@@ -95,6 +99,22 @@ class AsynchronousManager(mp.Process):
         message = ("#ASYNC", "#STOP")
         self._input.put(message)
         logger.subdebug("Message Sent: {}".format(message))
+        
+    def shutdown(self):
+        """Handle the full suite of shutdown operations."""
+        self.stop()
+        self._unwind()
+        self.join()
+        
+    def _unwind(self):
+        """Unwind and process recieved asynchronous results."""
+        while True:
+            try:
+                message = self._output_async.get_nowait()
+            except queue.Empty as e:
+                break
+            self._handle_message(message)
+        
         
     def __enter__(self):
         """Enter the context."""
@@ -129,17 +149,6 @@ class AsynchronousManager(mp.Process):
         self._input.put(message)
         logger.subdebug("Message Sent: {}".format(message))
         return self._proxies.get(value.__class__.__name__, AsynchronousProxy)(this_id, self._input, self._output_sync, self._output_async)
-        
-    def _handle_message(self, message, code="#RETURN"):
-        """Message handling."""
-        logger.subdebug("Message Recieved: {}".format(message))
-        sync, kind, result = message
-        if kind == "#ERROR":
-            raise RemoteError(result)
-        elif kind == code:
-            return result
-        else:
-            raise RemoteError(result)
         
     @classmethod
     def register(cls, typecode, init_func, proxy_type=AsynchronousProxy):
