@@ -14,7 +14,8 @@ import six
 import abc
 import io
 import sys
-
+import collections.abc
+import logging
 from astropy.utils.console import ProgressBar
 
 from .process.packet import PacketInterface
@@ -49,11 +50,16 @@ class Evolver(PacketInterface):
     def evolve_async(self, total_time, chunksize=int(1e3), chunks=int(1e3), queue=None):
         """An event evolution tool, using a queue. The queue should be ready to recieve all
         of the read packets."""
+        if not isinstance(queue, collections.abc.Iterable):
+            queue = [queue]
         for i in range(chunks):
             if self.Time >= total_time:
                 break
             else:
                 self.evolve(total_time - self.Time, chunksize)
-                queue.put(self.create_packet(), block=False)
+                packet = self.create_packet()
+                for q in queue:
+                    q.put(packet, block=False)
+        return i
     
 
