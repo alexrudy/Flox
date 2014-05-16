@@ -9,18 +9,20 @@
 
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
+import os, os.path
 import astropy.units as u
 import numpy as np
 import abc
 import six
 import h5py
+from pyshell.util import resolve
 
 @six.add_metaclass(abc.ABCMeta)
 class GridWriter(object):
     """A grid writing object."""
     def __init__(self, filename):
         super(GridWriter, self).__init__()
-        self.filename = filename
+        self.filename = os.path.normpath(os.path.expanduser(filename))
         
     @abc.abstractmethod
     def write(self, data, name=""):
@@ -28,9 +30,25 @@ class GridWriter(object):
         pass
         
     @abc.abstractmethod
-    def read(self, data_cls, name=""):
+    def read(self, data, name=""):
         """Read to a data class."""
         pass
+        
+class WriterInterface(object):
+    """A mixin for classes which can use a writer interface."""
+    
+    @staticmethod
+    def _get_writer(writer, filename):
+        """Get a writer class for the appropriate type."""
+        return resolve(writer)(filename)
+    
+    def write(self, writer, filename, dataname):
+        """Get the writer and write!"""
+        self._get_writer(writer, filename).write(self, dataname)
+    
+    def read(self, reader, filename, dataname):
+        """Read based on a reader class."""
+        self._get_writer(writer, filename).read(self, dataname)
 
 class HDF5Writer(GridWriter):
     """Write an HDF5 file."""
