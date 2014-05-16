@@ -10,11 +10,17 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 import abc
+import sys
+import io
 import six
 from matplotlib.gridspec import GridSpec
 import numpy as np
+import queue
 
-from pyshell.util import askip
+from astropy.utils.console import ProgressBar
+from matplotlib import animation
+
+from pyshell.util import configure_class
 
 class MultiViewController(object):
     """A controller which manages many views."""
@@ -38,6 +44,78 @@ class MultiViewController(object):
     def draw(self):
         """Force the figure to re-draw."""
         self.figure.canvas.draw()
+        
+    @classmethod
+    def from_config(cls, config):
+        """Configure this object."""
+        import matplotlib.pyplot as plt
+        figure = plt.figure(**config.get('fig',{}))
+        mvc = cls(figure, config.get('nr',1), config.get('nc', 1), **config.get('kwargs',{}))
+        for plot in config['plots'].values():
+            r, c = plot.pop('r'), plot.pop('c')
+            mvc[r,c] = configure_class(plot)
+        return mvc
+        
+    def get_animation(self, system, queue, progressbar=None, buffer_length=10, timeout=60, **kwargs):
+        """Get the animation object."""
+        if queue is not None:
+            generator = self._packet_callback(system, queue, buffer_length=buffer_length, timeout=timeout)
+        else:
+            generator = self._system_callback(system)
+        # kwargs.setdefault('repeat', False)
+        return animation.FuncAnimation(self.figure, self._animate_callback, generator, save_count=system.nt,
+            fargs=(system, progressbar), repeat=True, **kwargs)
+        
+    def animate(self, queue, system, progress=True, **kwargs):
+        """Animation."""
+        import matplotlib
+        matplotlib.rcParams['text.usetex'] = False
+        import matplotlib.pyplot as plt
+        if progress:
+            out = None
+        else:
+            out = io.StringIO()
+        with ProgressBar(system.nt, file=out) as PBar:
+            anim = self.get_animation(system, queue, PBar, **kwargs)
+            plt.show()
+            
+        
+    def movie(self, filename, queue, system, progress=True, buffer_length=0, **kwargs):
+        """Write a movie."""
+        if progress:
+            out = None
+        else:
+            out = io.StringIO()
+        with ProgressBar(system.nt, file=out) as PBar:
+            anim = self.get_animation(system, queue, PBar, buffer_length=0, **kwargs)
+            anim.save(filename)
+        
+    def _packet_callback(self, System, Queue, buffer_length=0, timeout=None):
+        """Packet callback method."""
+        def _packet_generator():
+            try:
+                packet = Queue.get(timeout=timeout)
+                System.read_packet(packet)
+            except queue.Empty:
+                raise StopIteration
+            yield System.it
+        
+        return _packet_generator
+        
+    def _system_callback(self, System):
+        """System callback method."""
+        def _system_generator():
+            for i in range(System.nt):
+                System.it = i
+                yield i
+        return _system_generator
+        
+    def _animate_callback(self, i, System, PBar=None):
+        """Animation Callback."""
+        if PBar is not None:
+            PBar.update(System.it)
+        if System.it > 0:
+            self.update(System)
 
 @six.add_metaclass(abc.ABCMeta)
 class View(object):
