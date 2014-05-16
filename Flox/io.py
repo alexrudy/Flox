@@ -46,7 +46,7 @@ class WriterInterface(object):
         """Get the writer and write!"""
         self._get_writer(writer, filename).write(self, dataname)
     
-    def read(self, reader, filename, dataname):
+    def read(self, writer, filename, dataname):
         """Read based on a reader class."""
         self._get_writer(writer, filename).read(self, dataname)
 
