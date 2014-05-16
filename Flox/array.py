@@ -37,6 +37,18 @@ class ArrayEngine(collections.MutableMapping):
     def allocate(self, name, shape):
         """Allocate a given array."""
         raise NotImplementedError()
+        
+    def shape(self, obj, shape):
+        """Hook into modification of the array shape."""
+        return shape
+    
+    def _get(self, obj, name):
+        """Engine caller to the underlying get method."""
+        return self[name]
+    
+    def _set(self, obj, name, value):
+        """Engine caller to the underlying set method."""
+        self[name] = value
     
     @classmethod
     def from_engine(cls, engine):
@@ -47,6 +59,22 @@ class ArrayEngine(collections.MutableMapping):
             new_engine.allocate(key, old_array.shape)
             new_engine[key] = old_array
         return new_engine
+
+class TimekeepingEngine(ArrayEngine):
+    """An engine which handles timekeeping using the system iteration interface."""
+    
+    def shape(self, obj, shape):
+        """Hook into modification of the array shape."""
+        return shape + tuple([obj.nt])
+    
+    def _get(self, obj, name):
+        """Engine caller to the underlying get method."""
+        return self[name][...,obj.it]
+        
+    def _set(self, obj, name, value):
+        """Engine caller to the underlying set method."""
+        self[name][...,obj.it] = value
+
 
 class ArrayYAMLSupport(object):
     """An empty class for Array YAML support with built-in types."""
@@ -64,12 +92,10 @@ class ArrayProperty(UnitsProperty):
     
     def shape(self, obj):
         """Retrieve inexplicit shapes"""
-        shape = tuple([self._get_shape_part(obj, part) for part in self._shape] + [obj.nt])
-        if len(shape) < 1:
-            raise ValueError("Got 0-dimensional array: {!r}".format(shape))
+        shape = tuple([self._get_shape_part(obj, part) for part in self._shape])
         if shape == tuple((0,)):
             raise ValueError("Got unindexable array: {!r}".format(shape))
-        return shape
+        return getattr(obj, self._engine).shape(obj, shape)
         
     def _get_shape_part(self, obj, part):
         """Get a part of the shape tuple"""
@@ -86,11 +112,11 @@ class ArrayProperty(UnitsProperty):
     
     def set(self, obj, value):
         """Short out the setter so that it doesn't use units, but uses the allocated array space."""
-        getattr(obj, self._engine)[self._attr][...,obj.it] = value
+        getattr(obj, self._engine)._set(obj, self._attr, value)
         
     def get(self, obj):
         """Get this object."""
-        return getattr(obj, self._engine)[self._attr][...,obj.it]
+        return getattr(obj, self._engine)._get(obj, self._attr)
         
 class SpectralArrayProperty(ArrayProperty):
     """An array with spectral property support"""
@@ -107,7 +133,7 @@ class SpectralArrayProperty(ArrayProperty):
         """Perturbed inverse transform."""
         return spectral_transform(self._func, self.get(obj), 1.0, obj.aspect.value, perturbed=True)
 
-class NumpyArrayEngine(ArrayYAMLSupport, dict, ArrayEngine):
+class NumpyArrayEngine(ArrayYAMLSupport, dict, TimekeepingEngine):
     """A numpy-based array engine"""
     
     def __init__(self, dtype=np.float):
@@ -129,3 +155,19 @@ class NumpyArrayEngine(ArrayYAMLSupport, dict, ArrayEngine):
         """Allocate arrays with empty numpy arrays"""
         self[name] = np.zeros(shape, dtype=self._dtype)
         
+class NumpyFrameEngine(ArrayYAMLSupport, dict, ArrayEngine):
+    """A numpy-based array engine which only holds a single frame."""
+    
+    def __init__(self, dtype=np.float):
+        """Initialize this object."""
+        super(NumpyFrameEngine, self).__init__()
+        self._dtype = dtype
+        
+    def allocate(self, name, shape):
+        """Allocate arrays with empty numpy arrays"""
+        self[name] = np.zeros(shape, dtype=self._dtype)
+        
+    @classmethod
+    def get_parameter_list(cls):
+        """Get the parameter list pairs."""
+        return ['dtype']
