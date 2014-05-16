@@ -12,7 +12,7 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 import numpy as np
 import abc
 import six
-
+from queue import Empty
 
 class Packet(dict):
     """A 2D packet, containing the data required for the setup of an evolver."""
@@ -49,3 +49,14 @@ class PacketInterface(object):
         for variable in packet.keys():
             self.check_array(packet[variable], variable)
             setattr(self, variable, packet[variable])
+            
+    def read_queue(self, queue, timeout=None):
+        """Read the packets off of a queue, consuming that queue."""
+        packets = 0
+        try:
+            while True:
+                packets += 1
+                self.read_packet(queue.get(timeout=timeout))
+        except Empty as e:
+            pass
+        return packets

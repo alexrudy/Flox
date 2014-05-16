@@ -34,7 +34,6 @@ class EvolverProcessing(object):
     def __init__(self, timeout=10, buffer_length=10):
         super(EvolverProcessing, self).__init__()
         self.async_manager = EvolverManager()
-        self.async_manager.name = "Evolver"
         self.queue_manager = mm.SyncManager()
         self.timeout = timeout
         self.buffer_length = buffer_length
@@ -88,7 +87,9 @@ class EvolverProcessing(object):
         with ProgressBar(chunks) as PBar:
             anim = animation.FuncAnimation(Plotter.figure, self._animate_callback, self._packet_callback(System, Q), interval=1, fargs=(System, Plotter, PBar))
             plt.show()
-            
+        
+    
+    
     def _packet_callback(self, System, Queue):
         """Packet callback method."""
         def _packet_generator():
@@ -104,6 +105,7 @@ class EvolverProcessing(object):
                     packet = Queue.get(timeout=self.timeout)
                     System.read_packet(packet)
                 except queue.Empty:
+                    print("Ending Animation!")
                     raise StopIteration
             yield System.it
         
