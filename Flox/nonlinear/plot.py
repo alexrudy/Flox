@@ -32,6 +32,14 @@ def setup_plots(fig, stability=None, zmode=33):
         MVC[3,2] = VProfileView("Temperature", 0)
     return MVC
     
+def setup_movie(fig, variables=["Temperature"], kwargs=[dict(cmap="hot")]):
+    """Setup a movie view."""
+    MVC = MultiViewController(fig, len(variables), 1)
+    for i, (variable, kwds) in enumerate(zip(variables,kwargs)):
+        MVC[i,0] = GridView(variable,**kwds)
+    return MVC
+    
+
 def setup_plots_watch(fig, stability=None, zmode=33):
     """Setup plots from a figure."""
     rows = 5
