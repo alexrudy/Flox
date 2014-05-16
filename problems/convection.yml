@@ -13,13 +13,16 @@ system:
 ic:
   stable: yes
   sin:
-    mink: 1
-    maxk: 10
+    enable: yes
+    k: [ 1, 2 ]
     random: yes
-    eps: 0.1
+    epsilon: 0.1
 animate:
-  buffer: 1
+  filename: problems/convection.mp4
+  buffer: 10
   enable: yes
+  nr: 2
+  nc: 1
   plots:
     T:
       r: 0
@@ -27,6 +30,12 @@ animate:
       '()': Flox.plot.GridView
       variable: "Temperature"
       cmap: "hot"
+    S:
+      r: 1
+      c: 0
+      '()': Flox.plot.ContourView
+      variable: "Stream"
+      cmap: "Greens"
 evolve:
   class: Flox.nonlinear.NonlinearEvolver
   iterations: 50
