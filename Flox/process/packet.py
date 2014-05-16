@@ -81,17 +81,18 @@ class PacketInterface(object):
         
     def iterate_queue_buffered(self, queue, timeout, buffer=10):
         """Iterate over a queue, but buffer the output results if many are available."""
-        try:
-            for b in range(buffer-1):
-                self.read_packet(queue.get_nowait())
-        except Empty as e:
-            # Now the buffer is empty, but do nothing.
-            pass
-        # Wait for the last element to arrive.
-        try:
-            self.read_packet(queue.get(timeout=timeout))
-        except Empty as e:
-            raise StopIteration("Queue is Empty")
-        else:
-            yield self
+        while True:
+            try:
+                for b in range(buffer-1):
+                    self.read_packet(queue.get_nowait())
+            except Empty as e:
+                # Now the buffer is empty, but do nothing.
+                pass
+            # Wait for the last element to arrive.
+            try:
+                self.read_packet(queue.get(timeout=timeout))
+            except Empty as e:
+                raise StopIteration("Queue is Empty")
+            else:
+                yield self
         
