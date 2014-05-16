@@ -1,0 +1,49 @@
+system:
+  '()': Flox.system.NDSystem2D
+  Prandtl: 0.5
+  Rayleigh: 1.0e+6
+  aspect: 3.0
+  deltaT: !quantity '1 K'
+  depth: !quantity '1 m'
+  kinematic_viscosity: !quantity '0.001 St'
+  nx: 50
+  nz: 100
+  nt: 100
+  engine: 'Flox.array.NumpyArrayEngine'
+ic:
+  stable: yes
+  sin:
+    limits: no
+    enable: yes
+    k: [ 1, 8 ]
+    random: yes
+    epsilon: 0.1
+animate:
+  filename: problems/convection.mp4
+  buffer: 10
+  enable: yes
+  movie:
+    interval: 20
+  nr: 2
+  nc: 1
+  plots:
+    T:
+      r: 0
+      c: 0
+      '()': Flox.plot.GridView
+      variable: "Temperature"
+      cmap: "hot"
+    S:
+      r: 1
+      c: 0
+      '()': Flox.plot.ContourView
+      variable: "Stream"
+      cmap: "Greens"
+evolve:
+  class: Flox.nonlinear.NonlinearEvolver
+  iterations: 50
+  time: !quantity '1 yr'
+write:
+  writer: Flox.io.HDF5Writer
+  filename: ~/Documents/convection.hdf5
+  dataname: convection

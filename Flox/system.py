@@ -257,7 +257,7 @@ class System2D(PacketInterface, WriterInterface, HasUnitsProperties):
     def __getstate__(self):
         """Get the state for this object."""
         parameters = {}
-        argnames = self.get_parameter_list()
+        argnames = self.get_parameter_list() + ['it']
         for argname in argnames:
             if argname != "engine":
                 parameters[argname] = getattr(self, argname)
