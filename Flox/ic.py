@@ -32,12 +32,18 @@ class InitialConditioner(object):
     def sin(self, System):
         """Sin perturbations in each mode."""
         if self.params.get('sin.enable', False):
-            kmin, kmax = self.params.get('sin.k',[1,2])
-            lmin, lmax = self.params.get('sin.l',[1,2])
+            if self.params.get('sin.limits', True):
+                kmin, kmax = self.params.get('sin.k',[1,2])
+                ks = range(kmin, kmax)
+                lmin, lmax = self.params.get('sin.l',[1,2])
+                ls = range(lmin, lmax)
+            else:
+                ks = self.params.get('sin.k',[1])
+                ls = self.params.get('sin.l',[1])
             amplitude = self.params.get('sin.epsilon',0.5)
             amp_mode = self.params.get('sin.amplitude','fixed')
-            for k in range(kmin, kmax):
-                for l in range(lmin, lmax):
+            for k in ks:
+                for l in ls:
                     if amp_mode == 'fixed':
                         eps = amplitude
                     if amp_mode == 'random':

@@ -71,6 +71,7 @@ class FloxManager(object):
         else:
             System.read(**self.config.get('write',{}))
         
+        System.it = 0
         if self.opt.movie:
             self.mo_movie(System, debug=self.opt.debug)
         if self.opt.view:
@@ -88,12 +89,12 @@ class FloxManager(object):
     def mo_movie(self, System, debug=False):
         """Create a movie."""
         MVC = MultiViewController.from_config(self.config['animate'].store)
-        MVC.movie(self.config.get('animate.filename','movie.mp4'), System)
+        MVC.movie(self.config.get('animate.filename','movie.mp4'), System, **self.config.get('animate.movie',{}))
     
     def mo_view(self, System, debug=False):
         """Create a movie."""
         MVC = MultiViewController.from_config(self.config['animate'].store)
-        MVC.animate(System)
+        MVC.animate(System, **self.config.get('animate.view',{}))
     
     def mp_evolve(self, System, debug=False):
         """Construct the required processes."""
@@ -153,7 +154,7 @@ class FloxManager(object):
                 ASystem = copy.copy(System)
                 ASystem.engine = "Flox.array.NumpyFrameEngine"
                 MVC = getattr(AM, MultiViewController.__name__)(self.config['animate'].store)
-                MVC.animate(System, AQ, buffer=self.config.get('animate.buffer'), timeout=2)
+                MVC.animate(System, AQ, buffer=self.config.get('animate.buffer',10), timeout=self.config.get('animate.timeout',2), **self.config.get('animate.view',{}))
             
             WS.write(**self.config.get('write',{}))
             

@@ -13,14 +13,17 @@ system:
 ic:
   stable: yes
   sin:
+    limits: no
     enable: yes
-    k: [ 1, 2 ]
+    k: [ 1 ]
     random: yes
     epsilon: 0.1
 animate:
   filename: problems/convection.mp4
   buffer: 10
   enable: yes
+  movie:
+    interval: 20
   nr: 2
   nc: 1
   plots:
