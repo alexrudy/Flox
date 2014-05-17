@@ -8,7 +8,7 @@ system:
   kinematic_viscosity: !quantity '0.001 St'
   nx: 50
   nz: 100
-  nt: 1000
+  nt: 1200
   engine: 'Flox.array.NumpyArrayEngine'
 ic:
   stable: yes
@@ -38,10 +38,10 @@ animate:
       c: 0
       '()': Flox.plot.ContourView
       variable: "Stream"
-      cmap: "Greens"
+      cmap: "PRGn"
 evolve:
   class: Flox.nonlinear.NonlinearEvolver
-  iterations: 50
+  iterations: 500
   time: !quantity '1 yr'
 write:
   writer: Flox.io.HDF5Writer

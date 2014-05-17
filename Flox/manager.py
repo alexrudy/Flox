@@ -33,6 +33,7 @@ class FloxManager(object):
         super(FloxManager, self).__init__()
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument('configfile', type=six.text_type, help="Configuration file name.")
+        self.parser.add_argument('-nt','--snapshots', type=int, default=0, help="Number of snapshots to record at maximum.")
         self.parser.add_argument('-mp','--multiprocess', action='store_true', help="Use only a single process, do no extra work.")
         self.parser.add_argument('-n','--no-evolve',action='store_false', dest='evolve', help="Dry run, don't actually evolve.")
         self.parser.add_argument('-d', '--debug', action='store_true', help='Enable logging and debug mode.')
@@ -43,6 +44,8 @@ class FloxManager(object):
     def load_configuration(self):
         """Load the configuration for this module."""
         self.config = FloxConfiguration.fromfile(self.opt.configfile)
+        if getattr(self.opt, 'snapshots', 0) > 0:
+            self.config['evolve.nt'] = self.opt.snapshots
         
     def run(self):
         """Run this management object."""
@@ -57,13 +60,15 @@ class FloxManager(object):
         System = System_Class.from_params(System_config)
         
         if self.opt.restart:
+            print("Restarting")
             System.read(**self.config.get('write',{}))
             print(System)
-            print(System.it)
         else:
+            print("Initializing")
             # Build the initial conditions
             ICs = InitialConditioner(self.config['ic'])
             ICs.run(System)
+            print(System)
         
         if self.opt.evolve:
             if not self.opt.multiprocess:

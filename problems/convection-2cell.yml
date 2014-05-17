@@ -8,7 +8,7 @@ system:
   kinematic_viscosity: !quantity '0.001 St'
   nx: 50
   nz: 100
-  nt: 100
+  nt: 1200
   engine: 'Flox.array.NumpyArrayEngine'
 ic:
   stable: yes
@@ -17,9 +17,9 @@ ic:
     enable: yes
     k: [ 1, 8 ]
     random: yes
-    epsilon: 0.1
+    epsilon: 0.01
 animate:
-  filename: problems/convection.mp4
+  filename: problems/convection-2cell.mp4
   buffer: 10
   enable: yes
   movie:
@@ -38,12 +38,12 @@ animate:
       c: 0
       '()': Flox.plot.ContourView
       variable: "Stream"
-      cmap: "Greens"
+      cmap: "PRGn"
 evolve:
   class: Flox.nonlinear.NonlinearEvolver
   iterations: 50
   time: !quantity '1 yr'
 write:
   writer: Flox.io.HDF5Writer
-  filename: ~/Documents/convection.hdf5
+  filename: ~/Documents/convection-2cell.hdf5
   dataname: convection

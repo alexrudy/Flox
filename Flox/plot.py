@@ -16,6 +16,7 @@ import six
 from matplotlib.gridspec import GridSpec
 import numpy as np
 import queue
+import warnings
 
 from astropy.utils.console import ProgressBar
 from matplotlib import animation
@@ -94,10 +95,11 @@ class MultiViewController(object):
         matplotlib.rcParams['text.usetex'] = False
         
         out = None if progress else io.StringIO()
-        
-        with ProgressBar(system.nt, file=out) as progressbar:
-            anim = self.get_animation(system, queue, progressbar, **kwargs)
-            plt.show()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with ProgressBar(system.nt, file=out) as progressbar:
+                anim = self.get_animation(system, queue, progressbar, **kwargs)
+                plt.show()
             
         
     def movie(self, filename, system, queue=None, progress=True, save_kwargs=dict(), **kwargs):
@@ -109,9 +111,11 @@ class MultiViewController(object):
         matplotlib.rcParams['text.usetex'] = False
         
         out = None if progress else io.StringIO()
-        with ProgressBar(system.nt, file=out) as PBar:
-            anim = self.get_animation(system, queue, PBar, buffer=0, **kwargs)
-            anim.save(filename, **save_kwargs)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with ProgressBar(system.nt, file=out) as PBar:
+                anim = self.get_animation(system, queue, PBar, buffer=0, **kwargs)
+                anim.save(filename, **save_kwargs)
 
 @six.add_metaclass(abc.ABCMeta)
 class View(object):
@@ -155,7 +159,7 @@ class GridView(View):
         self.image = self.ax.imshow(self.data(system), **self.im_kwargs)
         self.ax.figure.colorbar(self.image, ax=self.ax)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
-        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit), transform=self.ax.transAxes)
+        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nt), transform=self.ax.transAxes)
         
     def update(self, system):
         """Update the view"""
@@ -185,7 +189,7 @@ class ContourView(GridView):
             self.image = self.ax.contour(self.data(system), **self.im_kwargs)
             self.cb = self.ax.figure.colorbar(self.image, ax=self.ax)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
-        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit), transform=self.ax.transAxes)
+        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nt), transform=self.ax.transAxes)
         self.initialized = True
         
     def update(self, system):
@@ -205,7 +209,7 @@ class ContourView(GridView):
             else:
                 self.cb = self.ax.figure.colorbar(self.image, ax=self.ax)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
-        self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
+        self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nt))
     
 
 class ProfileView(View):
