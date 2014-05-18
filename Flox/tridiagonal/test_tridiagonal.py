@@ -11,113 +11,123 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 import numpy as np
-from astropy.utils.misc import NumpyRNGContext
+import numpy.random
+import pytest
 
-def assemble_tridiagonal_matrix(n, eps=1e-2, seed=5):
+def assemble_tridiagonal_matrix(n, eps=1e-2, mag=1, func=np.ones):
     """Assemble a tridiagonal matrix."""
-    with NumpyRNGContext(seed):
-        from numpy import random
-        
-        dia = np.diag(random.randn(n))
-        sup = eps * np.diag(random.randn(n-1),-1)
-        sub = eps * np.diag(random.randn(n-1),1)
-    return np.matrix(dia + sup + sub)
+    # from numpy import random
+    # dia = mag * random.randn(n)
+    # _sup = eps * mag * random.randn(n-1)
+    # _sub = eps * mag * random.randn(n-1)
+    dia = mag * func(n)
+    _sup = eps * mag * func(n-1)
+    _sub = eps * mag * func(n-1)
+    sup = np.zeros_like(dia)
+    sup[:-1] = _sup
+    sub = np.zeros_like(dia)
+    sub[1:] = _sub
+    dia += sup + sub
+    mat = np.matrix(np.diag(dia) + np.diag(_sup,-1) + np.diag(_sub,1))
+    return mat, sub, dia, sup
     
-def assemble_solution_matrix(n, seed=5):
+def assemble_solution_matrix(n, mag=1, func=np.ones):
     """Assemble a solution matrix"""
-    
-    with NumpyRNGContext(seed):
-        from numpy import random
-        
-        sol = random.randn(n)
-        
+    sol = mag * func(n)
     return np.matrix(sol).T
     
-def test_tridiagonal_solve():
-    """Tridiagonal solver basic"""
-    from . import tridiagonal_from_matrix
-    seed = 5
-    n = int(1e2)
-    eps = 1e-1
-    
-    mat = assemble_tridiagonal_matrix(n, eps, seed=seed)
-    sol = assemble_solution_matrix(n, seed=seed)
-    
-    rhs = np.array(mat * sol)[:,0]
-    solar = np.array(sol)[:,0]
-    res = np.array(np.zeros_like(sol))[:,0]
-    
-    status = tridiagonal_from_matrix(n, rhs, res, mat)
-    assert np.allclose(res, solar)
-    
 
-def test_tridiagonal_solve_linear():
-    """Tridiagonal solver linear"""
-    from . import tridiagonal_from_matrix
-    seed = 5
-    n = int(1e2)
-    eps = 1e-1
-    with NumpyRNGContext(seed):
-        from numpy import random
-        factor = random.randn()
+@pytest.fixture(params=[
+    (int(5), 1e-1, 1.0, lambda n : np.ones(n)),
+    (int(5), 1e-1, 1.0, lambda n : np.arange(n) + 1),
+    (int(5), 1e-1, 1.0, lambda n : np.arange(n)[::-1] + 1),
+    (int(5), 1e-1, 1.0, lambda n : np.linspace(1,2,n)[::-1]),
+    (int(5), 1e-1, 1.0, lambda n : np.hstack((np.linspace(1,3,n//2)[::-1],np.linspace(-1,2,n-n//2)))),
+    (int(5), 0.0, 1.0, lambda n : np.random.randn(n) + 10),
+    pytest.mark.xfail((int(3), 0.1, 1.0, lambda n : np.random.rand(n) + 10)),
+    ])
+def tridiagonal_group(request):
+    """Create a tridiagonal group."""
+    n, eps, mag, func = request.param
+    mat, sub, dia, sup = assemble_tridiagonal_matrix(n, eps, mag, func)
+    sol = assemble_solution_matrix(n, mag, func)
+    rhs = np.array(mat * sol)[:,0]
+    sol = np.array(sol)[:,0]
+    return (mat, sub, dia, sup, sol, rhs)
+    
+@pytest.fixture
+def boundary_tridiagonal_group(tridiagonal_group):
+    """Set up a tridiagonal group with boundaries."""
+    (_mat, sub, dia, sup, _sol, _rhs) = tridiagonal_group
+    n = dia.shape[0]
     
     mat = np.matrix(np.zeros((n+2, n+2)))
-    mat[1:-1,1:-1] = assemble_tridiagonal_matrix(n, eps, seed=seed)
+    mat[1:-1,1:-1] = _mat
+    mat[0,0] = 1.0
+    mat[-1,-1] = 1.0
     sol = np.matrix(np.zeros((n+2))).T
-    sol[1:-1] = assemble_solution_matrix(n, seed=seed)
-    
+    sol[1:-1] = _sol[:,np.newaxis]
     rhs = np.array(mat * sol)[:,0]
-    solar = np.array(sol)[:,0]
-    res = np.array(np.zeros_like(sol))[:,0]
-
-    status = tridiagonal_from_matrix(n, factor*rhs, res, factor*mat)
+    sol = np.array(sol)
+    
+    return (mat, sub, dia, sup, sol, rhs)
+    
+def test_tridiagonal_solve(tridiagonal_group):
+    """Tridiagonal solver basic"""
+    from ._tridiagonal import tridiagonal_do_work, tridiagonal_from_work
+    mat, sub, dia, sup, sol, rhs = tridiagonal_group
+    wk1 = np.zeros_like(sol)
+    wk2 = np.zeros_like(sol)
+    res = np.zeros_like(sol)
+    assert not tridiagonal_do_work(rhs.shape[0], sub, dia, sup, wk1, wk2)
+    assert not tridiagonal_from_work(rhs.shape[0], rhs, res, wk1, wk2, sub)
+    assert np.allclose(res, sol)
+    
+@pytest.mark.xfail
+def test_tridiagonal_solve_linear(boundary_tridiagonal_group):
+    """Tridiagonal solver linear"""
+    from . import tridiagonal_from_matrix
+    (mat, sub, dia, sup, sol, rhs) = boundary_tridiagonal_group
+    factor = random.randn()
+    
+    assert not tridiagonal_from_matrix(n+2, factor*rhs, res, factor*mat)
     assert np.allclose(res, solar)
     
-def test_tridiagonal_object():
+@pytest.mark.xfail
+def test_tridiagonalsolver(boundary_tridiagonal_group):
     """TridiagonalSolver"""
     from . import TridiagonalSolver, tridiagonal_split_matrix
-    seed = 5
-    nz = 101
-    nx = 50
-    eps = 1e-2
+    (mat, sub, dia, sup, sol, rhs) = boundary_tridiagonal_group
     
-    mat = np.matrix(np.zeros((nz+2, nz+2)))
-    mat[1:-1,1:-1] = assemble_tridiagonal_matrix(nz, eps, seed=seed)
-    
-    sol = np.matrix(np.zeros((nz+2))).T
-    sol[1:-1] = assemble_solution_matrix(nz, seed=seed)
-    
-    rhs = np.empty((nz, nx))
-    solar = np.empty((nz, nx))
-    res = np.zeros((nz, nx))
-    matar = np.empty((nz, nz, nx))
-    
-    sub = np.empty((nz, nx))
-    dia = np.empty((nz, nx))
-    sup = np.empty((nz, nx))
+    nz = dia.shape[0]
+    nx = 10
+    rhsar = np.zeros((nz, nx))
+    matar = np.zeros((nz, nz, nx))
+    solar = np.zeros((nz, nx))
+    resar = np.zeros((nz, nx))
     
     assert mat.shape == (nz+2, nz+2)
     assert sol.shape == (nz+2, 1)
-    assert np.array(mat * sol).shape == (nz+2,1)
+    assert np.array(mat * sol).shape == (nz+2, 1)
     
-    rhs[...] = np.array(mat * sol)[1:-1,0,np.newaxis] * (np.arange(nx)[np.newaxis,:] + 1.0)
-    solar[...] = np.array(sol)[1:-1,0,np.newaxis] #(np.arange(nx)[np.newaxis,:] + 1.0)
+    rhsar[...] = np.array(mat * sol)[1:-1,0,np.newaxis] * (np.arange(nx)[np.newaxis,:] + 1.0)
+    solar[...] = np.array(sol)[1:-1,0,np.newaxis] * (np.arange(nx)[np.newaxis,:] + 1.0)
     matar[...] = (np.arange(nx)[np.newaxis,:] + 1.0) * np.array(mat)[1:-1,1:-1,np.newaxis]
     
     # Test some basics before we start.
     assert matar.shape == (nz, nz, nx)
-    assert rhs.shape == (nz, nx)
+    assert rhsar.shape == (nz, nx)
     assert solar.shape == (nz, nx)
     
     TS = TridiagonalSolver(nz, nx)
      
     assert not TS.matrix(matar)
-    assert not TS.solve(rhs, res)
-    assert np.isfinite(rhs).all()
-    assert np.isfinite(res).all()
+    assert not TS.solve(rhsar, resar)
+    assert np.isfinite(rhsar).all()
+    assert np.isfinite(resar).all()
     
-    assert np.allclose(res, solar)
+    assert np.allclose(resar, solar)
     
     
-    TS.solve(5 * rhs, res)
-    assert np.allclose(res, 5 * solar)
+    TS.solve(5 * rhsar, resar)
+    assert np.allclose(resar, 5 * solar)

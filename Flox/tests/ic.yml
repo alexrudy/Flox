@@ -1,0 +1,8 @@
+ic:
+  stable: yes
+  sin:
+    amplitude: fixed
+    limits: no
+    enable: yes
+    k: [ 1 ]
+    epsilon: 0.01

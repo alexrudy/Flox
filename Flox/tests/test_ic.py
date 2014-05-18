@@ -9,6 +9,12 @@
 
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
+import pytest
+
+@pytest.fixture
+def initial_conditions():
+    """Return a configured initial conditions object."""
+    pass
 
 def test_stable_temp():
     """Determine that the temperature is stable initially."""

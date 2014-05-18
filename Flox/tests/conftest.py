@@ -14,6 +14,7 @@ import pytest
 import numpy as np
 
 from .functional_forms import d_polynomial, d_fourier, FunctionalForm
+from .test_system import system_from_args, system_args, system_classes
 
 @pytest.fixture(params=[
     ("Polynomial", 20, 1.0, d_polynomial, (3.0,)),
@@ -29,3 +30,18 @@ from .functional_forms import d_polynomial, d_fourier, FunctionalForm
 def functional_form(request):
     """Return a functional form evaluated."""
     return FunctionalForm(*request.param)
+
+@pytest.fixture(params=system_classes)
+def system_class(request):
+    """Return a system class."""
+    return request.param
+
+@pytest.fixture(params=[
+    dict(nx=10, nz=10),
+    dict(nx=100, nz=100),
+])
+def system(request, system_class):
+    """Return a system, setup."""
+    system_class, this_args = system_class
+    this_args.update(system_args)
+    return system_from_args(system_class, this_args, request.param)

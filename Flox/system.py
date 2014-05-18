@@ -166,6 +166,11 @@ class System2D(PacketInterface, WriterInterface, HasUnitsProperties):
         """Get a list of the parameters which can be changed/modified directly"""
         return ['nz', 'nx', 'nt', 'engine']
         
+    @classmethod
+    def get_attribute_list(cls):
+        """Return a full list of attributes, abstract and not."""
+        return set(cls._list_attributes(UnitsProperty)) - set(cls._list_attributes(ArrayProperty))
+        
     def get_packet_list(self):
         """Return the packet list."""
         return self._list_attributes(ArrayProperty)
@@ -289,7 +294,6 @@ class System2D(PacketInterface, WriterInterface, HasUnitsProperties):
         except Exception as e:
             self.it -= 1
             raise e
-        
         
     def check_array(self, value, name):
         """Check an array's value."""
