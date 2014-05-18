@@ -33,3 +33,5 @@ problems/*.mp4
 html/*
 
 multiprocessing/*.hdf5
+
+movies/*
