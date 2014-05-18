@@ -71,16 +71,3 @@ def single_mode_perturbation(System, k, l=1, eps=1):
     """Single mode perturbation."""
     System.Temperature[:,k] = eps * np.sin(l * np.pi * z_array(System))
 
-def single_mode_linear_perturbation(System, mode=1, eps=1):
-    """Make a standard mode for this perturbation."""
-    System.Temperature[:,mode] = eps * np.sin(np.pi * z_array(System))
-
-def standard_linear_perturbation(System):
-    """Apply the standard linear perturbation from Ch. 3"""
-    System.Temperature[:,1:] = np.sin(np.pi * z_array(System))[:,np.newaxis]
-    
-
-def standard_nonlinear_perturbation(System, eps=1e-2):
-    """Apply the standard nonlinear perturbation from Ch. 4"""
-    import numpy.random
-    System.Temperature[:,1:-1] = eps * 2 * (np.random.rand(System.nx - 2)[np.newaxis,:] - 0.5) * np.sin(np.pi * z_array(System))[:,np.newaxis]
