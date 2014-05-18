@@ -14,6 +14,7 @@ import six
 import copy
 import numpy as np
 import numpy.random
+import os
 
 import multiprocessing.managers as mm
 import multiprocessing as mp
@@ -25,6 +26,7 @@ from .input import FloxConfiguration
 from .process.manager import AsynchronousManager
 from .process.evolver import EvolverManager
 from .plot import MultiViewController
+from ._threads import omp_set_num_threads, omp_get_num_threads
 
 
 class FloxManager(object):
@@ -40,12 +42,15 @@ class FloxManager(object):
         self.parser.add_argument('--movie', action='store_true', help="Create a movie at the end.")
         self.parser.add_argument('--view', action='store_true', help="View a saved simulation")
         self.parser.add_argument('--restart', action='store_true', help="Restart the simulation from a partial simulation elsewhere.")
+        self.parser.add_argument('--nthreads', dest='num_threads', type=int, help="Number of threads for OpenMP.", default=1)
         
     def load_configuration(self):
         """Load the configuration for this module."""
         self.config = FloxConfiguration.fromfile(self.opt.configfile)
         if getattr(self.opt, 'snapshots', 0) > 0:
             self.config['evolve.nt'] = self.opt.snapshots
+            
+        omp_set_num_threads(self.opt.num_threads)
         
     def run(self):
         """Run this management object."""
@@ -71,17 +76,21 @@ class FloxManager(object):
             print(System)
         
         if self.opt.evolve:
+            print("Evolving")
             if not self.opt.multiprocess:
                 self.mo_evolve(System, debug=self.opt.debug)
             else:
                 self.mp_evolve(System, debug=self.opt.debug)
         else:
+            print("Reading")
             System.read(**self.config.get('write',{}))
         
         System.it = 0
         if self.opt.movie:
+            print("Making Movie")
             self.mo_movie(System, debug=self.opt.debug)
         if self.opt.view:
+            print("Viewing")
             self.mo_view(System, debug=self.opt.debug)
     
     def mo_evolve(self, System, debug=False):
@@ -89,7 +98,7 @@ class FloxManager(object):
         
         # Set up the evolver object.
         evolver = resolve(self.config['evolve.class'])
-        EV = evolver.from_system(System)
+        EV = evolver.from_system(System, self.config.get('evolve.saftey', 0.1))
         EV.evolve_system(System, self.config['evolve.time'], chunks=int(self.config.get('evolve.nt',System.nt-System.nit-2)), chunksize=int(self.config.get('evolve.iterations',1)))
         System.write(**self.config.get('write',{}))
     

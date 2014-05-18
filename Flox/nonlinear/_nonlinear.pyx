@@ -19,6 +19,7 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from cpython.array cimport array, clone
+from cython.parallel cimport prange
 
 from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D
@@ -43,7 +44,7 @@ cdef class TemperatureSolver(Solver):
         r = temperature(self.nz, self.nx, self.G_curr, self.V_curr, P_curr, dz, npa, self.V_p, self.V_m)
         # Now we do the non-linear terms from equation 4.6
         
-        for j in range(self.nz):
+        for j in prange(self.nz, nogil=True):
             
             for k in range(self.nx):
                 # n=0 special case.
@@ -75,25 +76,25 @@ cdef class VorticitySolver(Solver):
     
     cpdef int compute(self, DTYPE_t[:,:] T_curr, DTYPE_t[:,:] P_curr, DTYPE_t[:,:] dPdz, DTYPE_t dz, DTYPE_t a, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra):
         
-        cdef int r, j, k, kp, kpp
+        cdef int r, j, k, kp, kpp, nz = self.nz, nx = self.nx
         cdef DTYPE_t p2a = pi / (2.0 * a), term
         
         r = vorticity(self.nz, self.nx, self.G_curr, self.V_curr, T_curr, dz, npa, Pr, Ra, self.V_p, self.V_m)
         
-        for j in range(self.nz):
-            for k in range(self.nx):
-                for kp in range(1, self.nx):
+        for j in prange(nz, nogil=True):
+            for k in range(nx):
+                for kp in range(1, nx):
                     # 1st term, 1st delta
                     kpp = k - kp
-                    if 0 < kpp < self.nx:
+                    if 0 < kpp < nx:
                         self.G_curr[j, k] += -1.0 * p2a * (-1.0 * kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
                     # 2nd term, 1st delta
                     kpp = kp + k
-                    if 0 < kpp < self.nx:
+                    if 0 < kpp < nx:
                         self.G_curr[j, k] += -1.0 * p2a * ( -1.0 * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp]))
                     # 2nd term, 2nd delta
                     kpp = kp - k
-                    if 0 < kpp < self.nx:
+                    if 0 < kpp < nx:
                         self.G_curr[j, k] += -1.0 * p2a * (kp * dPdz[j, kpp] * self.V_curr[j, kp] + kpp * P_curr[j, kpp] * self.dVdz[j, kp])
         return r
     

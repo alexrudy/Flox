@@ -9,15 +9,15 @@
 from Flox._flox cimport DTYPE_t
 from Flox._solve cimport Solver
 
-cpdef int tridiagonal_split_matrix(int J, DTYPE_t[:,:] mat, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup)
+cpdef int tridiagonal_split_matrix(int J, DTYPE_t[:,:] mat, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup) nogil
 
 cpdef int tridiagonal_from_matrix(int J, DTYPE_t[:] rhs, DTYPE_t[:] sol, DTYPE_t[:,:] mat)
 
 cpdef int tridiagonal_solver(int J, DTYPE_t[:] rhs, DTYPE_t[:] sol, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup)
 
-cpdef int tridiagonal_do_work(int J, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup, DTYPE_t[:] wk1, DTYPE_t[:] wk2)
+cpdef int tridiagonal_do_work(int J, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup, DTYPE_t[:] wk1, DTYPE_t[:] wk2) nogil
 
-cpdef int tridiagonal_from_work(int J, DTYPE_t[:] rhs, DTYPE_t[:] sol, DTYPE_t[:] wk1, DTYPE_t[:] wk2, DTYPE_t[:] sub)
+cpdef int tridiagonal_from_work(int J, DTYPE_t[:] rhs, DTYPE_t[:] sol, DTYPE_t[:] wk1, DTYPE_t[:] wk2, DTYPE_t[:] sub) nogil
 
 cdef class TridiagonalSolver(Solver):
     cdef readonly DTYPE_t[:,:] sub

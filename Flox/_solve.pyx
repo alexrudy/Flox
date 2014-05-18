@@ -36,7 +36,7 @@ cdef class Solver:
         self.V_p = np.zeros((nx,), dtype=np.float)
         self.V_m = np.zeros((nx,), dtype=np.float)
         
-    cpdef int prepare(self, DTYPE_t dz):
+    cpdef int prepare(self, DTYPE_t dz) except -1:
         
         self.dVdz[...] = 0.0
         

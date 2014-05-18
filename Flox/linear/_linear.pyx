@@ -18,13 +18,14 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from cpython.array cimport array, clone
+from cython.parallel cimport prange
 
 from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D
 from Flox._solve cimport Solver, Evolver
 from Flox.tridiagonal._tridiagonal cimport TridiagonalSolver
 
-cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t[:,:] P_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t[:] f_p, DTYPE_t[:] f_m):
+cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t[:,:] P_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t[:] f_p, DTYPE_t[:] f_m) nogil:
     
     cdef int j, k
     cdef DTYPE_t npa_s
@@ -60,7 +61,7 @@ cdef class TemperatureSolver(Solver):
         
         return r
 
-cpdef int vorticity(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t[:] f_p, DTYPE_t[:] f_m):
+cpdef int vorticity(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t[:] f_p, DTYPE_t[:] f_m) nogil:
     
     cdef int j, k
     

@@ -7,6 +7,8 @@
 #  Copyright 2014 Alexander Rudy. All rights reserved.
 # 
 
+import os
+
 from setuptools import find_packages, setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
@@ -14,18 +16,24 @@ from Cython.Build import cythonize
 
 import numpy as np
 
+os.environ["CC"] = "gcc"
+
 extension_include_dirs = [ np.get_include(), './Flox/']
+extension_kwargs = dict(extra_compile_args=['-fopenmp'],
+    extra_link_args=['-fopenmp'], include_dirs=extension_include_dirs)
 extensions = [
+    Extension("*", ["Flox/_threads.pyx"],
+        **extension_kwargs),
     Extension("*", ["Flox/_solve.pyx"],
-        include_dirs = extension_include_dirs,),
+        **extension_kwargs),
     Extension("*", ["Flox/finitedifference.pyx"],
-        include_dirs = extension_include_dirs,),
+        **extension_kwargs),
     Extension("*", ["Flox/tridiagonal/*.pyx"],
-        include_dirs = extension_include_dirs,),
+        **extension_kwargs),
     Extension("*", ["Flox/linear/*.pyx"],
-        include_dirs = extension_include_dirs,),
+        **extension_kwargs),
     Extension("*", ["Flox/nonlinear/*.pyx"],
-        include_dirs = extension_include_dirs,),
+        **extension_kwargs),
         ]
 
 DEPENDENCIES = [
