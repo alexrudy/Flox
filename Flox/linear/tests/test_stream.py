@@ -11,7 +11,6 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 import numpy as np
-import nose.tools as nt
 from .system import PolynomialSystem, ConstantSystem, FourierSystem
 from ...tests.test_finitedifference import w_2d_second_derivative
 

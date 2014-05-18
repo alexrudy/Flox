@@ -10,7 +10,6 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 import numpy as np
-import nose.tools as nt
 from .system import PolynomialSystem, FourierSystem
 
 def get_system():

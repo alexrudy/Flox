@@ -10,12 +10,9 @@
 
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
-import nose.tools as nt
-from nose.plugins.attrib import attr
 import numpy as np
 from astropy.utils.misc import NumpyRNGContext
 
-@nt.nottest
 def assemble_tridiagonal_matrix(n, eps=1e-2, seed=5):
     """Assemble a tridiagonal matrix."""
     with NumpyRNGContext(seed):

@@ -40,7 +40,7 @@ class AnalyticalSystem(object):
         
     def grids(self):
         """Make the grids"""
-        n, z = np.meshgrid(np.arange(self.nx), np.linspace(0, (self.nz) * self.dz, self.nz))
+        n, z = np.meshgrid(np.arange(self.nx), np.linspace(0, (self.nz-1) * self.dz, self.nz))
         return n, z
         
     @property

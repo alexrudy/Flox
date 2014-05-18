@@ -10,7 +10,6 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 import numpy as np
-import nose.tools as nt
 
 def w_second_derivative(f, dz, f_p, f_m, factor=1.0):
     """Second derivative warpper."""
