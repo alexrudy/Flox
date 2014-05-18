@@ -58,5 +58,5 @@ system_units = {
 def test_system_quantities(system):
     """Check for quantities."""
     for attribute in system.get_attribute_list():
-        check_system(system, attribute, system_units[attribute])
+        check_quantity(system, attribute, system_units[attribute])
     
