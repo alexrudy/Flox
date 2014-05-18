@@ -19,6 +19,8 @@ import six
 import abc
 from six.moves import reduce
 
+from Flox.tests.functional_forms import d_polynomial
+
 def _second_derivative(f, f_p, f_m, dz):
     """Second derivative handler"""
     from Flox.finitedifference import second_derivative2D
@@ -165,54 +167,41 @@ class AnalyticalSystem(object):
 class PolynomialSystem(AnalyticalSystem):
     """A polynomial based, analytically solved system."""
     
-    def _polynomial(self, data, *args):
-        """A polynomial evaluator."""
-        return self._d_poloynomial(0, data, *args)
-        
-    def _d_poloynomial(self, n_d, data, *args):
-        """2nd Derivative of a polynomial"""
-        ans = np.zeros_like(data)
-        for power, coeff in enumerate(args):
-            if power >= n_d:
-                p_coeff = reduce(lambda x,y : x*y, [ power - i for i in range(n_d) ], 1)
-                ans += coeff * np.power(data, power - n_d)
-        return ans
-    
     _T = (0, 0, 1, 2)
     
     @property
     def Temperature(self):
         """Return the analytic temperature."""
-        return self._polynomial(self.z, *self._T)
+        return d_polynomial(0, self.z, *self._T)
         
     @property
     def b_Temperature(self):
         z = np.array([self.zm, self.zp])
-        return self._polynomial(z, *self._T)
+        return d_polynomial(0, z, *self._T)
         
     _V = (0, 3, 1, 8)
         
     @property
     def Vorticity(self):
         """Return the analytic Vorticity."""
-        return self._polynomial(self.z, *self._V)
+        return d_polynomial(0, self.z, *self._V)
                 
     @property
     def b_Vorticity(self):
         z = np.array([self.zm, self.zp])
-        return self._polynomial(z, *self._V)
+        return d_polynomial(0, z, *self._V)
         
     _S = (0, -2, 0, 1)
         
     @property
     def Stream(self):
         """Return the analytic Stream."""
-        return self._polynomial(self.z, *self._S)
+        return d_polynomial(0, self.z, *self._S)
         
     @property
     def b_Stream(self):
         z = np.array([self.zm, self.zp])
-        return self._polynomial(z, *self._S)
+        return d_polynomial(0, z, *self._S)
     
 class ConstantSystem(AnalyticalSystem):
     """A polynomial based, analytically solved system."""

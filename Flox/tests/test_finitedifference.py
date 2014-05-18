@@ -10,79 +10,82 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 import numpy as np
+import numpy.random
 
-def w_second_derivative(f, dz, f_p, f_m, factor=1.0):
+def _check_2D_bounds(K, *args):
+    """Check 2-dimesnional bounds."""
+    r = []
+    for f in args:
+        if np.asarray(f).ndim < 1:
+            r.append(np.array([f]*K))
+        else:
+            r.append(f)
+    return tuple(r)
+
+def second_derivative(f, dz, f_p, f_m, factor=1.0):
     """Second derivative warpper."""
-    from ..finitedifference import second_derivative
+    from ..finitedifference import second_derivative as _second_derivative
     ddf = np.zeros_like(f)
     J = f.shape[0]
-    rval = second_derivative(J, ddf, f, dz, f_p, f_m, factor)
+    assert not _second_derivative(J, ddf, f, dz, f_p, f_m, factor)
     return ddf
     
-def w_2d_second_derivative(f, dz, f_p, f_m, factor=1.0):
+def second_derivative_2D(f, dz, f_p, f_m, factor=1.0):
     """Second derivative warpper."""
-    from ..finitedifference import second_derivative2D
+    from ..finitedifference import second_derivative2D as _second_derivative2D
     ddf = np.zeros_like(f)
     J = f.shape[0]
     K = f.shape[1]
-    rval = second_derivative2D(J, K, ddf, f, dz, np.array([f_p]*K), np.array([f_m]*K), factor)
+    
+    f_p, f_m = _check_2D_bounds(K, f_p, f_m)
+    
+    assert not _second_derivative2D(J, K, ddf, f, dz, f_p, f_m, factor)
     return ddf
     
-def w_2d_first_derivative(f, dz, f_p, f_m, factor=1.0):
+def first_derivative_2D(f, dz, f_p, f_m, factor=1.0):
     """Second derivative warpper."""
-    from ..finitedifference import first_derivative2D
+    from ..finitedifference import first_derivative2D as _first_derivative2D
     df = np.zeros_like(f)
     J = f.shape[0]
     K = f.shape[1]
-    rval = first_derivative2D(J, K, df, f, dz, np.array([f_p]*K), np.array([f_m]*K), factor)
+    
+    f_p, f_m = _check_2D_bounds(K, f_p, f_m)
+    
+    assert not _first_derivative2D(J, K, df, f, dz, f_p, f_m, factor)
     return df
+    
+def first_derivative(f, dz, f_p, f_m, factor=1.0):
+    """Second derivative warpper."""
+    from ..finitedifference import first_derivative as _first_derivative
+    ddf = np.zeros_like(f)
+    J = f.shape[0]
+    assert not _first_derivative(J, ddf, f, dz, f_p, f_m, factor)
+    return ddf
 
-def test_simple_secondderivative():
-    """Simple second derivative"""
-    n = 10
-    dz = 0.1
-    factor = 1.0
-    z = np.arange(-n/2 * dz, n/2 * dz, dz)
-    f = z**3 + 2 * z**2
-    z_m = np.min(z) - dz
-    z_p = np.max(z) + dz
-    f_m = z_m**3 + 2 * z_m**2
-    f_p = z_p**3 + 2 * z_p**2
-    ddf_sol = 6 * z + 4
-    ddf = w_second_derivative(f, dz, f_p, f_m, factor) / factor
-    assert np.allclose(ddf_sol, ddf)
+def test_secondderivative(functional_form):
+    """Second derivative"""
+    functional_form.ndim = 1
+    factor = np.random.randn(1)
+    ddfx = second_derivative(functional_form.fx, functional_form.dx, functional_form.f_p, functional_form.f_m, factor) / factor
+    assert np.allclose(functional_form.ddfx, ddfx)
     
-    
-def test_2d_secondderivative():
+def test_secondderivative_2D(functional_form):
     """2D second derivative"""
-    n = 10
-    nx = 3
-    dz = 1.0
-    factor = 1.0
+    functional_form.ndim = 2
+    factor = np.random.randn(1)
+    ddfx = second_derivative_2D(functional_form.fx, functional_form.dx, functional_form.f_p, functional_form.f_m, factor) / factor
+    assert np.allclose(functional_form.ddfx, ddfx)
     
-    x, z = np.meshgrid(np.arange(nx), np.linspace(-n/2 * dz, n/2 * dz, n+1))
-    f = z**3 + 2 * z**2
-    z_m = np.min(z) - dz
-    z_p = np.max(z) + dz
-    f_m = z_m**3 + 2 * z_m**2
-    f_p = z_p**3 + 2 * z_p**2
-    ddf_sol = 6 * z + 4
-    ddf = w_2d_second_derivative(f, dz, f_p, f_m, factor) / factor
-    assert np.allclose(ddf_sol, ddf)
+def test_firstderivative(functional_form):
+    """Second derivative"""
+    functional_form.ndim = 1
+    factor = np.random.randn(1)
+    dfx = first_derivative(functional_form.fx, functional_form.dx, functional_form.f_p, functional_form.f_m, factor) / factor
+    assert np.allclose(functional_form.dfx, dfx)
     
-def test_2d_firstderivative():
-    """2D first derivative"""
-    n = 10
-    nx = 3
-    dz = 1.0
-    factor = 1.0
-    
-    x, z = np.meshgrid(np.arange(nx), np.linspace(-n/2 * dz, n/2 * dz, n+1))
-    f = z**2 + 2
-    z_m = np.min(z) - dz
-    z_p = np.max(z) + dz
-    f_m = z_m**2 + 2
-    f_p = z_p**2 + 2
-    ddf_sol = 2 * z
-    ddf = w_2d_first_derivative(f, dz, f_p, f_m, factor) / factor
-    assert np.allclose(ddf_sol, ddf)
+def test_firstderivative_2D(functional_form):
+    """2D second derivative"""
+    functional_form.ndim = 2
+    factor = np.random.randn(1)
+    dfx = first_derivative_2D(functional_form.fx, functional_form.dx, functional_form.f_p, functional_form.f_m, factor) / factor
+    assert np.allclose(functional_form.dfx, dfx)

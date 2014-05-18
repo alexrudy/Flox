@@ -14,3 +14,5 @@ cpdef int second_derivative2D(int J, int K, DTYPE_t[:,:] ddf, DTYPE_t[:,:] f, DT
 cpdef int first_derivative2D(int J, int K, DTYPE_t[:,:] df, DTYPE_t[:,:] f, DTYPE_t dz, DTYPE_t[:] f_p, DTYPE_t[:] f_m, DTYPE_t factor) nogil
 
 cpdef int second_derivative(int J, DTYPE_t[:] ddf, DTYPE_t[:] f, DTYPE_t dz, DTYPE_t f_p, DTYPE_t f_m, DTYPE_t factor) nogil
+
+cpdef int first_derivative(int J, DTYPE_t[:] df, DTYPE_t[:] f, DTYPE_t dz, DTYPE_t f_p, DTYPE_t f_m, DTYPE_t factor) nogil

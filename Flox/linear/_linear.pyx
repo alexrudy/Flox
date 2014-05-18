@@ -9,7 +9,7 @@
 
 #cython: overflowcheck=True
 #cython: wraparound=False
-#cython: boundscheck=True
+#cython: boundscheck=False
 #cython: cdivision=True
 
 from __future__ import division
