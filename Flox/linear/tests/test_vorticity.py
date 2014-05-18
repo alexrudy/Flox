@@ -10,56 +10,37 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 import numpy as np
-from .system import PolynomialSystem, FourierSystem
 
-def get_system():
-    """Get the required system for this test."""
-    return FourierSystem(
-        dz = 0.8,
-        dt = 0.4,
-        a = 0.25,
-        nx = 2,
-        nz = 6,
-        Ra = 10.0,
-        Pr = 5.0,
-    )
-
-def w_dvorticity(System):
+def vorticity_linearterms(system):
     """Derivative of vorticity solver."""
     from .._linear import vorticity
-    dV = np.zeros_like(System.Vorticity)
-    fp = np.zeros(System.nx, np.float)
-    fm = np.zeros(System.nx, np.float)
-    rv = vorticity(System.nz, System.nx, dV, System.Vorticity, System.Temperature, System.dz, System.npa[0,:], System.Pr, System.Ra, fp, fm)
+    dV = np.zeros_like(system.Vorticity)
+    f_m, f_p = system.b_Vorticity
+    rv = vorticity(system.nz, system.nx, dV, system.Vorticity, system.Temperature, system.dz, system.npa[0,:], system.Pr, system.Ra, f_p, f_m)
     return dV
 
-def w_vorticity(System):
+def w_vorticity(system):
     """TempeartureSolver Wrapper."""
     from .._linear import VorticitySolver
-    Vn = np.zeros_like(System.Vorticity)
-    dVn = np.zeros_like(System.Vorticity)
-    dVo = np.zeros_like(System.Vorticity)
-    VS = VorticitySolver(System.nz, System.nx)
-    VS.Value = System.Vorticity
-    VS.compute(System.Temperature, System.dz, System.npa[0,:], System.Pr, System.Ra)
-    VS.advance(System.dt)
+    VS = VorticitySolver(system.nz, system.nx)
+    VS.Value = system.Vorticity
+    VS.Value_m, VS.Value_p = system.b_Vorticity
+    VS.compute(system.Temperature, system.dz, system.npa[0,:], system.Pr, system.Ra)
+    VS.advance(system.dt)
     return VS.Value, VS.dValuedt
     
-def test_vorticity_derivative():
+def test_vorticity_derivative(system):
     """Derivative of vorticity."""
-    System = get_system()
-    dVc = w_dvorticity(System)
-    # This test cuts out the boundary points, and doesn't care about them.
-    assert np.allclose(System.d_Vorticity[1:-1,:], dVc[1:-1,:])
+    dVc = vorticity_linearterms(system)
+    assert np.allclose(system.d_Vorticity, dVc)
     
-def test_vorticity_solver():
+def test_vorticity_solver(system):
     """Solver for vorticity."""
-    System = get_system()
-    Vnc, dVc = w_vorticity(System)
+    Vnc, dVc = w_vorticity(system)
     assert np.isfinite(Vnc).all()
     assert np.isfinite(dVc).all()
-    assert np.allclose(Vnc[1:-1,:], System.evolved("Vorticity")[1:-1,:])
-    assert np.allclose(dVc[1:-1,:], System.d_Vorticity[1:-1,:])
+    assert np.allclose(Vnc, system.evolved("Vorticity"))
+    assert np.allclose(dVc, system.d_Vorticity)
 
 
     

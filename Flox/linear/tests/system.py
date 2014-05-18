@@ -17,7 +17,23 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 import numpy as np
 import six
 import abc
+from six.moves import reduce
 
+def _second_derivative(f, f_p, f_m, dz):
+    """Second derivative handler"""
+    from Flox.finitedifference import second_derivative2D
+    ddf = np.zeros_like(f)
+    assert not second_derivative2D(f.shape[0], f.shape[1], ddf, f, dz, f_p, f_m, 1.0)
+    return ddf
+
+def second_derivative(system, fluid_componet):
+    """Finite differenced second derivative of an array."""
+    from Flox.finitedifference import second_derivative2D
+    f = getattr(system, fluid_componet)
+    ddf = np.zeros_like(f)
+    f_m, f_p = getattr(system, 'b_'+fluid_componet)
+    assert not second_derivative2D(f.shape[0], f.shape[1], ddf, f, system.dz, f_p, f_m, 1.0)
+    return ddf
 
 six.add_metaclass(abc.ABCMeta)
 class AnalyticalSystem(object):
@@ -68,21 +84,26 @@ class AnalyticalSystem(object):
     @property
     def zp(self):
         """Positive boundary for z"""
-        return np.max(self.z) + self.dz
+        return (np.max(self.z) + self.dz) * np.ones((self.nx))
     
     @property
     def zm(self):
         """Negative boundray for z"""
-        return np.max(self.z) + self.dz
+        return (np.min(self.z) - self.dz) * np.ones((self.nx))
     
     @abc.abstractproperty
     def Temperature(self):
         """Return the analytic temperature."""
         pass
         
-    @abc.abstractproperty
+    @property
     def dd_Temperature(self):
         """Return an analytic second derivative of temperature."""
+        return second_derivative(self, 'Temperature')
+        
+    @abc.abstractproperty
+    def b_Temperature(self):
+        """Temperature ghost point values."""
         pass
         
     @abc.abstractproperty
@@ -90,9 +111,14 @@ class AnalyticalSystem(object):
         """Return the analytic Vorticity."""
         pass
         
-    @abc.abstractproperty
+    @property
     def dd_Vorticity(self):
         """Return an analytic second derivative of Vorticity."""
+        return second_derivative(self, 'Vorticity')
+        
+    @abc.abstractproperty
+    def b_Vorticity(self):
+        """Vorticity ghost point values."""
         pass
         
     @abc.abstractproperty
@@ -100,9 +126,14 @@ class AnalyticalSystem(object):
         """Return the analytic Stream."""
         pass
         
-    @abc.abstractproperty
+    @property
     def dd_Stream(self):
         """Return an analytic second derivative of Stream."""
+        return second_derivative(self, 'Stream')
+        
+    @abc.abstractproperty
+    def b_Stream(self):
+        """Stream ghost point values."""
         pass
         
     @property
@@ -128,42 +159,60 @@ class AnalyticalSystem(object):
         
     def evolved(self, variable):
         """Evolved variable"""
-        return self.dt/2.0 * 3.0 * getattr(self,"d_{}".format(variable)) + getattr(self,"{}".format(variable))
+        return self.dt/2.0 * 3.0 * getattr(self,"d_{}".format(variable)) + getattr(self,variable)
 
 
 class PolynomialSystem(AnalyticalSystem):
     """A polynomial based, analytically solved system."""
     
+    def _polynomial(self, data, *args):
+        """A polynomial evaluator."""
+        return self._d_poloynomial(0, data, *args)
+        
+    def _d_poloynomial(self, n_d, data, *args):
+        """2nd Derivative of a polynomial"""
+        ans = np.zeros_like(data)
+        for power, coeff in enumerate(args):
+            if power >= n_d:
+                p_coeff = reduce(lambda x,y : x*y, [ power - i for i in range(n_d) ], 1)
+                ans += coeff * np.power(data, power - n_d)
+        return ans
+    
+    _T = (0, 0, 1, 2)
+    
     @property
     def Temperature(self):
         """Return the analytic temperature."""
-        return self.z**3 + 2 * self.z**2
+        return self._polynomial(self.z, *self._T)
         
     @property
-    def dd_Temperature(self):
-        """Return an analytic second derivative of temperature."""
-        return 6 * self.z + 4
+    def b_Temperature(self):
+        z = np.array([self.zm, self.zp])
+        return self._polynomial(z, *self._T)
+        
+    _V = (0, 3, 1, 8)
         
     @property
     def Vorticity(self):
         """Return the analytic Vorticity."""
-        return 8 * self.z**3 - 1 * self.z**2
-        
-        
+        return self._polynomial(self.z, *self._V)
+                
     @property
-    def dd_Vorticity(self):
-        """Return an analytic second derivative of Vorticity."""
-        return 6 * 8 * self.z - 2
+    def b_Vorticity(self):
+        z = np.array([self.zm, self.zp])
+        return self._polynomial(z, *self._V)
+        
+    _S = (0, -2, 0, 1)
         
     @property
     def Stream(self):
         """Return the analytic Stream."""
-        return self.z**3 - 2 * self.z
+        return self._polynomial(self.z, *self._S)
         
     @property
-    def dd_Stream(self):
-        """Second derivative of the stream function"""
-        return 6 * self.z
+    def b_Stream(self):
+        z = np.array([self.zm, self.zp])
+        return self._polynomial(z, *self._S)
     
 class ConstantSystem(AnalyticalSystem):
     """A polynomial based, analytically solved system."""
@@ -179,6 +228,10 @@ class ConstantSystem(AnalyticalSystem):
         return 0
         
     @property
+    def b_Temperature(self):
+        return np.array([self.zm, self.zp])
+        
+    @property
     def Vorticity(self):
         """Return the analytic Vorticity."""
         return self.z
@@ -190,10 +243,19 @@ class ConstantSystem(AnalyticalSystem):
         return 0
         
     @property
+    def b_Vorticity(self):
+        return np.array([self.zm, self.zp])
+        
+    @property
     def Stream(self):
         """Return the analytic Stream."""
         return self.z
         
+    
+    @property
+    def b_Stream(self):
+        return np.array([self.zm, self.zp])
+    
     @property
     def dd_Stream(self):
         """Second derivative of the stream function"""
@@ -210,20 +272,17 @@ class FourierSystem(AnalyticalSystem):
         return 3 * np.sin((self.m * np.pi)/(self.nz * self.dz) * self.z)
         
     @property
-    def dd_Temperature(self):
-        """Return an analytic second derivative of temperature."""
-        return -1 * ((self.m * np.pi)/(self.nz * self.dz))**2.0 * self.Temperature
+    def b_Temperature(self):
+        return [np.zeros(self.nx),np.zeros(self.nx)]
         
     @property
     def Vorticity(self):
         """Return the analytic Vorticity."""
         return 2 * np.sin((self.m * np.pi)/(self.nz * self.dz) * self.z)
         
-        
     @property
-    def dd_Vorticity(self):
-        """Return an analytic second derivative of Vorticity."""
-        return -1 * ((self.m * np.pi)/(self.nz * self.dz))**2.0 * self.Vorticity
+    def b_Vorticity(self):
+        return [np.zeros(self.nx),np.zeros(self.nx)]
         
     @property
     def Stream(self):
@@ -231,6 +290,5 @@ class FourierSystem(AnalyticalSystem):
         return 4 * np.sin((self.m * np.pi)/(self.nz * self.dz) * self.z)
         
     @property
-    def dd_Stream(self):
-        """Second derivative of the stream function"""
-        return -1 * ((self.m * np.pi)/(self.nz * self.dz))**2.0 * self.Stream
+    def b_Stream(self):
+        return [np.zeros(self.nx),np.zeros(self.nx)]

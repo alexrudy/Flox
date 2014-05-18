@@ -10,59 +10,41 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 import numpy as np
-from .system import PolynomialSystem, FourierSystem
 
-def get_system():
-    """Get the appropriate system for use with this test."""
-    return FourierSystem(
-        dz = 0.5,
-        dt = 1.0,
-        a = 1.0,
-        nx = 2,
-        nz = 6,
-        Ra = 10.0,
-        Pr = 5.0,
-    )
-
-def w_dtemperature(System):
-    """Derivative of temperature solver."""
+def temperature_linearterms(system):
+    """Operate the derivative of temperature linear term computer."""
     from .._linear import temperature
-    dT = np.zeros_like(System.Temperature)
-    fp = np.zeros(System.nx, np.float)
-    fm = np.zeros(System.nx, np.float)
-    rv = temperature(System.nz, System.nx, dT, System.Temperature, System.Stream, System.dz, System.npa[0,:], fp, fm)
+    dT = np.zeros_like(system.Temperature)
+    f_m, f_p = system.b_Temperature
+    assert not temperature(system.nz, system.nx, dT, system.Temperature, system.Stream, system.dz, system.npa[0,:], f_p, f_m)
     return dT
 
-def w_temperature(System):
-    """TemperatureSolver Wrapper."""
+def temperature_linearsolver(system):
+    """Solve the linear temperature terms, and return the current value and the time derivative."""
     from .._linear import TemperatureSolver
-    Tn = np.zeros_like(System.Temperature)
-    dTn = np.zeros_like(System.Temperature)
-    dTo = np.zeros_like(System.Temperature)
-    TS = TemperatureSolver(System.nz, System.nx)
-    TS.Value = System.Temperature
-    TS.compute(System.Stream, System.dz, System.npa[0,:])
-    TS.advance(System.dt)
+    Tn = np.zeros_like(system.Temperature)
+    dTn = np.zeros_like(system.Temperature)
+    dTo = np.zeros_like(system.Temperature)
+    TS = TemperatureSolver(system.nz, system.nx)
+    TS.Value = system.Temperature
+    TS.Value_m, TS.Value_p = system.b_Temperature
+    TS.compute(system.Stream, system.dz, system.npa[0,:])
+    TS.advance(system.dt)
     return TS.Value, TS.dValuedt
     
-def test_temperature_derivative():
+def test_temperature_linearterms(system):
     """Derivative of temperature."""
-    System = get_system()
-    dTc = w_dtemperature(System)
-    dTa = System.d_Temperature_simple
-    
-    dTr = dTa / dTc
-    # This test cuts out the boundary points, and doesn't care about them.
+    dTc = temperature_linearterms(system)
+    dTa = system.d_Temperature_simple
     assert np.allclose(dTa, dTc)
 
-def test_temperature_solver():
+def test_temperature_linearsolver(system):
     """Solver for temperature."""
-    System = get_system()
-    Tnc, dTnc = w_temperature(System)
+    Tnc, dTnc = temperature_linearsolver(system)
     assert np.isfinite(Tnc).all()
     assert np.isfinite(dTnc).all()
-    assert np.allclose(System.evolved("Temperature")[1:-1,:], Tnc[1:-1,:])
-    assert np.allclose(System.d_Temperature[1:-1,:], dTnc[1:-1,:])
+    assert np.allclose(system.evolved("Temperature"), Tnc)
+    assert np.allclose(system.d_Temperature, dTnc)
 
 
     
