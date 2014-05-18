@@ -38,7 +38,7 @@ animate:
       c: 0
       '()': Flox.plot.ContourView
       variable: "Stream"
-      cmap: "PRGn"
+      colors: k
 evolve:
   class: Flox.nonlinear.NonlinearEvolver
   iterations: 500

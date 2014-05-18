@@ -29,6 +29,10 @@ class GridWriter(object):
         """Write this data object to a file."""
         pass
         
+    def write_frame(self, data, name=""):
+        """Write a single frame."""
+        raise NotImplementedError("Not Supported!")
+        
     @abc.abstractmethod
     def read(self, data, name=""):
         """Read to a data class."""

@@ -158,6 +158,8 @@ class GridView(View):
         self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
         self.image = self.ax.imshow(self.data(system), **self.im_kwargs)
         self.ax.figure.colorbar(self.image, ax=self.ax)
+        self.ax.xaxis.set_visible(False)
+        self.ax.yaxis.set_visible(False)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
         self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nt), transform=self.ax.transAxes)
         
@@ -181,7 +183,6 @@ class ContourView(GridView):
     
     def initialize(self, system):
         """Initialize the system."""
-        self.im_kwargs.setdefault('cmap','hot')
         self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
         data = self.data(system)
         ptp = np.ptp(data)
@@ -190,13 +191,14 @@ class ContourView(GridView):
             self.cb = self.ax.figure.colorbar(self.image, ax=self.ax)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
         self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nt), transform=self.ax.transAxes)
+        self.ax.xaxis.set_visible(False)
+        self.ax.yaxis.set_visible(False)
         self.initialized = True
         
     def update(self, system):
         """Update the view"""
         if not self.initialized:
             self.initialize(system)
-        self.im_kwargs.setdefault('cmap','hot')
         self.im_kwargs['aspect'] = 1.0 / system.aspect * (system.nx / system.nz)
         self.ax.cla()
         data = self.data(system)

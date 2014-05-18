@@ -2,31 +2,31 @@ system:
   '()': Flox.system.NDSystem2D
   Prandtl: 0.5
   Rayleigh: 1.0e+6
-  aspect: 3.0
+  aspect: 1.0
   deltaT: !quantity '1 K'
   depth: !quantity '1 m'
   kinematic_viscosity: !quantity '0.001 St'
   nx: 50
-  nz: 100
-  nt: 1200
+  nz: 200
+  nt: 500
   engine: 'Flox.array.NumpyArrayEngine'
 ic:
   stable: yes
   sin:
+    amplitude: fixed
     limits: no
     enable: yes
-    k: [ 1, 8 ]
-    random: yes
+    k: [ 1 ]
     epsilon: 0.01
 animate:
-  filename: problems/convection-2cell.mp4
+  filename: problems/nonlinear.mp4
   buffer: 10
   enable: yes
   movie:
     interval: 20
     save_kwargs:
       bitrate: 100000
-  nr: 2
+  nr: 1
   nc: 1
   plots:
     T:
@@ -35,17 +35,12 @@ animate:
       '()': Flox.plot.GridView
       variable: "Temperature"
       cmap: "hot"
-    S:
-      r: 1
-      c: 0
-      '()': Flox.plot.ContourView
-      variable: "Stream"
-      colors: k
 evolve:
   class: Flox.nonlinear.NonlinearEvolver
-  iterations: 50
+  iterations: 200
   time: !quantity '1 yr'
+  nt: 50
 write:
   writer: Flox.io.HDF5Writer
-  filename: ~/Documents/convection-2cell.hdf5
+  filename: ~/Documents/nonlinear.hdf5
   dataname: convection
