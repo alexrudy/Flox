@@ -22,9 +22,13 @@ extension_include_dirs = [ np.get_include(), './Flox/']
 extension_kwargs = dict(extra_compile_args=['-fopenmp'],
     extra_link_args=['-fopenmp'], include_dirs=extension_include_dirs)
 extensions = [
+    Extension("*", ["Flox/component/*.pyx"],
+        **extension_kwargs),
     Extension("*", ["Flox/_threads.pyx"],
         **extension_kwargs),
     Extension("*", ["Flox/_solve.pyx"],
+        **extension_kwargs),
+    Extension("*", ["Flox/_evolve.pyx"],
         **extension_kwargs),
     Extension("*", ["Flox/finitedifference.pyx"],
         **extension_kwargs),

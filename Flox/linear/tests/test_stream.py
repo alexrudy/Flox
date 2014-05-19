@@ -21,7 +21,7 @@ def test_stream_solver(system):
     
 def test_stream_matrix(system):
     """Matrix used for the stream solver function."""
-    from .._linear import StreamSolver
+    from ...component.stream import StreamSolver
     SS = StreamSolver(system.nz, system.nx)
     SS.setup(system.dz, system.npa[0,:])
     
@@ -60,7 +60,7 @@ def stream_matrix(system):
     
 def stream_solver(system):
     """Compute the stream function from the vorticity."""
-    from .._linear import StreamSolver
+    from ...component.stream import StreamSolver
     
     stream = np.zeros_like(system.Vorticity)
     

@@ -9,10 +9,7 @@
 
 from __future__ import division
 
-import numpy as np
-cimport numpy as np
 cimport cython
-from cpython.array cimport array, clone
 
 from Flox._flox cimport DTYPE_t
 
@@ -29,8 +26,3 @@ cdef class Solver:
     cpdef int prepare(self, DTYPE_t dz)
     cpdef int advance(self, DTYPE_t deltaT)
     
-cdef class Evolver:
-    cdef public DTYPE_t Time
-    cpdef DTYPE_t delta_time(self)
-    cpdef int step(self, DTYPE_t delta_time)
-    cpdef int evolve(self, DTYPE_t time, int max_iterations)

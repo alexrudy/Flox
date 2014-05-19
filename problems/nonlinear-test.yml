@@ -37,7 +37,7 @@ animate:
       cmap: "hot"
 evolve:
   class: Flox.nonlinear.NonlinearEvolver
-  iterations: 200
+  iterations: 500
   time: !quantity '1 yr'
   nt: 50
 write:

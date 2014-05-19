@@ -22,99 +22,12 @@ from cpython.array cimport array, clone
 from cython.parallel cimport prange
 
 from Flox._flox cimport DTYPE_t
-from Flox.finitedifference cimport second_derivative2D
-from Flox._solve cimport Solver, Evolver
-from Flox.linear._linear cimport vorticity, temperature, StreamSolver
-
-cdef DTYPE_t pi = np.pi
-
-cpdef int galerkin_sin(int J, int K, DTYPE_t[:,:] G_curr, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] dVdz, DTYPE_t[:,:] O_curr, DTYPE_t[:,:] dOdz, DTYPE_t a, DTYPE_t[:] npa) nogil:
-    
-    cdef int j, k, kp, kpp
-    cdef DTYPE_t p2a = pi / (2.0 * a)
-    
-    for j in prange(J, nogil=True):
-    
-        for k in range(K):
-            # n=0 special case.
-            G_curr[j,0] += -p2a * k * (V_curr[j, k] * dOdz[j, k] + O_curr[j, k] * dVdz[j, k])
-        
-            # Terms applied everywhere.
-            G_curr[j,k] += -npa[k] * O_curr[j, k] * dVdz[j, 0]
-        
-            for kp in range(1, K):
-                # 1st term, 1st Delta
-                kpp = k - kp
-                if 0 < kpp < K:
-                    G_curr[j, k] += -1.0 * p2a * (-1.0 * kp * dOdz[j, kpp] * V_curr[j, kp] + kpp * O_curr[j, kpp] * dVdz[j, kp])
-            
-                # 2nd term, 1st Delta
-                kpp = kp + k
-                if 0 < kpp < K:
-                    G_curr[j, k] += -1.0 * p2a * (kp * dOdz[j, kpp] * V_curr[j, kp] + kpp * O_curr[j, kpp] * dVdz[j, kp])
-                
-                # 2nd term, 2nd Delta
-                kpp = kp - k
-                if 0 < kpp < K:
-                    G_curr[j, k] += -1.0 * p2a * (kp * dOdz[j, kpp] * V_curr[j, kp] + kpp * O_curr[j, kpp] * dVdz[j, kp])
-
-    return 0
-    
-cpdef int galerkin_cos(int J, int K, DTYPE_t[:,:] G_curr, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] dVdz, DTYPE_t[:,:] O_curr, DTYPE_t[:,:] dOdz, DTYPE_t a) nogil:
-    
-    cdef int j, k, kp, kpp
-    cdef DTYPE_t p2a = pi / (2.0 * a)
-    
-    for j in prange(J, nogil=True):
-        for k in range(K):
-            for kp in range(1, K):
-                # 1st term, 1st delta
-                kpp = k - kp
-                if 0 < kpp < K:
-                    G_curr[j, k] += -1.0 * p2a * (-1.0 * kp * dOdz[j, kpp] * V_curr[j, kp] + kpp * O_curr[j, kpp] * dVdz[j, kp])
-                # 2nd term, 1st delta
-                kpp = kp + k
-                if 0 < kpp < K:
-                    G_curr[j, k] += -1.0 * p2a * ( -1.0 * (kp * dOdz[j, kpp] * V_curr[j, kp] + kpp * O_curr[j, kpp] * dVdz[j, kp]))
-                # 2nd term, 2nd delta
-                kpp = kp - k
-                if 0 < kpp < K:
-                    G_curr[j, k] += -1.0 * p2a * (kp * dOdz[j, kpp] * V_curr[j, kp] + kpp * O_curr[j, kpp] * dVdz[j, kp])
-                    
-    return 0
-
-cdef class TemperatureSolver(Solver):
-    
-    def __cinit__(self, int nz, int nx):
-        # Boundary Conditions:
-        # T(n=0,z=0) = 1.0
-        self.V_m[0] = 1.0
-        self.V_p[0] = 0.0
-    
-    cpdef int compute(self, DTYPE_t[:,:] P_curr, DTYPE_t[:,:] dPdz, DTYPE_t dz, DTYPE_t a, DTYPE_t[:] npa):
-        
-        cdef int r
-        # This equation handles the linear terms. It is only slightly modified from the linear version.
-        r = temperature(self.nz, self.nx, self.G_curr, self.V_curr, dz, npa, self.V_p, self.V_m)
-        # Now we do the non-linear terms from equation 4.6
-        r += galerkin_sin(self.nz, self.nx, self.G_curr, self.V_curr, self.dVdz, P_curr, dPdz, a, npa)
-        
-        return r
+from Flox._evolve cimport Evolver
+from Flox.component.temperature cimport TemperatureSolver
+from Flox.component.vorticity cimport VorticitySolver
+from Flox.component.stream cimport StreamSolver
 
 
-cdef class VorticitySolver(Solver):
-    
-    cpdef int compute(self, DTYPE_t[:,:] T_curr, DTYPE_t[:,:] P_curr, DTYPE_t[:,:] dPdz, DTYPE_t dz, DTYPE_t a, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra):
-        
-        cdef int r
-        # This equation handles the linear terms. It is only slightly modified from the linear version.
-        r = vorticity(self.nz, self.nx, self.G_curr, self.V_curr, T_curr, dz, npa, Pr, Ra, self.V_p, self.V_m)
-        # Now we do the non-linear terms from equation 4.6
-        r += galerkin_cos(self.nz, self.nx, self.G_curr, self.V_curr, self.dVdz, P_curr, dPdz, a)
-        
-        return r
-    
-    
 cdef class NonlinearEvolver(Evolver):
     
     def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t dz, DTYPE_t a, DTYPE_t safety):
@@ -153,8 +66,17 @@ cdef class NonlinearEvolver(Evolver):
         self._Stream.prepare(self.dz)
         
         # Compute the time derivatives
-        self._Temperature.compute(self._Stream.V_curr, self._Stream.dVdz, self.dz, self.a, self.npa)
-        self._Vorticity.compute(self._Temperature.V_curr, self._Stream.V_curr, self._Stream.dVdz, self.dz, self.a, self.npa, self.Pr, self.Ra)
+        
+        # First the regular linear terms.
+        self._Temperature.compute_base(self.dz, self.npa)
+        # Then the nonlinear galerkin terms.
+        self._Temperature.compute_nonlinear(self._Stream.V_curr, self._Stream.dVdz, self.a, self.npa)
+        
+        # First the regular linear terms.
+        self._Vorticity.compute_base(self._Temperature.V_curr, self.dz, self.npa, self.Pr, self.Ra)
+        
+        # Then the nonlinear galerkin terms.
+        self._Vorticity.compute_nonlinear(self._Stream.V_curr, self._Stream.dVdz, self.a)
         
         # Advance the variables.
         self._Temperature.advance(delta_time)

@@ -13,7 +13,7 @@ import numpy as np
 
 def vorticity_linearterms(system):
     """Derivative of vorticity solver."""
-    from .._linear import vorticity
+    from ...component.vorticity import vorticity
     dV = np.zeros_like(system.Vorticity)
     f_m, f_p = system.b_Vorticity
     rv = vorticity(system.nz, system.nx, dV, system.Vorticity, system.Temperature, system.dz, system.npa[0,:], system.Pr, system.Ra, f_p, f_m)
@@ -21,11 +21,11 @@ def vorticity_linearterms(system):
 
 def w_vorticity(system):
     """TempeartureSolver Wrapper."""
-    from .._linear import VorticitySolver
+    from ...component.vorticity import VorticitySolver
     VS = VorticitySolver(system.nz, system.nx)
     VS.Value = system.Vorticity
     VS.Value_m, VS.Value_p = system.b_Vorticity
-    VS.compute(system.Temperature, system.dz, system.npa[0,:], system.Pr, system.Ra)
+    VS.compute_base(system.Temperature, system.dz, system.npa[0,:], system.Pr, system.Ra)
     VS.advance(system.dt)
     return VS.Value, VS.dValuedt
     

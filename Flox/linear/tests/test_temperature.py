@@ -13,7 +13,7 @@ import numpy as np
 
 def temperature_linearterms(system):
     """Operate the derivative of temperature linear term computer."""
-    from .._linear import temperature
+    from ...component.temperature import temperature
     dT = np.zeros_like(system.Temperature)
     f_m, f_p = system.b_Temperature
     assert not temperature(system.nz, system.nx, dT, system.Temperature, system.dz, system.npa[0,:], f_p, f_m)
@@ -21,14 +21,15 @@ def temperature_linearterms(system):
 
 def temperature_linearsolver(system):
     """Solve the linear temperature terms, and return the current value and the time derivative."""
-    from .._linear import TemperatureSolver
+    from ...component.temperature import TemperatureSolver
     Tn = np.zeros_like(system.Temperature)
     dTn = np.zeros_like(system.Temperature)
     dTo = np.zeros_like(system.Temperature)
     TS = TemperatureSolver(system.nz, system.nx)
     TS.Value = system.Temperature
     TS.Value_m, TS.Value_p = system.b_Temperature
-    TS.compute(system.Stream, system.dz, system.npa[0,:])
+    TS.compute_base(system.dz, system.npa[0,:])
+    TS.compute_linear(system.dz, system.npa[0,:], system.Stream)
     TS.advance(system.dt)
     return TS.Value, TS.dValuedt
     

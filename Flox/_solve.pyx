@@ -42,7 +42,7 @@ cdef class Solver:
         
         return first_derivative2D(self.nz, self.nx, self.dVdz, self.V_curr, dz, self.V_p, self.V_m, 1.0)
         
-    cpdef int advance(self, DTYPE_t deltaT):
+    cpdef int advance(self, DTYPE_t deltaT) except -1:
         
         cdef int j, k
         
@@ -88,31 +88,4 @@ cdef class Solver:
     
     # User should implement some function which can compute G_curr at each timestep!
     # We don't implement a method here, because its signature will vary greatly!
-    
-cdef class Evolver:
-    
-    cpdef DTYPE_t delta_time(self):
-        
-        return 0.0
-    
-    cpdef int step(self, DTYPE_t delta_time):
-        
-        return 0
-        
-    cpdef int evolve(self, DTYPE_t time, int max_iterations):
-        
-        cdef int j, r = 0
-        
-        for j in range(max_iterations):
-            if self.Time > time:
-                break
-            
-            r += self.step(self.delta_time())
-            if r == 0:
-                pass
-            else:
-                break
-        
-        return r
-    
     
