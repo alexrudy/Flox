@@ -25,13 +25,13 @@ from Flox.finitedifference cimport second_derivative2D
 from Flox._solve cimport Solver, Evolver
 from Flox.tridiagonal._tridiagonal cimport TridiagonalSolver
 
-cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t[:,:] P_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t[:] f_p, DTYPE_t[:] f_m) nogil:
+cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t[:] f_p, DTYPE_t[:] f_m) nogil:
     
     cdef int j, k
     cdef DTYPE_t npa_s
     # The last term in equation (2.10)
     # This resets the values in T_next
-    for k in range(K):
+    for k in prange(K):
         npa_s = npa[k] * npa[k]
         for j in range(J):
             d_T[j,k] =  -T_curr[j,k] * npa_s
@@ -40,6 +40,18 @@ cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE
     r1 = second_derivative2D(J, K, d_T, T_curr, dz, f_p, f_m, 1.0)
     
     return r1
+
+cpdef int temperature_linear(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] P_curr, DTYPE_t[:] npa) nogil:
+    
+    cdef int j, k
+    cdef DTYPE_t npa_i
+    
+    for k in prange(K):
+        npa_i = npa[k]
+        for j in range(J):
+            d_T[j, k] += npa_i * P_curr[j,k]
+    
+    return 0
 
 cdef class TemperatureSolver(Solver):
     
@@ -52,12 +64,9 @@ cdef class TemperatureSolver(Solver):
         
         cdef int r
         cdef DTYPE_t npa_i
-        r = temperature(self.nz, self.nx, self.G_curr, self.V_curr, P_curr, dz, npa, self.V_p, self.V_m)
+        r = temperature(self.nz, self.nx, self.G_curr, self.V_curr, dz, npa, self.V_p, self.V_m)
         
-        for k in range(self.nx):
-            npa_i = npa[k]
-            for j in range(self.nz):
-                self.G_curr[j, k] += npa_i * P_curr[j,k]
+        r += temperature_linear(self.nz, self.nx, self.G_curr, P_curr, npa)
         
         return r
 
