@@ -16,6 +16,7 @@ from Flox.component.temperature cimport TemperatureSolver
 from Flox.component.vorticity cimport VorticitySolver
 from Flox.component.stream cimport StreamSolver
 from Flox.component.vectorpotential cimport VectorPotentialSolver
+from Flox.component.currentdensity cimport CurrentDensitySolver
 
 cdef class Evolver:
     cdef public DTYPE_t Time
@@ -23,6 +24,7 @@ cdef class Evolver:
     cdef TemperatureSolver _Temperature
     cdef StreamSolver _Stream
     cdef VectorPotentialSolver _VectorPotential
+    cdef CurrentDensitySolver _CurrentDensity
     
     cpdef DTYPE_t delta_time(self)
     cpdef int step(self, DTYPE_t delta_time)
