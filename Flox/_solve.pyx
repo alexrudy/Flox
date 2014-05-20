@@ -35,9 +35,7 @@ cdef class Solver:
         self.V_m = np.zeros((nx,), dtype=np.float)
         
     cpdef int prepare(self, DTYPE_t dz) except -1:
-    
-        self.dVdz[...] = 0.0
-    
+        self.dVdz[...] = 0.0    
         return first_derivative2D(self.nz, self.nx, self.dVdz, self.V_curr, dz, self.V_p, self.V_m, 1.0)
         
     property Value:
@@ -57,10 +55,17 @@ cdef class TimeSolver(Solver):
         
         self.nx = nx
         self.nz = nz
+        self.ready = False
         self.G_curr = np.zeros((nz, nx), dtype=np.float)
         self.G_prev = np.zeros((nz, nx), dtype=np.float)
 
-    
+    cpdef int prepare(self, DTYPE_t dz) except -1:
+        
+        self.G_curr[...] = 0.0
+        self.ready = True
+        return Solver.prepare(self, dz)
+        
+        
     cpdef int advance(self, DTYPE_t deltaT) except -1:
     
         cdef int j, k
@@ -69,7 +74,8 @@ cdef class TimeSolver(Solver):
             for j in range(self.nz):
                 self.V_curr[j,k] = self.V_curr[j,k] + deltaT / 2.0 * (3.0 * self.G_curr[j,k] - self.G_prev[j,k])
                 self.G_prev[j,k] = self.G_curr[j,k]
-            
+        
+        self.ready = False
         return 0
         
     property dValuedt:

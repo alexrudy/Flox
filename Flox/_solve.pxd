@@ -28,5 +28,6 @@ cdef class TimeSolver(Solver):
 
     cdef DTYPE_t[:,:] G_curr
     cdef DTYPE_t[:,:] G_prev
+    cdef bint ready
 
     cpdef int advance(self, DTYPE_t deltaT)
