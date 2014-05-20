@@ -7,7 +7,7 @@
 #  Copyright 2014 Alexander Rudy. All rights reserved.
 # 
 
-#cython: overflowcheck=True
+#cython: overflowcheck=False
 #cython: wraparound=False
 #cython: boundscheck=False
 #cython: cdivision=True
