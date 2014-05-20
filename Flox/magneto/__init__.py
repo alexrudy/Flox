@@ -31,6 +31,8 @@ class MagnetoEvolver(_MagnetoEvolver, Evolver):
             system.nondimensionalize(system.aspect).value,
             saftey
             )
-        ev.Prandtl = system.nondimensionalize(system.Prandtl).value
-        ev.Rayleigh = system.nondimensionalize(system.Rayleigh).value
+        ev.Pr = system.nondimensionalize(system.Prandtl).value
+        ev.Ra = system.nondimensionalize(system.Rayleigh).value
+        ev.Q = system.nondimensionalize(System.Chandrasekhar).value
+        ev.q = system.nondimensionalize(System.Roberts).value
         return ev
