@@ -35,12 +35,12 @@ cdef class MagnetoEvolver(Evolver):
         
         self.dz = dz
         self.npa = npa
+        self.a = a
         self._Temperature = TemperatureSolver(nz, nx)
         self._Vorticity = VorticitySolver(nz, nx)
         self._Stream = StreamSolver(nz, nx)
         self._Stream.setup(dz, npa)
         self._VectorPotential = VectorPotentialSolver(nz, nx)
-        self._VectorPotential.prepare(dz) # Called becasue this is needed before the first iteration to compute J.
         self._CurrentDensity = CurrentDensitySolver(nz, nx)
         self.safety = safety
         
@@ -67,6 +67,7 @@ cdef class MagnetoEvolver(Evolver):
         self._Stream.prepare(self.dz)
         if not self._VectorPotential.ready:
             self._VectorPotential.prepare(self.dz)
+        self._CurrentDensity.prepare(self.dz)
         # Compute the time derivatives
         
         # Vector Potential

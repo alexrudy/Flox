@@ -55,8 +55,8 @@ class FloxManager(object):
     def run(self):
         """Run this management object."""
         self.opt = self.parser.parse_args()
-        # if self.opt.debug:
-        #     ipydb()
+        if self.opt.debug:
+            ipydb()
         self.load_configuration()
         
         # Build the system.

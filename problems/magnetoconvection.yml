@@ -1,0 +1,58 @@
+system:
+  '()': Flox.magneto.system.MagnetoSystem
+  Prandtl: 0.5
+  Rayleigh: 1.0e+6
+  Chandrasekhar: 100
+  Roberts: 1.0
+  aspect: 3.0
+  deltaT: !quantity '1 K'
+  depth: !quantity '1 m'
+  B0: !quantity '1 T'
+  kinematic_viscosity: !quantity '0.001 St'
+  nx: 50
+  nz: 100
+  nt: 1200
+  engine: 'Flox.array.NumpyArrayEngine'
+ic:
+  stable: yes
+  sin:
+    limits: no
+    enable: yes
+    k: [ 1 , 8 ]
+    random: yes
+    epsilon: 0.1
+animate:
+  filename: problems/magnetoconvection.mp4
+  buffer: 10
+  enable: yes
+  movie:
+    interval: 20
+  nr: 2
+  nc: 1
+  plots:
+    T:
+      r: 0
+      c: 0
+      '()': Flox.plot.GridView
+      variable: "Temperature"
+      cmap: "hot"
+    S:
+      r: 1
+      c: 0
+      '()': Flox.plot.ContourView
+      variable: "Stream"
+      colors: k
+    A:
+      r: 2
+      c: 0
+      '()': Flox.plot.ContourView
+      variable: "VectorPotential"
+      colors: k
+evolve:
+  class: Flox.magneto.MagnetoEvolver
+  iterations: 500
+  time: !quantity '1 yr'
+write:
+  writer: Flox.io.HDF5Writer
+  filename: ~/Documents/convection.hdf5
+  dataname: magnetoconvection

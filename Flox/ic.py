@@ -65,7 +65,6 @@ def stable_temperature_gradient(System):
     else:
         step = 1
     System.Temperature[:,0] = z_array(System)[::-1]
-    
 
 def single_mode_perturbation(System, k, l=1, eps=1):
     """Single mode perturbation."""

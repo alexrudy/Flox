@@ -33,6 +33,6 @@ class MagnetoEvolver(_MagnetoEvolver, Evolver):
             )
         ev.Pr = system.nondimensionalize(system.Prandtl).value
         ev.Ra = system.nondimensionalize(system.Rayleigh).value
-        ev.Q = system.nondimensionalize(System.Chandrasekhar).value
-        ev.q = system.nondimensionalize(System.Roberts).value
+        ev.Q = system.nondimensionalize(system.Chandrasekhar).value
+        ev.q = system.nondimensionalize(system.Roberts).value
         return ev

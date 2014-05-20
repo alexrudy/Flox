@@ -15,21 +15,35 @@ import astropy.units as u
 from pyshell.astron.units import UnitsProperty, HasUnitsProperties, recompose, ComputedUnitsProperty, recompose_unit
 from pyshell.util import setup_kwargs, configure_class, resolve
 
-from ...array import SpectralArrayProperty, ArrayEngine, ArrayProperty
-from ...system import NDSystem2D
+from ..array import SpectralArrayProperty, ArrayEngine, ArrayProperty
+from ..system import NDSystem2D
 
 class MagnetoSystem(NDSystem2D):
     """docstring for MagnetoSystem"""
-    def __init__(self, Roberts=0, Chandrasekhar=0, **kwargs):
-        super(MagnetoSystem, self).__init__()
+    def __init__(self, Roberts=0, Chandrasekhar=0, B0=0, **kwargs):
         self.Roberts = Roberts
         self.Chandrasekhar = Chandrasekhar
+        self.B0 = B0
+        super(MagnetoSystem, self).__init__(**kwargs)
     
-    VectorPotential = SpectralArrayProperty("VectorPotential", u.V * u.s / u.m, func=np.sin, shape=('nz','nx'), latex=r"$A$")
+    VectorPotential = SpectralArrayProperty("VectorPotential", u.T * u.m, func=np.sin, shape=('nz','nx'), latex=r"$A$")
     CurrentDensity = SpectralArrayProperty("CurrentDensity", u.A / u.m**2, func=np.sin, shape=('nz','nx'), latex=r"$J$")
     
     Roberts = UnitsProperty("Roberts", u.dimensionless_unscaled, latex=r"$q$")
     Chandrasekhar = UnitsProperty("Chandrasekhar", u.dimensionless_unscaled, latex=r"$Q$")
+    B0 = UnitsProperty("Magnetic field", u.T, latex=r"$B_{0}$")
+    
+    def _setup_standard_bases(self):
+        """Setup the standard bases."""
+        super(MagnetoSystem, self)._setup_standard_bases()
+        magnetic_unit = u.def_unit("B0", self.B0)
+        mass_unit = magnetic_unit * u.A * u.s**2
+        self._bases["standard"][u.T.physical_type] = u.T
+        self._bases["standard"][u.kg.physical_type] = u.kg
+        self._bases["standard"][u.A.physical_type] = u.A
+        self._bases["nondimensional"][magnetic_unit.physical_type] = magnetic_unit
+        self._bases["nondimensional"][mass_unit.physical_type] = mass_unit
+        self._bases["nondimensional"][u.A.physical_type] = u.A
     
     @classmethod
     def get_parameter_list(cls):

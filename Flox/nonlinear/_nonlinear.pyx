@@ -34,6 +34,7 @@ cdef class NonlinearEvolver(Evolver):
         
         self.dz = dz
         self.npa = npa
+        self.a = a
         self._Temperature = TemperatureSolver(nz, nx)
         self._Vorticity = VorticitySolver(nz, nx)
         self._Stream = StreamSolver(nz, nx)
