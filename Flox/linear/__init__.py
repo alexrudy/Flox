@@ -17,7 +17,6 @@ class LinearEvolver(Evolver, _LinearEvolver):
     def __init__(self, *args, **kwargs):
         super(LinearEvolver, self).__init__()
         
-        
     def get_packet_list(self):
         """Variables"""
         return [ "Temperature", "dTemperature", "Vorticity", "dVorticity", "Stream", "Time"]
@@ -25,13 +24,13 @@ class LinearEvolver(Evolver, _LinearEvolver):
     @classmethod
     def from_system(cls, system, saftey=0.5):
         """Load the grid parameters into the LE"""
-        return cls(
+        ev = cls(
             system.nz, system.nx,
             system.nondimensionalize(system.npa).value,
-            system.nondimensionalize(system.Prandtl).value,
-            system.nondimensionalize(system.Rayleigh).value,
             system.nondimensionalize(system.dz).value, 
             saftey
             )
-        
+        ev.Prandtl = system.nondimensionalize(system.Prandtl).value
+        ev.Rayleigh = system.nondimensionalize(system.Rayleigh).value
+        return ev
     

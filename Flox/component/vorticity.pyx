@@ -7,7 +7,7 @@
 #  Copyright 2014 Alexander Rudy. All rights reserved.
 # 
 
-#cython: overflowcheck=True
+#cython: overflowcheck=False
 #cython: wraparound=False
 #cython: boundscheck=False
 #cython: cdivision=True
@@ -32,7 +32,7 @@ cpdef int vorticity(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] V_curr, DTYPE_t
     # The second term and fourth in equation (2.11)
     for k in range(K):
         for j in range(J):
-            d_V[j,k] = (Ra * Pr * npa[k] * T_curr[j,k]) - (Pr * npa[k] * npa[k] * V_curr[j,k])
+            d_V[j,k] += (Ra * Pr * npa[k] * T_curr[j,k]) - (Pr * npa[k] * npa[k] * V_curr[j,k])
         
     # The second last term in equation (2.11)
     # Boundary Conditions:

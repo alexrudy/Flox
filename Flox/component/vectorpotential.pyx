@@ -7,7 +7,7 @@
 #  Copyright 2014 Alexander Rudy. All rights reserved.
 # 
 
-#cython: overflowcheck=True
+#cython: overflowcheck=False
 #cython: wraparound=False
 #cython: boundscheck=False
 #cython: cdivision=True
@@ -33,7 +33,7 @@ cpdef int vectorpotential(int J, int K, DTYPE_t[:,:] d_A, DTYPE_t[:,:] A_curr, D
     for k in prange(K):
         npa_s = npa[k] * npa[k]
         for j in range(J):
-            d_A[j,k] = (dAdzz[j, k] - A_curr[j,k] * npa_s) / q
+            d_A[j,k] += (dAdzz[j, k] - A_curr[j,k] * npa_s) / q
         
     return 0
 

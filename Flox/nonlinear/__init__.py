@@ -24,14 +24,14 @@ class NonlinearEvolver(_NonlinearEvolver, Evolver):
     @classmethod
     def from_system(cls, system, saftey=0.5):
         """Load the grid parameters into the LE"""
-        return cls(
+        ev = cls(
             system.nz, system.nx,
             system.nondimensionalize(system.npa).value,
-            system.nondimensionalize(system.Prandtl).value,
-            system.nondimensionalize(system.Rayleigh).value,
             system.nondimensionalize(system.dz).value,
             system.nondimensionalize(system.aspect).value,
             saftey
             )
-        
+        ev.Prandtl = system.nondimensionalize(system.Prandtl).value
+        ev.Rayleigh = system.nondimensionalize(system.Rayleigh).value
+        return ev
             

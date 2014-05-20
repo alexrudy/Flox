@@ -7,7 +7,7 @@
 #  Copyright 2014 Alexander Rudy. All rights reserved.
 # 
 
-#cython: overflowcheck=True
+#cython: overflowcheck=False
 #cython: wraparound=False
 #cython: boundscheck=False
 #cython: cdivision=True
@@ -33,7 +33,7 @@ cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE
     for k in prange(K):
         npa_s = npa[k] * npa[k]
         for j in range(J):
-            d_T[j,k] =  -T_curr[j,k] * npa_s
+            d_T[j,k] +=  -T_curr[j,k] * npa_s
     
     # The second last term in equation (2.10)
     r1 = second_derivative2D(J, K, d_T, T_curr, dz, f_p, f_m, 1.0)

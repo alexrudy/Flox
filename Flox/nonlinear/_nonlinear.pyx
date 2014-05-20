@@ -30,13 +30,10 @@ from Flox.component.stream cimport StreamSolver
 
 cdef class NonlinearEvolver(Evolver):
     
-    def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t dz, DTYPE_t a, DTYPE_t safety):
+    def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t dz, DTYPE_t a, DTYPE_t safety):
         
-        self.npa = npa
-        self.Pr = Pr
-        self.Ra = Ra
         self.dz = dz
-        self.a = a
+        self.npa = npa
         self._Temperature = TemperatureSolver(nz, nx)
         self._Vorticity = VorticitySolver(nz, nx)
         self._Stream = StreamSolver(nz, nx)
@@ -74,7 +71,6 @@ cdef class NonlinearEvolver(Evolver):
         
         # First the regular linear terms.
         self._Vorticity.compute_base(self._Temperature.V_curr, self.dz, self.npa, self.Pr, self.Ra)
-        
         # Then the nonlinear galerkin terms.
         self._Vorticity.compute_nonlinear(self._Stream.V_curr, self._Stream.dVdz, self.a)
         
@@ -90,53 +86,4 @@ cdef class NonlinearEvolver(Evolver):
         
         return 0
     
-    property Temperature:
-    
-        """Temperature"""
-    
-        def __get__(self):
-            return np.asanyarray(self._Temperature.V_curr)
-        
-        def __set__(self, value):
-            self._Temperature.V_curr = np.asanyarray(value).copy()
-        
-    property dTemperature:
-    
-        """Derivative of Temperature with Time"""
-    
-        def __get__(self):
-            return np.asanyarray(self._Temperature.G_prev)
-
-        def __set__(self, value):
-            self._Temperature.G_prev = np.asanyarray(value).copy()
-
-    property Vorticity:
-
-        """Vorticity"""
-
-        def __get__(self):
-            return np.asanyarray(self._Vorticity.V_curr)
-
-        def __set__(self, value):
-            self._Vorticity.V_curr = np.asanyarray(value).copy()
-
-    property dVorticity:
-
-        """Derivative of Vorticity with Time"""
-
-        def __get__(self):
-            return np.asanyarray(self._Vorticity.G_prev)
-
-        def __set__(self, value):
-            self._Vorticity.G_prev = np.asanyarray(value).copy()
-        
-    property Stream:
-    
-        """Stream function"""
-    
-        def __get__(self):
-            return np.asanyarray(self._Stream.V_curr)
-
-        def __set__(self, value):
-            self._Stream.V_curr = np.asanyarray(value).copy()
     

@@ -7,7 +7,7 @@
 #  Copyright 2014 University of California. All rights reserved.
 # 
 
-#cython: overflowcheck=True
+#cython: overflowcheck=False
 #cython: wraparound=False
 #cython: boundscheck=False
 #cython: cdivision=True
@@ -26,12 +26,10 @@ from Flox.component.stream cimport StreamSolver
 
 cdef class LinearEvolver(Evolver):
     
-    def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t dz, DTYPE_t safety):
+    def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t dz, DTYPE_t safety):
         
-        self.npa = npa
-        self.Pr = Pr
-        self.Ra = Ra
         self.dz = dz
+        self.npa = npa
         self._Temperature = TemperatureSolver(nz, nx)
         self._Vorticity = VorticitySolver(nz, nx)
         self._Stream = StreamSolver(nz, nx)
@@ -46,6 +44,11 @@ cdef class LinearEvolver(Evolver):
     cpdef int step(self, DTYPE_t delta_time):
         
         cdef DTYPE_t time = self.Time
+        # Prepare for the timestep.
+        self._Temperature.prepare(self.dz)
+        self._Vorticity.prepare(self.dz)
+        self._Stream.prepare(self.dz)
+        
         # Compute the derivatives
         self._Temperature.compute_base(self.dz, self.npa)
         self._Temperature.compute_linear(self.dz, self.npa, self._Stream.V_curr)

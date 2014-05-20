@@ -11,8 +11,5 @@ from Flox._flox cimport DTYPE_t
 from Flox._evolve cimport Evolver
     
 cdef class LinearEvolver(Evolver):
-    cdef readonly DTYPE_t Pr
-    cdef readonly DTYPE_t Ra
-    cdef readonly DTYPE_t dz
-    cdef readonly DTYPE_t safety
-    cdef DTYPE_t[:] npa
+    cdef public DTYPE_t Pr
+    cdef public DTYPE_t Ra
