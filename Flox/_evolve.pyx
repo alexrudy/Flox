@@ -56,7 +56,7 @@ cdef class Evolver:
             return np.asanyarray(self._Temperature.V_curr)
         
         def __set__(self, value):
-            self._Temperature.V_curr = np.asanyarray(value)
+            self._Temperature.V_curr = np.asanyarray(value).copy()
         
     property dTemperature:
     
@@ -66,7 +66,7 @@ cdef class Evolver:
             return np.asanyarray(self._Temperature.G_prev)
 
         def __set__(self, value):
-            self._Temperature.G_prev = np.asanyarray(value)
+            self._Temperature.G_prev = np.asanyarray(value).copy()
 
     property Vorticity:
 
@@ -76,7 +76,7 @@ cdef class Evolver:
             return np.asanyarray(self._Vorticity.V_curr)
 
         def __set__(self, value):
-            self._Vorticity.V_curr = np.asanyarray(value)
+            self._Vorticity.V_curr = np.asanyarray(value).copy()
 
     property dVorticity:
 
@@ -86,7 +86,7 @@ cdef class Evolver:
             return np.asanyarray(self._Vorticity.G_prev)
 
         def __set__(self, value):
-            self._Vorticity.G_prev = np.asanyarray(value)
+            self._Vorticity.G_prev = np.asanyarray(value).copy()
         
     property Stream:
     
@@ -96,7 +96,7 @@ cdef class Evolver:
             return np.asanyarray(self._Stream.V_curr)
 
         def __set__(self, value):
-            self._Stream.V_curr = np.asanyarray(value)
+            self._Stream.V_curr = np.asanyarray(value).copy()
  
     property VectorPotential:
     
@@ -106,7 +106,7 @@ cdef class Evolver:
             return np.asanyarray(self._VectorPotential.V_curr)
 
         def __set__(self, value):
-            self._VectorPotential.V_curr = np.asanyarray(value)
+            self._VectorPotential.V_curr = np.asanyarray(value).copy()
             
     property dVectorPotential:
 
@@ -116,4 +116,14 @@ cdef class Evolver:
             return np.asanyarray(self._VectorPotential.G_prev)
 
         def __set__(self, value):
-            self._VectorPotential.G_prev = np.asanyarray(value)
+            self._VectorPotential.G_prev = np.asanyarray(value).copy()
+            
+    property CurrentDensity:
+
+        """Magnetic Current Density"""
+
+        def __get__(self):
+            return np.asanyarray(self._CurrentDensity.V_curr)
+
+        def __set__(self, value):
+            self._CurrentDensity.V_curr = np.asanyarray(value).copy()

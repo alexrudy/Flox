@@ -20,6 +20,11 @@ from Flox.component.currentdensity cimport CurrentDensitySolver
 
 cdef class Evolver:
     cdef public DTYPE_t Time
+    cdef public DTYPE_t dz
+    cdef public DTYPE_t a
+    cdef public DTYPE_t safety
+    cdef DTYPE_t[:] npa
+    
     cdef VorticitySolver _Vorticity
     cdef TemperatureSolver _Temperature
     cdef StreamSolver _Stream
