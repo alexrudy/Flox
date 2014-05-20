@@ -107,3 +107,13 @@ cdef class Evolver:
 
         def __set__(self, value):
             self._VectorPotential.V_curr = np.asanyarray(value)
+            
+    property dVectorPotential:
+
+        """Derivative of Magnetic Vector Potential with Time"""
+
+        def __get__(self):
+            return np.asanyarray(self._VectorPotential.G_prev)
+
+        def __set__(self, value):
+            self._VectorPotential.G_prev = np.asanyarray(value)
