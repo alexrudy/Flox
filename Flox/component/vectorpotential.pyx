@@ -86,8 +86,16 @@ cdef class VectorPotentialSolver(TimeSolver):
     
         return vectorpotential_linear(self.nz, self.nx, self.G_curr, dPdz)
     
-    cpdef int compute_nonlinear(self, DTYPE_t[:,:] P_curr, DTYPE_t[:,:] dPdz, DTYPE_t a, DTYPE_t[:] npa):
-
+    cpdef int compute_nonlinear(self, DTYPE_t[:,:] P_curr, DTYPE_t[:,:] dPdz, DTYPE_t a, DTYPE_t[:] npa, DTYPE_t dz):
+        
+        cdef int k,j
+        # First we tweak the advection on the boundaries.
+        for k in range(self.nx):
+            j = 0
+            dPdz[ j, k ] = P_curr[j + 1, k] / dz
+            j = self.nz - 1
+            dPdz[ j, k ] = - P_curr[j - 1, k] / dz
+        
         # Now we do the non-linear terms from equation 11.25
         return galerkin_sin(self.nz, self.nx, self.G_curr, self.V_curr, self.dVdz, P_curr, dPdz, a, npa, 1.0)
 

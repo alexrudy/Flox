@@ -42,6 +42,12 @@ cpdef int vorticity(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] V_curr, DTYPE_t
     
     return r1
     
+cpdef int linear_lorentz(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] dJdz, DTYPE_t factor) nogil:
+    cdef int j, k
+    for k in prange(K):
+        for j in range(j):
+            d_V[j, k] += factor * dJdz[j , k]
+    return 0
 
 cdef class VorticitySolver(TimeSolver):
     
@@ -54,3 +60,10 @@ cdef class VorticitySolver(TimeSolver):
         # Now we do the non-linear terms from equation 4.6
         return galerkin_cos(self.nz, self.nx, self.G_curr, self.V_curr, self.dVdz, P_curr, dPdz, a, 1.0)
     
+    cpdef int compute_lorentz(self, DTYPE_t[:,:] A_curr, DTYPE_t[:,:] dAdz, DTYPE_t[:,:] J_curr, DTYPE_t[:,:] dJdz, DTYPE_t a, DTYPE_t Q, DTYPE_t Pr, DTYPE_t q):
+        cdef int r
+        # Compute the linear magnetic lorentz force due to the background field.
+        r = linear_lorentz(self.nz, self.nx, self.G_curr, dJdz, -1.0 * (Q * Pr)/q)
+        # Compute the magnetic lorentz force from equation 
+        r += galerkin_cos(self.nz, self.nx, self.G_curr, J_curr, dJdz, A_curr, dAdz, a, -1.0 * (Q * Pr)/q)
+        return r
