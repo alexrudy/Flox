@@ -8,7 +8,7 @@
 # 
 
 from Flox._flox cimport DTYPE_t
-from Flox._solve cimport Solver
+from Flox._solve cimport TimeSolver
 
 cpdef int vectorpotential(int J, int K, DTYPE_t[:,:] d_A, DTYPE_t[:,:] A_curr, DTYPE_t[:,:] dAdzz, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t q) nogil
 
@@ -16,7 +16,7 @@ cpdef int vectorpotential_linear(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] P_
 
 cpdef int vectorpotential_dzz(int J, int K, DTYPE_t[:,:] dAdzz, DTYPE_t[:,:] A_curr, DTYPE_t dz, DTYPE_t factor) nogil
 
-cdef class VectorPotentialSolver(Solver):
+cdef class VectorPotentialSolver(TimeSolver):
     cdef DTYPE_t[:,:] dVdzz
     cpdef int compute_base(self, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t q)
     cpdef int compute_linear(self, DTYPE_t[:,:] dPdz)

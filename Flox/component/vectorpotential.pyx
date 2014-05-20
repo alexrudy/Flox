@@ -21,7 +21,7 @@ from cython.parallel cimport prange
 
 from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D_nb
-from Flox._solve cimport Solver
+from Flox._solve cimport TimeSolver
 from Flox.nonlinear.galerkin cimport galerkin_sin
 
 cpdef int vectorpotential(int J, int K, DTYPE_t[:,:] d_A, DTYPE_t[:,:] A_curr, DTYPE_t[:,:] dAdzz, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t q) nogil:
@@ -64,7 +64,7 @@ cpdef int vectorpotential_dzz(int J, int K, DTYPE_t[:,:] dAdzz, DTYPE_t[:,:] A_c
     # We handle the boundary conditions separately, above
     return r1
     
-cdef class VectorPotentialSolver(Solver):
+cdef class VectorPotentialSolver(TimeSolver):
     
     def __cinit__(self, int nz, int nx):
         # Initialize the second derivative array here.
@@ -73,7 +73,7 @@ cdef class VectorPotentialSolver(Solver):
     cpdef int prepare(self, DTYPE_t dz):
         # Compute the first and second z derivatives of the vector potential here.
         cdef int r
-        r = Solver.prepare(self, dz)
+        r = TimeSolver.prepare(self, dz)
         r += vectorpotential_dzz(self.nz, self.nx, self.dVdzz, self.V_curr, dz, 1.0)
         return r
         

@@ -30,29 +30,15 @@ cdef class Solver:
         self.nx = nx
         self.nz = nz
         self.V_curr = np.zeros((nz, nx), dtype=np.float)
-        self.G_curr = np.zeros((nz, nx), dtype=np.float)
-        self.G_prev = np.zeros((nz, nx), dtype=np.float)
         self.dVdz = np.zeros((nz, nx), dtype=np.float)
         self.V_p = np.zeros((nx,), dtype=np.float)
         self.V_m = np.zeros((nx,), dtype=np.float)
         
     cpdef int prepare(self, DTYPE_t dz) except -1:
-        
+    
         self.dVdz[...] = 0.0
-        
+    
         return first_derivative2D(self.nz, self.nx, self.dVdz, self.V_curr, dz, self.V_p, self.V_m, 1.0)
-        
-    cpdef int advance(self, DTYPE_t deltaT) except -1:
-        
-        cdef int j, k
-        
-        for k in range(self.nx):
-            for j in range(self.nz):
-                self.V_curr[j,k] = self.V_curr[j,k] + deltaT / 2.0 * (3.0 * self.G_curr[j,k] - self.G_prev[j,k])
-                self.G_prev[j,k] = self.G_curr[j,k]
-                
-        
-        return 0
         
     property Value:
         
@@ -61,31 +47,51 @@ cdef class Solver:
             
         def __set__(self, value):
             self.V_curr = np.asanyarray(value)
-            
-    property dValuedt:
-
-        def __get__(self):
-            return np.asanyarray(self.G_prev)
-    
-        def __set__(self, value):
-            self.G_prev = np.asanyarray(value)
-            
-    property Value_p:
-        
-        def __get__(self):
-            return np.asanyarray(self.V_p)
-            
-        def __set__(self, value):
-            self.V_p = np.asanyarray(value)
-        
-    property Value_m:
-        
-        def __get__(self):
-            return np.asanyarray(self.V_m)
-        
-        def __set__(self, value):
-            self.V_m = np.asanyarray(value)
     
     # User should implement some function which can compute G_curr at each timestep!
     # We don't implement a method here, because its signature will vary greatly!
     
+cdef class TimeSolver(Solver):
+    
+    def __cinit__(self, int nz, int nx):
+        
+        self.nx = nx
+        self.nz = nz
+        self.G_curr = np.zeros((nz, nx), dtype=np.float)
+        self.G_prev = np.zeros((nz, nx), dtype=np.float)
+
+    
+    cpdef int advance(self, DTYPE_t deltaT) except -1:
+    
+        cdef int j, k
+    
+        for k in range(self.nx):
+            for j in range(self.nz):
+                self.V_curr[j,k] = self.V_curr[j,k] + deltaT / 2.0 * (3.0 * self.G_curr[j,k] - self.G_prev[j,k])
+                self.G_prev[j,k] = self.G_curr[j,k]
+            
+        return 0
+        
+    property dValuedt:
+
+        def __get__(self):
+            return np.asanyarray(self.G_prev)
+
+        def __set__(self, value):
+            self.G_prev = np.asanyarray(value)
+        
+    property Value_p:
+    
+        def __get__(self):
+            return np.asanyarray(self.V_p)
+        
+        def __set__(self, value):
+            self.V_p = np.asanyarray(value)
+    
+    property Value_m:
+    
+        def __get__(self):
+            return np.asanyarray(self.V_m)
+    
+        def __set__(self, value):
+            self.V_m = np.asanyarray(value)

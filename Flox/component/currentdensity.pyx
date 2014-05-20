@@ -34,8 +34,6 @@ cpdef int currentdensity(int J, int K, DTYPE_t[:,:] J_curr, DTYPE_t[:,:] A_curr,
     
     return 0
 
-
-
 cdef class CurrentDensitySolver(Solver):
     
     cpdef int compute_base(self, DTYPE_t[:,:] A_curr, DTYPE_t[:,:] dAdzz, DTYPE_t[:] npa):

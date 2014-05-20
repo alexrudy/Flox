@@ -21,7 +21,7 @@ from cython.parallel cimport prange
 
 from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D
-from Flox._solve cimport Solver
+from Flox._solve cimport TimeSolver
 from Flox.nonlinear.galerkin cimport galerkin_sin
 
 cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t[:] f_p, DTYPE_t[:] f_m) nogil:
@@ -52,7 +52,7 @@ cpdef int temperature_linear(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] P_curr
     
     return 0
 
-cdef class TemperatureSolver(Solver):
+cdef class TemperatureSolver(TimeSolver):
     
     def __cinit__(self, int nz, int nx):
         # Boundary Conditions:

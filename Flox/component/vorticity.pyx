@@ -21,7 +21,7 @@ from cython.parallel cimport prange
 
 from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D
-from Flox._solve cimport Solver
+from Flox._solve cimport TimeSolver
 from Flox.nonlinear.galerkin cimport galerkin_cos
 
 
@@ -43,7 +43,7 @@ cpdef int vorticity(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] V_curr, DTYPE_t
     return r1
     
 
-cdef class VorticitySolver(Solver):
+cdef class VorticitySolver(TimeSolver):
     
     cpdef int compute_base(self, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra):
         
