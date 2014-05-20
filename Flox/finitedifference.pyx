@@ -23,19 +23,16 @@ from cython.parallel cimport prange
 
 from Flox._flox cimport DTYPE_t
 
-# Also known as 'clear_walrus'
-cpdef int clear_values(int J, DTYPE_t[:] val) nogil:
-    
-    cdef int j
-    
-    for j in range(0, J-1):
-        val[j] = 0.0
-    
-    return 0
-
+cpdef int second_derivative2D_nb(int J, int K, DTYPE_t[:,:] ddf, DTYPE_t[:,:] f, DTYPE_t dz, DTYPE_t factor) nogil:
+    # Compute the second derivative, but don't handle the boundary points.
+    cdef DTYPE_t dzs = dz * dz
+    cdef int k, j, r = 0
+    for k in prange(K):
+        for j in range(1, J-1):
+            ddf[j,k] += factor * (f[j+1,k] - 2.0 * f[j,k] + f[j-1,k])/(dzs)
 
 cpdef int second_derivative2D(int J, int K, DTYPE_t[:,:] ddf, DTYPE_t[:,:] f, DTYPE_t dz, DTYPE_t[:] f_p, DTYPE_t[:] f_m, DTYPE_t factor) nogil:
-    
+    # Compute the second derivative with known boundary points.
     cdef DTYPE_t dzs = dz * dz
     cdef int k, j, r = 0
     
@@ -50,7 +47,7 @@ cpdef int second_derivative2D(int J, int K, DTYPE_t[:,:] ddf, DTYPE_t[:,:] f, DT
     return 0
 
 cpdef int first_derivative2D(int J, int K, DTYPE_t[:,:] df, DTYPE_t[:,:] f, DTYPE_t dz, DTYPE_t[:] f_p, DTYPE_t[:] f_m, DTYPE_t factor) nogil:
-
+    # Compute the first derivative with known boundary points.
     cdef DTYPE_t dzs = 2.0 * dz
     cdef int k, j, r = 0
     

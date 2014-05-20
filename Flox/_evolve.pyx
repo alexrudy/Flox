@@ -98,3 +98,12 @@ cdef class Evolver:
         def __set__(self, value):
             self._Stream.V_curr = np.asanyarray(value)
  
+    property VectorPotential:
+    
+        """Magnetic Vector Potential"""
+        
+        def __get__(self):
+            return np.asanyarray(self._VectorPotential.V_curr)
+
+        def __set__(self, value):
+            self._VectorPotential.V_curr = np.asanyarray(value)

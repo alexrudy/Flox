@@ -52,5 +52,5 @@ cdef class VorticitySolver(Solver):
     cpdef int compute_nonlinear(self, DTYPE_t[:,:] P_curr, DTYPE_t[:,:] dPdz, DTYPE_t a):
     
         # Now we do the non-linear terms from equation 4.6
-        return galerkin_cos(self.nz, self.nx, self.G_curr, self.V_curr, self.dVdz, P_curr, dPdz, a)
+        return galerkin_cos(self.nz, self.nx, self.G_curr, self.V_curr, self.dVdz, P_curr, dPdz, a, 1.0)
     

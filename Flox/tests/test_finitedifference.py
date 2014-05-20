@@ -42,6 +42,16 @@ def second_derivative_2D(f, dz, f_p, f_m, factor=1.0):
     assert not _second_derivative2D(J, K, ddf, f, dz, f_p, f_m, factor)
     return ddf
     
+def second_derivative_2D_nb(f, dz, factor=1.0):
+    """Second derivative warpper."""
+    from ..finitedifference import second_derivative2D_nb as _second_derivative2D_nb
+    ddf = np.zeros_like(f)
+    J = f.shape[0]
+    K = f.shape[1]
+    
+    assert not _second_derivative2D_nb(J, K, ddf, f, dz, factor)
+    return ddf
+    
 def first_derivative_2D(f, dz, f_p, f_m, factor=1.0):
     """Second derivative warpper."""
     from ..finitedifference import first_derivative2D as _first_derivative2D
@@ -75,6 +85,14 @@ def test_secondderivative_2D(functional_form):
     factor = np.random.randn(1)
     ddfx = second_derivative_2D(functional_form.fx, functional_form.dx, functional_form.f_p, functional_form.f_m, factor) / factor
     assert np.allclose(functional_form.ddfx, ddfx)
+    
+def test_secondderivative_2D_nb(functional_form):
+    """2D second derivative"""
+    functional_form.ndim = 2
+    factor = np.random.randn(1)
+    ddfx = second_derivative_2D_nb(functional_form.fx, functional_form.dx, factor) / factor
+    assert np.allclose(functional_form.ddfx[1:-1,:], ddfx[1:-1,:])
+    assert np.allclose(0.0, ddfx[[0,-1],:])
     
 def test_firstderivative(functional_form):
     """Second derivative"""
