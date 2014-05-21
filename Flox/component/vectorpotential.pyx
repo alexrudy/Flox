@@ -19,10 +19,13 @@ cimport numpy as np
 cimport cython
 from cython.parallel cimport prange
 
+from Flox.transform import setup_transform
 from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D_nb
 from Flox._solve cimport TimeSolver
 from Flox.nonlinear.galerkin cimport galerkin_sin
+from Flox._transform cimport transform
+from Flox.transform import setup_transform
 
 cpdef int vectorpotential(int J, int K, DTYPE_t[:,:] d_A, DTYPE_t[:,:] A_curr, DTYPE_t[:,:] dAdzz, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t q) nogil:
     
@@ -69,6 +72,9 @@ cdef class VectorPotentialSolver(TimeSolver):
     def __cinit__(self, int nz, int nx):
         # Initialize the second derivative array here.
         self.dVdzz = np.zeros((nz, nx), dtype=np.float)
+        self.Alfven = np.zeros((nz, nx), dtype=np.float)
+        self.Bx = np.zeros((nz, nx), dtype=np.float)
+        self.Bz = np.zeros((nz, nx), dtype=np.float)
     
     cpdef int prepare(self, DTYPE_t dz):
         # Compute the first and second z derivatives of the vector potential here.
@@ -77,6 +83,32 @@ cdef class VectorPotentialSolver(TimeSolver):
         r += vectorpotential_dzz(self.nz, self.nx, self.dVdzz, self.V_curr, dz, 1.0)
         return r
         
+    
+    cpdef int setup_transform(self, DTYPE_t[:] npa):
+        cdef int k
+        self.Bx_transform = setup_transform(np.sin, self.nx, self.nx)
+        self.Bz_transform = setup_transform(np.cos, self.nx, self.nx)
+        for k in range(self.nx):
+            for kp in range(self.nx):
+                self.Bz_transform[k,kp] *= npa[k]
+        self.transform_ready = True
+        return 0
+    
+    cpdef int compute_alfven(self, DTYPE_t Q, DTYPE_t q, DTYPE_t Pr):
+        # Compute and update the internal variable handling the alfven velocity.
+        cdef int r, j, k
+        cdef DTYPE_t f = (Q * Pr)/q
+        self.Bx[...] = 0.0
+        self.Bz[...] = 0.0
+        self.maxAlfven = 0.0
+        r = transform(self.nz, self.nx, self.nx, self.Bx, self.dVdz, self.Bx_transform)
+        r += transform(self.nz, self.nx, self.nx, self.Bz, self.V_curr, self.Bz_transform)
+        for j in range(self.nz):
+            for k in range(self.nx):
+                self.Alfven[j,k] = f * (self.Bx[j,k])*(self.Bx[j,k]) + (1.0 + self.Bz[j,k])*(1.0 + self.Bz[j,k])
+                if self.Alfven[j,k] > self.maxAlfven:
+                    self.maxAlfven = self.Alfven[j,k]
+        return r
     
     cpdef int compute_base(self, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t q):
     

@@ -18,6 +18,15 @@ cpdef int vectorpotential_dzz(int J, int K, DTYPE_t[:,:] dAdzz, DTYPE_t[:,:] A_c
 
 cdef class VectorPotentialSolver(TimeSolver):
     cdef DTYPE_t[:,:] dVdzz
+    cdef DTYPE_t[:,:] Alfven
+    cdef DTYPE_t[:,:] Bx
+    cdef DTYPE_t[:,:] Bz
+    cdef DTYPE_t[:,:] Bx_transform
+    cdef DTYPE_t[:,:] Bz_transform
+    cdef DTYPE_t maxAlfven
+    
+    cpdef int setup_transform(self, DTYPE_t[:] npa)
+    cpdef int compute_alfven(self, DTYPE_t Q, DTYPE_t q, DTYPE_t Pr)
     cpdef int compute_base(self, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t q)
     cpdef int compute_linear(self, DTYPE_t[:,:] dPdz)
     cpdef int compute_nonlinear(self, DTYPE_t[:,:] P_curr, DTYPE_t[:,:] dPdz, DTYPE_t a, DTYPE_t[:] npa, DTYPE_t dz)
