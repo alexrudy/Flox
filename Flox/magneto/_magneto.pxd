@@ -15,3 +15,5 @@ cdef class MagnetoEvolver(Evolver):
     cdef public DTYPE_t Ra
     cdef public DTYPE_t q
     cdef public DTYPE_t Q
+    cdef public DTYPE_t maxAlfven
+    cdef bint linear_only

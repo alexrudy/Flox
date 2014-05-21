@@ -43,18 +43,25 @@ cdef class MagnetoEvolver(Evolver):
         self._VectorPotential = VectorPotentialSolver(nz, nx)
         self._CurrentDensity = CurrentDensitySolver(nz, nx)
         self.safety = safety
+        self.maxAlfven = 0.0
+        self.linear_only = False
         
     
     cpdef DTYPE_t delta_time(self):
         
-        cdef DTYPE_t dt_a, dt_b
-        # return 3.6e-6 * self.safety
-        dt_a =  (self.dz * self.dz) / 4.0
-        dt_b = (2.0 * np.pi) / (50.0 * np.sqrt(self.Ra * self.Pr)) 
-        if dt_a > dt_b:
-            return dt_b * self.safety
-        else:
-            return dt_a * self.safety
+        cdef DTYPE_t dt_a, dt_b, dt_c, dt_d, dt
+        if self.timestep_ready:
+            return Evolver.delta_time(self)
+        if self.maxAlfven == 0.0:
+            self.maxAlfven = self.Q * self.Pr / self.q
+        dt_a = (self.dz * self.dz) / 4.0
+        dt_b = (2.0 * np.pi) / (50.0 * np.sqrt(self.Ra * self.Pr))
+        dt_c = (self.dz * self.dz) * self.q / 4.0
+        dt_d = self.dz / np.sqrt(self.maxAlfven)
+        dt = np.min([dt_a, dt_b, dt_c, dt_d])
+        self.timestep = dt
+        self.timestep_ready = True
+        return Evolver.delta_time(self)
         
     cpdef int step(self, DTYPE_t delta_time):
         
@@ -72,7 +79,8 @@ cdef class MagnetoEvolver(Evolver):
         
         # Vector Potential
         self._VectorPotential.compute_base(self.dz, self.npa, self.q)
-        self._VectorPotential.compute_nonlinear(self._Stream.V_curr, self._Stream.dVdz, self.a, self.npa, self.dz)
+        if not self.linear_only:
+            self._VectorPotential.compute_nonlinear(self._Stream.V_curr, self._Stream.dVdz, self.a, self.npa, self.dz)
         self._VectorPotential.compute_linear(self._Stream.dVdz)
         
         # Tempearture
@@ -95,9 +103,25 @@ cdef class MagnetoEvolver(Evolver):
         self._VectorPotential.prepare(self.dz) # This is called to set the second-derivatives correctly.
         self._CurrentDensity.compute_base(self._VectorPotential.V_curr, self._VectorPotential.dVdzz, self.npa)
         
+        if not self._VectorPotential.transform_ready:
+            self._VectorPotential.setup_transform(self.npa)
+        if not self.timestep_ready:
+            self._VectorPotential.compute_alfven(self.Q, self.q, self.Pr)
+            self.maxAlfven = self._VectorPotential.maxAlfven
         
         self.Time = time + delta_time
         
         return 0
     
+    property LinearOnly:
+        
+        def __get__(self):
+            
+            if self.linear_only:
+                return True
+            else:
+                return False
+                
+        def __set__(self, value):
+            self.linear_only = value
     

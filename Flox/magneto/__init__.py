@@ -22,17 +22,19 @@ class MagnetoEvolver(_MagnetoEvolver, Evolver):
         return [ "Temperature", "dTemperature", "Vorticity", "dVorticity", "Stream", "VectorPotential", "dVectorPotential", "CurrentDensity", "Time"]
     
     @classmethod
-    def from_system(cls, system, saftey=0.5):
+    def from_system(cls, system, safety=0.5, checkCFL=10, LinearOnly=False):
         """Load the grid parameters into the LE"""
         ev = cls(
             system.nz, system.nx,
             system.nondimensionalize(system.npa).value,
             system.nondimensionalize(system.dz).value,
             system.nondimensionalize(system.aspect).value,
-            saftey
+            safety
             )
         ev.Pr = system.nondimensionalize(system.Prandtl).value
         ev.Ra = system.nondimensionalize(system.Rayleigh).value
         ev.Q = system.nondimensionalize(system.Chandrasekhar).value
         ev.q = system.nondimensionalize(system.Roberts).value
+        ev.checkCFL = checkCFL
+        ev.LinearOnly = LinearOnly
         return ev
