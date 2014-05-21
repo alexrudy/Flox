@@ -149,7 +149,11 @@ class GridView(View):
         
     def data(self, system):
         """Return the transformed data"""
-        return system.transformed_array(self.variable, perturbed=self.perturbed).value
+        data = system.transformed_array(self.variable, perturbed=self.perturbed).value
+        if self.variable == "VectorPotential":
+            return data + system.B0.value * np.linspace(0, 1, system.nx + 2)[1:-1][np.newaxis,:]
+        else:
+            return data
         
     def initialize(self, system):
         """Initialize the system."""
@@ -187,7 +191,7 @@ class ContourView(GridView):
         data = self.data(system)
         ptp = np.ptp(data)
         if np.isfinite(ptp) and ptp != 0.0:        
-            self.image = self.ax.contour(self.data(system), **self.im_kwargs)
+            self.image = self.ax.contour(self.data(system), 10, **self.im_kwargs)
             self.cb = self.ax.figure.colorbar(self.image, ax=self.ax)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
         self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nt), transform=self.ax.transAxes)
@@ -204,7 +208,7 @@ class ContourView(GridView):
         data = self.data(system)
         ptp = np.ptp(data)
         if np.isfinite(ptp) and ptp != 0.0:
-            self.image = self.ax.contour(self.data(system), **self.im_kwargs)
+            self.image = self.ax.contour(self.data(system), 10, **self.im_kwargs)
             if hasattr(self, 'cb'):
                 self.cb.ax.clear()
                 self.cb = self.ax.figure.colorbar(self.image, ax=self.ax, cax=self.cb.ax)
@@ -286,7 +290,7 @@ class VProfileView(ProfileView):
         self.ax.set_xlabel("z")
 
 class V1DProfileView(VProfileView):
-    """2nd Derivative Profile vertically."""
+    """1st Derivative Profile vertically."""
     
     def ydata(self, system):
         """Return the y-data values."""
