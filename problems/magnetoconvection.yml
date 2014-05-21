@@ -11,7 +11,7 @@ system:
   kinematic_viscosity: !quantity '0.001 St'
   nx: 100
   nz: 200
-  nt: 500
+  nt: 5000
   engine: 'Flox.array.NumpyArrayEngine'
 ic:
   stable: yes
@@ -23,6 +23,8 @@ ic:
     epsilon: 0.1
 animate:
   filename: problems/magnetoconvection.mp4
+  fig:
+    figsize: [ 10, 7 ]
   buffer: 0
   enable: yes
   movie:
@@ -36,12 +38,12 @@ animate:
       '()': Flox.plot.GridView
       variable: "Temperature"
       cmap: "hot"
-    S:
-      r: 1
-      c: 0
-      '()': Flox.plot.ContourView
-      variable: "Stream"
-      colors: k
+    # S:
+    #   r: 1
+    #   c: 0
+    #   '()': Flox.plot.ContourView
+    #   variable: "Stream"
+    #   colors: k
     A:
       r: 2
       c: 0
