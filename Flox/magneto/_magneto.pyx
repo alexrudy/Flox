@@ -80,7 +80,7 @@ cdef class MagnetoEvolver(Evolver):
         # Vector Potential
         self._VectorPotential.compute_base(self.dz, self.npa, self.q)
         if not self.linear_only:
-            self._VectorPotential.compute_nonlinear(self._Stream.V_curr, self._Stream.dVdz, self.a, self.npa, self.dz)
+            self._VectorPotential.compute_nonlinear(self._Stream.V_curr, self._Stream.dVdz, self.a, self.dz)
         self._VectorPotential.compute_linear(self._Stream.dVdz)
         
         # Tempearture

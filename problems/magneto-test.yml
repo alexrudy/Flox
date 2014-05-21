@@ -2,15 +2,15 @@ system:
   '()': Flox.magneto.system.MagnetoSystem
   Prandtl: 0.5
   Rayleigh: 1.0e+6
-  Chandrasekhar: 100
+  Chandrasekhar: 1.0e+3
   Roberts: 1.0
   aspect: 1.0
   deltaT: !quantity '1 K'
   depth: !quantity '1 m'
   B0: !quantity '0.001 T'
   kinematic_viscosity: !quantity '0.001 St'
-  nx: 75
-  nz: 200
+  nx: 50
+  nz: 100
   nt: 500
   engine: 'Flox.array.NumpyArrayEngine'
 ic:
@@ -29,8 +29,8 @@ animate:
     interval: 20
     save_kwargs:
       bitrate: 100000
-  nr: 3
-  nc: 1
+  nr: 1
+  nc: 3
   plots:
     T:
       r: 0
@@ -39,22 +39,26 @@ animate:
       variable: "Temperature"
       cmap: "hot"
     P:
-      r: 1
-      c: 0
+      r: 0
+      c: 1
       '()': Flox.plot.ContourView
       variable: "Stream"
       colors: k
     A:
-      r: 2
-      c: 0
+      r: 0
+      c: 2
       '()': Flox.plot.ContourView
       variable: "VectorPotential"
       colors: k
+      linestyles: solid
 evolve:
   class: Flox.magneto.MagnetoEvolver
-  iterations: 500
+  iterations: 50
   time: !quantity '1 yr'
-  nt: 50
+  nt: 100
+  settings:
+    checkCFL: 3
+    safety: 0.1
 write:
   writer: Flox.io.HDF5Writer
   filename: ~/Documents/magneto-test.hdf5
