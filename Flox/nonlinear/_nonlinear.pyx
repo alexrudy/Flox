@@ -45,13 +45,14 @@ cdef class NonlinearEvolver(Evolver):
     cpdef DTYPE_t delta_time(self):
         
         cdef DTYPE_t dt_a, dt_b
-        # return 3.6e-6 * self.safety
-        dt_a =  (self.dz * self.dz) / 4.0
-        dt_b = (2.0 * np.pi) / (50.0 * np.sqrt(self.Ra * self.Pr)) 
-        if dt_a > dt_b:
-            return dt_b * self.safety
-        else:
-            return dt_a * self.safety
+        if self.timestep_ready:
+            return Evolver.delta_time(self)
+        dt_a = (self.dz * self.dz) / 4.0
+        dt_b = (2.0 * np.pi) / (50.0 * np.sqrt(self.Ra * self.Pr))
+        dt = np.min([dt_a, dt_b])
+        self.timestep = dt
+        self.timestep_ready = True
+        return Evolver.delta_time(self)
         
     cpdef int step(self, DTYPE_t delta_time):
         

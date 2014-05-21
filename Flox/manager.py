@@ -98,8 +98,8 @@ class FloxManager(object):
         
         # Set up the evolver object.
         evolver = resolve(self.config['evolve.class'])
-        EV = evolver.from_system(System, self.config.get('evolve.saftey', 0.1))
-        EV.evolve_system(System, self.config['evolve.time'], chunks=int(self.config.get('evolve.nt',System.nt-System.nit-2)), chunksize=int(self.config.get('evolve.iterations',1)))
+        EV = evolver.from_system(System, **self.config.get('evolve.settings',{}))
+        EV.evolve_system(System, self.config['evolve.time'], chunks=int(self.config.get('evolve.nt',System.nt-System.nit-2)), chunksize=int(self.config.get('evolve.iterations',1)), quiet=debug)
         System.write(**self.config.get('write',{}))
     
     def mo_movie(self, System, debug=False):
@@ -157,7 +157,7 @@ class FloxManager(object):
             WS = WM.send(System)
             WQ.put(System.create_packet())
             # Launch the evolver.
-            EV = getattr(EM, evolver.__name__)(System, self.config.get('evolve.saftey', 0.1))
+            EV = getattr(EM, evolver.__name__)(System, **self.config.get('evolve.settings',{}))
             EV.read_packet(System.create_packet())
             nd_time = System.nondimensionalize(self.config['evolve.time'] + System.time).value
             EV.evolve_queues(nd_time, chunks=int(self.config.get('evolve.nt',System.nt-System.nit-2)), chunksize=int(self.config.get('evolve.iterations',1)), queues=Qs)
