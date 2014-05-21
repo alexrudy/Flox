@@ -55,7 +55,7 @@ class System2D(PacketInterface, WriterInterface, HasUnitsProperties):
             Ra = self.Rayleigh
             time = self.time
             return "<{0} with Ra={1.value} and Pr={2.value} at {3}>".format(self.__class__.__name__, Ra, Pr, time)
-        except (NotImplementedError, IndexError):
+        except (NotImplementedError, IndexError, KeyError):
             return super(System2D, self).__repr__()
     
     def infer_iteration(self):
@@ -341,8 +341,8 @@ class NDSystem2D(System2D):
     @classmethod
     def get_parameter_list(cls):
         """Get a list of the parameters which can be changed/modified directly"""
-        import inspect
-        return inspect.getargspec(cls.__init__)[0][1:] + super(NDSystem2D, cls).get_parameter_list()
+        properties = list(cls._list_attributes(UnitsProperty, strict=True))
+        return properties + super(NDSystem2D, cls).get_parameter_list()
     
 
 class PhysicalSystem2D(System2D):

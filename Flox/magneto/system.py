@@ -45,8 +45,14 @@ class MagnetoSystem(NDSystem2D):
         self._bases["nondimensional"][mass_unit.physical_type] = mass_unit
         self._bases["nondimensional"][u.A.physical_type] = u.A
     
-    @classmethod
-    def get_parameter_list(cls):
-        """Get a list of the parameters which can be changed/modified directly"""
-        import inspect
-        return inspect.getargspec(cls.__init__)[0][1:] + super(NDSystem2D, cls).get_parameter_list()
+    def __repr__(self):
+        """Represent this object!"""
+        try:
+            Pr = self.Prandtl
+            Ra = self.Rayleigh
+            Q = self.Chandrasekhar
+            q = self.Roberts
+            time = self.time
+            return "<{0} with Ra={Ra.value} Pr={Pr.value} Q={Q.value} q={q.value} at {time}>".format(self.__class__.__name__, Ra=Ra, Pr=Pr, Q=Q, q=q, time=time)
+        except (NotImplementedError, IndexError, KeyError):
+            return super(MagnetoSystem, self).__repr__()
