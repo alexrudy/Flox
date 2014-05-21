@@ -24,9 +24,12 @@ from Flox._flox cimport DTYPE_t
 
 cdef class Evolver:
     
+    def __cinit__(self, *args, **kwargs):
+        self.timestep_ready = False
+    
     cpdef DTYPE_t delta_time(self):
         
-        return 0.0
+        return self.timestep * self.safety
     
     cpdef int step(self, DTYPE_t delta_time):
         
@@ -34,13 +37,19 @@ cdef class Evolver:
         
     cpdef int evolve(self, DTYPE_t time, int max_iterations):
         
-        cdef int j, r = 0
+        cdef int j, r = 0, cfl = 0
+        self.timestep_ready = False
         
         for j in range(max_iterations):
             if self.Time > time:
                 break
-            
             r += self.step(self.delta_time())
+            
+            cfl += 1
+            if cfl >= self.checkCFL:
+                cfl = 0
+                self.timestep_ready = False
+            
             if r == 0:
                 pass
             else:

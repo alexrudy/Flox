@@ -23,6 +23,9 @@ cdef class Evolver:
     cdef public DTYPE_t dz
     cdef public DTYPE_t a
     cdef public DTYPE_t safety
+    cdef bint timestep_ready
+    cdef public int checkCFL
+    cdef DTYPE_t timestep
     cdef DTYPE_t[:] npa
     
     cdef VorticitySolver _Vorticity
