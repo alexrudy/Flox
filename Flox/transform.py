@@ -30,3 +30,12 @@ def spectral_transform(func, data, nx=1.0, a=1.0, perturbed=False):
         result[:,:,...] += cs[np.newaxis,i_n,:] * data[:,i_n,np.newaxis,...]
     return result
     
+def setup_transform(func, nx, nm):
+    """Setup the data for a transform."""
+    x = np.linspace(0, 1, nx+2)[1:-1]
+    n = np.arange(nm)
+    
+    # This array is n * x large.
+    # It will convert from modes to x-space.
+    cs = func(n[:,np.newaxis] * np.pi * x[np.newaxis,:])
+    return cs

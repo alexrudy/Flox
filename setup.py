@@ -40,6 +40,8 @@ extensions = [
         **extension_kwargs),
     Extension("*", ["Flox/magneto/*.pyx"],
         **extension_kwargs),
+    Extension("*", ["Flox/_transform.pyx"],
+        **extension_kwargs),
         ]
 
 DEPENDENCIES = [

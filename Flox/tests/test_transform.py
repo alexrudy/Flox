@@ -12,7 +12,7 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 import numpy as np
 import numpy.random
 
-from Flox.transform import spectral_transform
+from Flox.transform import spectral_transform, setup_transform
 
 import pytest
 
@@ -30,4 +30,21 @@ def test_spectral_transform(modal_amplitudes):
     """Tests a spectral transform against the python implementation."""
     amplitudes, nx = modal_amplitudes
     sa = spectral_transform(np.sin, amplitudes, nx, 1.0, perturbed=False)
+    
+def test_cython_spectral_transform(modal_amplitudes):
+    """Test the cython transform"""
+    from Flox._transform import transform
+    amplitudes, nx = modal_amplitudes
+    nz = amplitudes.shape[0]
+    nm = amplitudes.shape[1]
+    # Python side.
+    sa = spectral_transform(np.sin, amplitudes, nx, 1.0, perturbed=False)
+    
+    # Cython side.
+    transform_matrix = setup_transform(np.sin, nx, nm)
+    ca = np.zeros((nz, nx), dtype=np.float)
+    assert not transform(nz, nm, nx, ca, amplitudes, transform_matrix)
+    
+    assert np.allclose(sa, ca)
+    
     
