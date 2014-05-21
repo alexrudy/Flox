@@ -50,6 +50,20 @@ cpdef int vectorpotential_linear(int J, int K, DTYPE_t[:,:] d_A, DTYPE_t[:,:] dP
     
     return 0
     
+cpdef int vectorpotential_dz(int J, int K, DTYPE_t[:,:] dAdz) nogil:
+    
+    cdef int j, k
+    for k in prange(K):
+        # This takes care of the top and bottom boundaries in (11.25)
+        # Equation (11.37): Bottom boundary, first derivative vanishes.
+        j = 0
+        dAdz[j,k] = 0.0
+        # Equation (11.38): Top boundary, first derivative vanishes.
+        j = J - 1
+        dAdz[j,k] = 0.0
+    
+    return 0
+    
 cpdef int vectorpotential_dzz(int J, int K, DTYPE_t[:,:] dAdzz, DTYPE_t[:,:] A_curr, DTYPE_t dz, DTYPE_t factor) nogil:
     
     cdef int j, k, r1
@@ -79,8 +93,10 @@ cdef class VectorPotentialSolver(TimeSolver):
     cpdef int prepare(self, DTYPE_t dz):
         # Compute the first and second z derivatives of the vector potential here.
         cdef int r
+        self.dVdzz[...] = 0.0
         r = TimeSolver.prepare(self, dz)
         r += vectorpotential_dzz(self.nz, self.nx, self.dVdzz, self.V_curr, dz, 1.0)
+        r += vectorpotential_dz(self.nz, self.nx, self.dVdz)
         return r
         
     
