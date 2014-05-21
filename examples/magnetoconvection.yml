@@ -29,7 +29,7 @@ animate:
   enable: yes
   movie:
     interval: 20
-  nr: 3
+  nr: 2
   nc: 1
   plots:
     T:
@@ -45,7 +45,7 @@ animate:
     #   variable: "Stream"
     #   colors: k
     A:
-      r: 2
+      r: 1
       c: 0
       '()': Flox.plot.ContourView
       variable: "VectorPotential"
