@@ -9,7 +9,7 @@ system:
   depth: !quantity '1 m'
   B0: !quantity '0.001 T'
   kinematic_viscosity: !quantity '0.001 St'
-  nx: 50
+  nx: 75
   nz: 200
   nt: 500
   engine: 'Flox.array.NumpyArrayEngine'

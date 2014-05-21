@@ -2,28 +2,28 @@ system:
   '()': Flox.magneto.system.MagnetoSystem
   Prandtl: 0.5
   Rayleigh: 1.0e+6
-  Chandrasekhar: 1.0e+4
+  Chandrasekhar: 100
   Roberts: 1.0
   aspect: 3.0
   deltaT: !quantity '1 K'
   depth: !quantity '1 m'
   B0: !quantity '1 T'
   kinematic_viscosity: !quantity '0.001 St'
-  nx: 100
-  nz: 200
-  nt: 500
+  nx: 50
+  nz: 100
+  nt: 4000
   engine: 'Flox.array.NumpyArrayEngine'
 ic:
   stable: yes
   sin:
     limits: no
     enable: yes
-    k: [ 1 ]
+    k: [ 1 , 8 ]
     random: yes
     epsilon: 0.1
 animate:
-  filename: problems/magnetoconvection.mp4
-  buffer: 0
+  filename: problems/magnetoconvection-weak.mp4
+  buffer: 10
   enable: yes
   movie:
     interval: 20
@@ -50,12 +50,10 @@ animate:
       colors: k
 evolve:
   class: Flox.magneto.MagnetoEvolver
-  iterations: 100
+  iterations: 500
   time: !quantity '1 yr'
-  settings:
-    safety: 0.1
-    checkCFL: 50
 write:
   writer: Flox.io.HDF5Writer
   filename: ~/Documents/convection.hdf5
-  dataname: magnetoconvection-strong
+  dataname: magnetoconvection
+    - 
