@@ -28,7 +28,7 @@ extensions = [
         **extension_kwargs),
     Extension("*", ["Flox/_solve.pyx"],
         **extension_kwargs),
-    Extension("*", ["Flox/_evolve.pyx"],
+    Extension("*", ["Flox/evolver/_evolve.pyx"],
         **extension_kwargs),
     Extension("*", ["Flox/finitedifference.pyx"],
         **extension_kwargs),

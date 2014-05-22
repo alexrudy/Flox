@@ -10,7 +10,7 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 from ._linear import LinearEvolver as _LinearEvolver
-from ..evolver import Evolver
+from ..evolver.base import Evolver
 
 class LinearEvolver(Evolver, _LinearEvolver):
     """Linear evolver"""

@@ -8,7 +8,7 @@
 # 
 
 from Flox._flox cimport DTYPE_t
-from Flox._evolve cimport Evolver
+from Flox.evolver._evolve cimport Evolver
 
 cdef class MagnetoEvolver(Evolver):
     cdef public DTYPE_t Pr

@@ -10,7 +10,7 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 from ._magneto import MagnetoEvolver as _MagnetoEvolver
-from ..evolver import Evolver
+from ..evolver.base import Evolver
 
 class MagnetoEvolver(_MagnetoEvolver, Evolver):
     """Nonlinear evolver"""

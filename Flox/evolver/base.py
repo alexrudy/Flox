@@ -20,8 +20,8 @@ import functools
 
 from astropy.utils.console import ProgressBar
 
-from .process.packet import PacketInterface
-from .util import callback_progressbar_wrapper
+from ..process.packet import PacketInterface
+from ..util import callback_progressbar_wrapper
 
 @six.add_metaclass(abc.ABCMeta)
 class Evolver(PacketInterface):

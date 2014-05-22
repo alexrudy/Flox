@@ -22,7 +22,7 @@ from cpython.array cimport array, clone
 from cython.parallel cimport prange
 
 from Flox._flox cimport DTYPE_t
-from Flox._evolve cimport Evolver
+from Flox.evolver._evolve cimport Evolver
 from Flox.component.temperature cimport TemperatureSolver
 from Flox.component.vorticity cimport VorticitySolver
 from Flox.component.stream cimport StreamSolver
