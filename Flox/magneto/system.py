@@ -16,7 +16,10 @@ from pyshell.astron.units import UnitsProperty, HasUnitsProperties, recompose, C
 from pyshell.util import setup_kwargs, configure_class, resolve
 
 from ..array import SpectralArrayProperty, ArrayEngine, ArrayProperty
+from ..transform import setup_transform
+from .._transform import transform
 from ..system import NDSystem2D
+from ..finitedifference import first_derivative2D
 
 class MagnetoSystem(NDSystem2D):
     """docstring for MagnetoSystem"""
@@ -56,3 +59,17 @@ class MagnetoSystem(NDSystem2D):
             return "<{0} with Ra={Ra.value} Pr={Pr.value} Q={Q.value} q={q.value} at {time}>".format(self.__class__.__name__, Ra=Ra, Pr=Pr, Q=Q, q=q, time=time)
         except (NotImplementedError, IndexError, KeyError):
             return super(MagnetoSystem, self).__repr__()
+            
+    @ComputedUnitsProperty
+    def MagneticField(self):
+        """The magnetic field."""
+        A = self.VectorPotential
+        Bx_transform = setup_transform(np.sin, self.nx, self.nx)
+        Bz_transform = setup_transform(np.cos, self.nx, self.nx)
+        Bz_transform *= npa[:,np.newaxis]
+        Bx = np.zeros_like(A)
+        Bz = np.zeros_like(A)
+        dAdz = np.zeros_like(A)
+        first_derivative2D(A.shape[0], A.shape[1], dAdz, A, self.dz.value, np.zeros(A.shape[1]), np.zeros(A.shape[1]))
+        
+        transform(self.nz, self.nx, self.nx, Bx, self.dVdz, self.Bx_transform)
