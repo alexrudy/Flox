@@ -66,10 +66,12 @@ class MagnetoSystem(NDSystem2D):
         A = self.VectorPotential
         Bx_transform = setup_transform(np.sin, self.nx, self.nx)
         Bz_transform = setup_transform(np.cos, self.nx, self.nx)
-        Bz_transform *= npa[:,np.newaxis]
+        Bz_transform *= self.npa[:,np.newaxis]
         Bx = np.zeros_like(A)
         Bz = np.zeros_like(A)
         dAdz = np.zeros_like(A)
-        first_derivative2D(A.shape[0], A.shape[1], dAdz, A, self.dz.value, np.zeros(A.shape[1]), np.zeros(A.shape[1]))
+        first_derivative2D(A.shape[0], A.shape[1], dAdz, A, self.dz.value, np.zeros(A.shape[1]), np.zeros(A.shape[1]), 1.0)
+        assert not transform(self.nz, self.nx, self.nx, Bx, dAdz, Bx_transform)
+        assert not transform(self.nz, self.nx, self.nx, Bz, A, Bz_transform)
+        return np.hstack((Bx, 1.0 + Bz)) * type(self).VectorPotential.unit(self) / u.m
         
-        transform(self.nz, self.nx, self.nx, Bx, self.dVdz, self.Bx_transform)
