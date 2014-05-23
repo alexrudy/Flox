@@ -11,7 +11,6 @@
 #cython: wraparound=False
 #cython: boundscheck=False
 #cython: cdivision=True
-#cython: profile=False
 
 from __future__ import division
 

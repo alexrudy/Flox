@@ -14,7 +14,6 @@
 #cython: wraparound=False
 #cython: boundscheck=False
 #cython: cdivision=True
-#cython: profile=False
 
 from __future__ import division
 
@@ -147,13 +146,14 @@ cdef class TridiagonalSolver(Solver):
     cpdef int solve(self, DTYPE_t[:,:] rhs, DTYPE_t[:,:] sol):
         
         cdef int k, rv = 0
-        
+        sol[...] = 0.0
         for k in range(self.K):
+            self.t_rhs[0] = 0.0
+            self.t_rhs[self.J-1] = 0.0
             self.t_rhs[1:self.J-1] = rhs[:,k]
             self.t_sol[:] = 0.0
             rv += tridiagonal_from_work(self.J, self.t_rhs, self.t_sol, self.wk1[:,k], self.wk2[:,k], self.sub[:,k])
             sol[:,k] = self.t_sol[1:self.J-1]
-        
         return rv
     
     cpdef int matrix(self, DTYPE_t[:,:,:] mat):

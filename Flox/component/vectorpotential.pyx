@@ -11,7 +11,6 @@
 #cython: wraparound=False
 #cython: boundscheck=False
 #cython: cdivision=True
-
 from __future__ import division
 
 import numpy as np

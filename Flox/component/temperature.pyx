@@ -11,7 +11,6 @@
 #cython: wraparound=False
 #cython: boundscheck=False
 #cython: cdivision=True
-
 from __future__ import division
 
 import numpy as np
@@ -29,7 +28,6 @@ cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE
     cdef int j, k
     cdef DTYPE_t npa_s
     # The last term in equation (2.10)
-    # This resets the values in T_next
     for k in prange(K):
         npa_s = npa[k] * npa[k]
         for j in range(J):
@@ -51,6 +49,7 @@ cpdef int temperature_linear(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] P_curr
             d_T[j, k] += npa_i * P_curr[j,k]
     
     return 0
+    
 
 cdef class TemperatureSolver(TimeSolver):
     
