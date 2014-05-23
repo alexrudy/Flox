@@ -15,7 +15,7 @@ from pyshell.astron.yaml_tools import astropy_quantity_yaml_factory
 import astropy.constants
 import astropy.units
 
-from .array import ArrayEngine, ArrayYAMLSupport
+from .array import ArrayEngine
 
 
 class FloxDumper(PyshellDumper):
@@ -27,7 +27,6 @@ class FloxDumper(PyshellDumper):
         self.add_representer(astropy.constants.Constant, type(self).constant_representer)
         self.add_representer(astropy.units.Quantity, type(self).astropy_representer)
         self.add_multi_representer(ArrayEngine, type(self).arrayengine_representer)
-        self.add_multi_representer(ArrayYAMLSupport, type(self).arrayengine_representer)
     
     def constant_representer(self, data):
         """Represent an Astropy Constant"""

@@ -9,16 +9,21 @@
 
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
+from Flox.array import EngineStateError
 from Flox.system import NDSystem2D, PhysicalSystem2D
 from Flox.magneto.system import MagnetoSystem
 import astropy.units as u
+import numpy as np
 
-system_args = dict(nx = 100, nz = 100, nt = 100, deltaT = 10, depth = 1, aspect = 1, engine = 'Flox.array.NumpyArrayEngine',)
+import pytest
+
+system_args = dict(nx = 100, nz = 100, deltaT = 10, depth = 1, aspect = 1,)
 
 system_classes = [
-    (NDSystem2D, dict(deltaT=1, depth=1, aspect=1, Prandtl=1, Rayleigh=1, kinematic_viscosity=1)), 
-    (PhysicalSystem2D, dict(deltaT=1, depth=1, aspect=1, kinematic_viscosity=1, thermal_diffusivity=1, thermal_expansion=1, gravitaional_acceleration=1)),
-    (MagnetoSystem, dict(Roberts=1, Chandrasekhar=1, B0=1, deltaT=1, depth=1, aspect=1, Prandtl=1, Rayleigh=1, kinematic_viscosity=1))
+    (NDSystem2D, dict(deltaT=1, depth=1, aspect=1, Prandtl=1, Rayleigh=1, kinematic_viscosity=1, engine = {'()':'Flox.array.NumpyArrayEngine', 'length': 100 })), 
+    (PhysicalSystem2D, dict(deltaT=1, depth=1, aspect=1, kinematic_viscosity=1, thermal_diffusivity=1, thermal_expansion=1, gravitaional_acceleration=1, engine = {'()':'Flox.array.NumpyArrayEngine', 'length': 100 })),
+    (MagnetoSystem, dict(Roberts=1, Chandrasekhar=1, B0=1, deltaT=1, depth=1, aspect=1, Prandtl=1, Rayleigh=1, kinematic_viscosity=1, engine = {'()':'Flox.array.NumpyArrayEngine', 'length': 100 })),
+    (MagnetoSystem, dict(Roberts=1, Chandrasekhar=1, B0=1, deltaT=1, depth=1, aspect=1, Prandtl=1, Rayleigh=1, kinematic_viscosity=1, engine='Flox.array.NumpyArrayEngine', nt=200))
     ]
 
 def system_from_args(klass, args, extras):
@@ -31,6 +36,10 @@ def test_system_repr(system):
     """Represent system"""
     repr(system)
     
+def test_system_init(system):
+    """Setup the """
+    pass
+    
 def check_quantity(obj, name, unit):
     """Check units."""
     if unit is not None:
@@ -38,6 +47,18 @@ def check_quantity(obj, name, unit):
         assert getattr(obj, name).unit.is_equivalent(u.Unit(unit))
     else:
         assert not isinstance(getattr(obj, name), u.Quantity)
+    
+def compare_systems(system_A, system_B):
+    """Compare two systems."""
+    for attribute in system_A.get_attribute_list():
+        try:
+            if isinstance(getattr(system_A, attribute), np.ndarray):
+                assert np.allclose(getattr(system_A, attribute),getattr(system_B, attribute))
+            else:
+                assert getattr(system_A, attribute) == getattr(system_B, attribute)
+        except EngineStateError as e:
+            pass
+        
     
 system_units = {
     'npa' : 1,
@@ -57,7 +78,8 @@ system_units = {
     'thermal_expansion' : '1 / K',
     'B0' : 'T',
     'Roberts' : 1,
-    'Chandrasekhar' : 1
+    'Chandrasekhar' : 1,
+    'MagneticField' : 'T',
 }
 
 def test_system_quantities(system):
@@ -69,3 +91,11 @@ def test_system_pickle(system):
     """Pickling."""
     import pickle
     newsys = pickle.loads(pickle.dumps(system))
+    compare_systems(system, newsys)
+    
+def test_system_engine_pickle(system):
+    import pickle
+    from Flox.array import EngineStateError
+    pickledSystem = pickle.loads(pickle.dumps(system))
+    with pytest.raises(EngineStateError):
+        pickledSystem.engine

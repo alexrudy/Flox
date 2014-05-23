@@ -18,84 +18,129 @@ from pyshell.astron.units import UnitsProperty, HasUnitsProperties, recompose, C
 from pyshell.util import setup_kwargs, configure_class, resolve
 
 from .input import FloxConfiguration
-from .array import SpectralArrayProperty, ArrayEngine, ArrayProperty
+from .array import SpectralArrayProperty, ArrayEngine, ArrayProperty, EngineStateError
 from .io import WriterInterface
 from .util import fullname
 
 from .process.packet import PacketInterface, Packet
 
-
 @six.add_metaclass(abc.ABCMeta)
-class System2D(PacketInterface, WriterInterface, HasUnitsProperties):
-    """An abstract 2D Fluid box, with some basic properties."""
-    
-    # nx = 0
-    # nz = 0
-    # nt = 0
+class SystemBase(WriterInterface, HasUnitsProperties):
+    """Base functions and properties for a system."""
     it = 0
     _bases = {}
     _engine = None
     
-    def __init__(self, nx, nz, nt, it=0, engine=ArrayEngine, dtype=np.float):
-        super(System2D, self).__init__()
+    def __init__(self, nx, nz, nt=None, engine=ArrayEngine, dtype=np.float):
+        super(SystemBase, self).__init__()
         self.nx = nx
         self.nz = nz
-        self.nt = nt
-        self.it = it
         self.dtype = dtype
         self._bases = {}
         self.engine = engine
-        self.initialize_arrays()
+        if nt is not None:
+            self.engine.length = nt
+        self.engine.initialize_arrays()
         
-    
     def __repr__(self):
         """Represent this object!"""
-        try:
-            Pr = self.Prandtl
-            Ra = self.Rayleigh
-            time = self.time
-            return "<{0} with Ra={1.value} and Pr={2.value} at {3}>".format(self.__class__.__name__, Ra, Pr, time)
-        except (NotImplementedError, IndexError, KeyError):
-            return super(System2D, self).__repr__()
-    
-    def infer_iteration(self):
-        """Infer the iteration number from loaded data."""
-        # TODO Ensure Time is sorted!
-        self.it = self.nit
-        
-    def __iter__(self):
-        """Setup this object as an iterator."""
-        self.it = 1
-        for i in range(1, self.nit):
-            self.it = i
-            yield self
-        
-    def __len__(self):
-        """Length of this as an iterator."""
-        return self.nit
-        
-    @property
-    def nit(self):
-        """Get the total number of iterations."""
-        return np.argmax(self.engine["Time"])
+        return "<{0} ({1}x{2})>".format(self.__class__.__name__, self.nz, self.nx)
     
     @property
     def engine(self):
         """Get the engine property."""
+        if self._engine is None:
+            raise EngineStateError("{}: Engine not initialized.".format(self))
         return self._engine
         
     @engine.setter
     def engine(self, engine):
         """Set the engine property."""
-        if isinstance(engine, collections.Mapping):
-            engine = configure_class(engine)
+        if isinstance(engine, ArrayEngine):
+            engine.system = self
+        elif isinstance(engine, collections.Mapping):
+            config = dict(**engine)
+            engine = resolve(config.pop('()'))(self, **config)
         elif isinstance(engine, six.text_type):
-            engine = resolve(engine)()
+            engine = resolve(engine)(self)
         elif issubclass(engine, ArrayEngine):
-            engine = engine()
+            engine = engine(self)
         if not isinstance(engine, ArrayEngine):
             raise ValueError("Can't set an array engine to a non-subclass of {0}: {1!r}".format(ArrayEngine, engine))
         self._engine = engine
+    
+    @classmethod
+    def get_parameter_list(cls):
+        """Get a list of the parameters which can be changed/modified directly"""
+        return ['nz', 'nx']
+        
+    @classmethod
+    def get_attribute_list(cls):
+        """Return a full list of attributes, abstract and not."""
+        return set(cls._list_attributes(UnitsProperty)) - set(cls._list_attributes(ArrayProperty))
+        
+    def nondimensionalize(self, quantity):
+        """Nondimensionalize a given quantity for use somewhere."""
+        return recompose(quantity, list(self._bases['nondimensional'].values()))
+        
+    def dimensionalize(self, quantity):
+        """Dimensionalize a given quantity or value."""
+        return recompose(quantity, list(self._bases['standard'].values()))
+        
+    @classmethod
+    def from_params(cls, parameters):
+        """Load a box from a parameter file."""
+        return cls(**parameters)
+        
+    def to_params(self):
+        """Create a parameter file."""
+        parameters = FloxConfiguration()
+        argnames = self.get_parameter_list()
+        for argname in argnames:
+            parameters[argname] = getattr(self, argname)
+        return parameters
+        
+    def __getstate__(self):
+        """Get the state for this object."""
+        parameters = {}
+        argnames = self.get_parameter_list()
+        for argname in argnames:
+            parameters[argname] = getattr(self, argname)
+        return parameters
+        
+    def __setstate__(self, parameters):
+        """Set the state of this system from pickling."""
+        for param in parameters:
+            setattr(self, param, parameters[param])
+        self._setup_standard_bases()
+        
+    def list_arrays(self):
+        """Return an iterator over the array property names."""
+        return self._list_attributes(ArrayProperty)
+    
+    def read_packet(self, packet):
+        """Read the packet."""
+        try:
+            self.it += 1
+            super(System2D, self).read_packet(packet)
+        except Exception as e:
+            self.it -= 1
+            raise e
+        
+    def check_array(self, value, name):
+        """Check an array's value."""
+        assert np.isfinite(value).all(), "{} is not finite.".format(name)
+    
+
+class System2D(SystemBase):
+    """An abstract 2D Fluid box, with some basic properties."""
+    
+    def __repr__(self):
+        """Represent this system."""
+        try:
+            return "<{0} Pr={Prandtl.value:.1g} Ra={Rayleigh.value:.1g}>".format(self.__class__.__name__, Prandtl=self.Prandtl, Rayleigh=self.Rayleigh)
+        except NotImplementedError:
+            return super(System2D, self).__repr__()
     
     @abc.abstractproperty
     def Prandtl(self):
@@ -160,21 +205,7 @@ class System2D(PacketInterface, WriterInterface, HasUnitsProperties):
     def npa(self):
         """(n * pi / a)"""
         return np.arange(self.nx).astype(np.float) * np.pi / self.aspect
-        
-    @classmethod
-    def get_parameter_list(cls):
-        """Get a list of the parameters which can be changed/modified directly"""
-        return ['nz', 'nx', 'nt', 'engine']
-        
-    @classmethod
-    def get_attribute_list(cls):
-        """Return a full list of attributes, abstract and not."""
-        return set(cls._list_attributes(UnitsProperty)) - set(cls._list_attributes(ArrayProperty))
-        
-    def get_packet_list(self):
-        """Return the packet list."""
-        return self._list_attributes(ArrayProperty)
-        
+    
     def _setup_standard_bases(self):
         """Set the standard, non-dimensional bases"""
         temperature_unit = u.def_unit("Box-delta-T", self.deltaT)
@@ -188,41 +219,6 @@ class System2D(PacketInterface, WriterInterface, HasUnitsProperties):
         time_unit = type(self).Time.unit(self)
         viscosity_unit = length_unit**2 / time_unit
         self._bases['standard'] = { unit.physical_type:unit for unit in [temperature_unit, length_unit, time_unit, viscosity_unit] }
-        
-    def nondimensionalize(self, quantity):
-        """Nondimensionalize a given quantity for use somewhere."""
-        return recompose(quantity, list(self._bases['nondimensional'].values()))
-        
-    def dimensionalize(self, quantity):
-        """Dimensionalize a given quantity or value."""
-        return recompose(quantity, list(self._bases['standard'].values()))
-    
-    def dimesnional_array(self, name):
-        """Return a dimensionalized array"""
-        array_desc = getattr(type(self), name)
-        array_dunit = array_desc.unit(self)
-        array_ndunit = self.nondimensional_unit(array_dunit)
-        return (array_desc.get(self) * array_ndunit).to(array_dunit)
-        
-    def dimensional_full_array(self, name):
-        """Return a dimensionalized array"""
-        array_desc = getattr(type(self), name)
-        array_dunit = array_desc.unit(self)
-        array_ndunit = self.nondimensional_unit(array_dunit)
-        return (self.engine[name] * array_ndunit).to(array_dunit)
-        
-    def nondimensional_unit(self, unit):
-        """Create a nondimensional unit for this system."""
-        return recompose_unit(unit, set(self._bases['nondimensional'].values()))
-        
-    def transformed_array(self, name, perturbed=False):
-        """Return a transformed array for a given name"""
-        array_desc = getattr(type(self), name)
-        array_dunit = array_desc.unit(self)
-        array_ndunit = self.nondimensional_unit(array_dunit)
-        if perturbed:
-            return (array_desc.p_itransform(self) * array_ndunit).to(array_dunit)
-        return (array_desc.itransform(self) * array_ndunit).to(array_dunit)
         
     def diagnostic_string(self, z=None, n=None):
         """A longer diagnostic string."""
@@ -245,64 +241,10 @@ class System2D(PacketInterface, WriterInterface, HasUnitsProperties):
         
         return "\n".join(output)
         
-        
-    @classmethod
-    def from_params(cls, parameters):
-        """Load a box from a parameter file."""
-        return cls(**parameters)
-        
-    def to_params(self):
-        """Create a parameter file."""
-        parameters = FloxConfiguration()
-        argnames = self.get_parameter_list()
-        for argname in argnames:
-            parameters[argname] = getattr(self, argname)
-        return parameters
-        
-    def __getstate__(self):
-        """Get the state for this object."""
-        parameters = {}
-        argnames = self.get_parameter_list() + ['it']
-        for argname in argnames:
-            if argname != "engine":
-                parameters[argname] = getattr(self, argname)
-            else:
-                parameters[argname] = fullname(getattr(self, argname))
-        return parameters
-        
-    def __setstate__(self, parameters):
-        """Set the state of this system from pickling."""
-        for param in parameters:
-            setattr(self, param, parameters[param])
-        self.initialize_arrays()
-        self._setup_standard_bases()
-        
-    def list_arrays(self):
-        """Return an iterator over the array property names."""
-        return self._list_attributes(ArrayProperty)
-        
-    def initialize_arrays(self):
-        """Initialize data arrays"""
-        for attr_name in self.list_arrays():
-            getattr(type(self), attr_name).allocate(self)
-            
-    def read_packet(self, packet):
-        """Read the packet."""
-        try:
-            self.it += 1
-            super(System2D, self).read_packet(packet)
-        except Exception as e:
-            self.it -= 1
-            raise e
-        
-    def check_array(self, value, name):
-        """Check an array's value."""
-        assert np.isfinite(value).all(), "{} is not finite.".format(name)
-    
     @ComputedUnitsProperty
     def time(self):
         """The current time of this simulation"""
-        return self.dimensionalize(self.Time * self.nondimensional_unit(type(self).Time.unit(self)))
+        return self.engine.dimensional["Time"]
     
     Time = ArrayProperty("Time", u.s, shape=tuple(), latex=r"$t$")
     Temperature = SpectralArrayProperty("Temperature", u.K, func=np.cos, shape=('nz','nx'), latex=r"$T$")

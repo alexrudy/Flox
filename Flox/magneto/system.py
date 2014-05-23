@@ -55,9 +55,8 @@ class MagnetoSystem(NDSystem2D):
             Ra = self.Rayleigh
             Q = self.Chandrasekhar
             q = self.Roberts
-            time = self.time
-            return "<{0} with Ra={Ra.value} Pr={Pr.value} Q={Q.value} q={q.value} at {time}>".format(self.__class__.__name__, Ra=Ra, Pr=Pr, Q=Q, q=q, time=time)
-        except (NotImplementedError, IndexError, KeyError):
+            return "<{0} with Ra={Ra.value} Pr={Pr.value} Q={Q.value} q={q.value}>".format(self.__class__.__name__, Ra=Ra, Pr=Pr, Q=Q, q=q)
+        except NotImplementedError:
             return super(MagnetoSystem, self).__repr__()
             
     @ComputedUnitsProperty
