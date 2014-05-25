@@ -29,7 +29,7 @@ from .engine.units import WithUnitBases
 class SystemBase(EngineInterface, WriterInterface, HasUnitsProperties, WithUnitBases):
     """Base functions and properties for a system."""
     
-    def __init__(self, nx, nz, nt=None, **kwargs):
+    def __init__(self, nx, nz, **kwargs):
         
         self.nx = nx
         self.nz = nz

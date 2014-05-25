@@ -11,8 +11,8 @@ system:
   kinematic_viscosity: !quantity '0.001 St'
   nx: 50
   nz: 100
-  nt: 500
-  engine: 'Flox.array.NumpyArrayEngine'
+  nt: 150
+  engine: 'Flox.engine.numpy.NumpyArrayEngine'
 ic:
   stable: yes
   sin:
@@ -55,9 +55,8 @@ evolve:
   class: Flox.magneto.MagnetoEvolver
   iterations: 50
   time: !quantity '1 yr'
-  nt: 100
   settings:
-    checkCFL: 3
+    checkCFL: 10
     safety: 0.1
 write:
   writer: Flox.io.HDF5Writer

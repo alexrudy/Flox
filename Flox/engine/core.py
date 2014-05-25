@@ -93,6 +93,11 @@ class ArrayEngine(collections.Mapping, PacketInterface):
         """Total potential length of this object."""
         pass
     
+    @property
+    def free(self):
+        """Number of free-space iterations available."""
+        return self.length - self.iterations - 2
+    
     def iterator(self, system):
         """Return an iterator."""
         return EngineIterator(self, system)

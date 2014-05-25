@@ -51,8 +51,6 @@ class NumpyArrayEngine(dict, TimekeepingEngine):
             
     def initialize_arrays(self, system):
         """Set the array length before initializing."""
-        if self._length is None:
-            self._length = 100
         self._iterations = 0
         return super(NumpyArrayEngine, self).initialize_arrays(system)
     

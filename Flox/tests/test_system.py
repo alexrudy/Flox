@@ -9,7 +9,6 @@
 
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
-from Flox.array import EngineStateError
 from Flox.hydro.system import NDSystem2D, PhysicalSystem2D
 from Flox.magneto.system import MagnetoSystem
 import astropy.units as u
@@ -96,6 +95,5 @@ def test_system_pickle(system):
     
 def test_system_engine_pickle(system):
     import pickle
-    from Flox.array import EngineStateError
     pickledSystem = pickle.loads(pickle.dumps(system))
     assert pickledSystem.engine is None
