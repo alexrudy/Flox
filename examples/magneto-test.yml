@@ -11,7 +11,7 @@ system:
   kinematic_viscosity: !quantity '0.001 St'
   nx: 50
   nz: 100
-  nt: 150
+  nt: 500
   engine: 'Flox.engine.numpy.NumpyArrayEngine'
 ic:
   stable: yes

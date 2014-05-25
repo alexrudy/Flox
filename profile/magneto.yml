@@ -1,0 +1,16 @@
+system:
+  Prandtl: !quantity '1 '
+  Rayleigh: !quantity '10000 '
+  Chandrasekhar: !quantity '1000 '
+  Roberts: !quantity '1 '
+  aspect: !quantity '1 '
+  deltaT: !quantity '1 K'
+  depth: !quantity '1 m'
+  kinematic_viscosity: !quantity '0.01 St'
+  nx: 10
+  nz: 10
+  nt: 10000
+  engine: 'Flox.array.NumpyArrayEngine'
+iterations: 20000
+time: !quantity '5 d'
+threads: 4
