@@ -1,5 +1,5 @@
 system:
-  '()': Flox.system.NDSystem2D
+  '()': Flox.hydro.system.NDSystem2D
   Prandtl: 0.5
   Rayleigh: 1.0e+6
   aspect: 1.0
@@ -8,8 +8,8 @@ system:
   kinematic_viscosity: !quantity '0.001 St'
   nx: 50
   nz: 200
-  nt: 500
-  engine: 'Flox.array.NumpyArrayEngine'
+  nt: 50
+  engine: 'Flox.engine.numpy.NumpyArrayEngine'
 ic:
   stable: yes
   sin:
@@ -37,9 +37,8 @@ animate:
       cmap: "hot"
 evolve:
   class: Flox.nonlinear.NonlinearEvolver
-  iterations: 500
+  iterations: 50
   time: !quantity '1 yr'
-  nt: 50
 write:
   writer: Flox.io.HDF5Writer
   filename: ~/Documents/nonlinear.hdf5
