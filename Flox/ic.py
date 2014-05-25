@@ -64,9 +64,9 @@ def stable_temperature_gradient(System):
         step = -1
     else:
         step = 1
-    System.Temperature[:,0] = z_array(System)[::-1]
+    System.Temperature.raw[:,0] = z_array(System)[::-1]
 
 def single_mode_perturbation(System, k, l=1, eps=1):
     """Single mode perturbation."""
-    System.Temperature[:,k] = eps * np.sin(l * np.pi * z_array(System))
+    System.Temperature.raw[:,k] = eps * np.sin(l * np.pi * z_array(System))
 

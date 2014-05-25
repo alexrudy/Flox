@@ -68,6 +68,7 @@ class HDF5Writer(GridWriter):
                     group.attrs[param] = value.value
                 elif isinstance(value, six.string_types):
                     group.attrs[param] = value
+            group.attrs['iteration'] = data.iteration
     
     def create_array(self, group, data, array_name):
         """Write the array object"""
@@ -80,18 +81,19 @@ class HDF5Writer(GridWriter):
             dataset = group.create_dataset(array_name, array_data.shape, dtype=array_data.dtype)
         dataset[...] = array_data
         dataset.attrs['name'] = six.text_type(array_obj.name)
-        dataset.attrs['unit'] = six.text_type(array_obj.unit(data))
-        dataset.attrs['latex'] = array_obj.latex
+        dataset.attrs['unit'] = six.text_type(array_obj.unit)
+        dataset.attrs['latex'] = six.text_type(array_obj.latex)
         
     def read(self, data, name=""):
         """Read from a data file."""
         with h5py.File(self.filename) as file_context:
             group = file_context.require_group(name)
-            for array_name in group.keys():
+            for array_name in data.engine.get_data_list():
                 self.read_array(group, data, array_name)
-            for param, value in group.attrs.items():
-                setattr(data, param, value)
-        data.infer_iteration()
+            for param in data.get_parameter_list():
+                if param in group.attrs:
+                    setattr(data, param, group.attrs[param])
+            
     
     def read_array(self, group, data, array_name):
         """Read the dataset."""
