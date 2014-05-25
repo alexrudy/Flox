@@ -93,7 +93,7 @@ class HDF5Writer(GridWriter):
             for param in data.get_parameter_list():
                 if param in group.attrs:
                     setattr(data, param, group.attrs[param])
-            data.engine.iterations = group.attrs.get('iterations',0)
+            data.engine.iterations = group.attrs.get('iterations',np.argmax(group['Time']))
     
     def read_array(self, group, data, array_name):
         """Read the dataset."""
