@@ -50,14 +50,10 @@ def check_quantity(obj, name, unit):
 def compare_systems(system_A, system_B):
     """Compare two systems."""
     for attribute in system_A.get_attribute_list():
-        try:
-            if isinstance(getattr(system_A, attribute), np.ndarray):
-                assert np.allclose(getattr(system_A, attribute),getattr(system_B, attribute))
-            else:
-                assert getattr(system_A, attribute) == getattr(system_B, attribute)
-        except EngineStateError as e:
-            pass
-        
+        if isinstance(getattr(system_A, attribute), np.ndarray):
+            assert np.allclose(getattr(system_A, attribute),getattr(system_B, attribute))
+        else:
+            assert getattr(system_A, attribute) == getattr(system_B, attribute)
     
 system_units = {
     'npa' : 1,
@@ -79,6 +75,7 @@ system_units = {
     'Roberts' : 1,
     'Chandrasekhar' : 1,
     'MagneticField' : 'T',
+    'Velocity': 'm / s'
 }
 
 def test_system_quantities(system):

@@ -19,6 +19,9 @@ from pyshell.util import setup_kwargs, configure_class, resolve
 
 from ..engine.descriptors import SpectralArrayProperty, ArrayProperty
 from ..system import System2D
+from ..transform import setup_transform
+from .._transform import transform
+from ..finitedifference import first_derivative2D
 
 class HydroSystem(System2D):
     """A hydrodynamical system."""
@@ -77,6 +80,21 @@ class HydroSystem(System2D):
         viscosity_unit = length_unit**2 / time_unit
         self.add_bases("standard", set([temperature_unit, length_unit, time_unit, viscosity_unit]))
         
+    
+    @ComputedUnitsProperty
+    def Velocity(self):
+        """The magnetic field."""
+        S = self.Stream.raw
+        Vx_transform = -setup_transform(np.sin, self.nx, self.nx)
+        Vz_transform = setup_transform(np.cos, self.nx, self.nx)
+        Vz_transform *= self.npa[:,np.newaxis]
+        Vx = np.zeros_like(S)
+        Vz = np.zeros_like(S)
+        dSdz = np.zeros_like(S)
+        assert not first_derivative2D(S.shape[0], S.shape[1], dSdz, S, self.dz.value, np.zeros(S.shape[1]), np.zeros(S.shape[1]), 1.0)
+        assert not transform(self.nz, self.nx, self.nx, Vx, dSdz, Vx_transform)
+        assert not transform(self.nz, self.nx, self.nx, Vz, S, Vz_transform)
+        return np.array([Vx, Vz]) * type(self).Stream.unit / u.m
     
     Temperature = SpectralArrayProperty("Temperature", u.K, func=np.cos, shape=('nz','nx'), latex=r"$T$")
     Vorticity = SpectralArrayProperty("Vorticity", 1.0 / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\omega$")

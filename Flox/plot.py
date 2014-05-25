@@ -220,6 +220,58 @@ class ContourView(GridView):
         self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.iteration, system.engine.iterations))
     
 
+class VectorView(GridView):
+    """Vector field view."""
+    
+    def data(self, system):
+        """docstring for data"""
+        return getattr(system,self.variable).value
+    
+    def initialize(self, system):
+        """Initialize the system."""
+        aspect = 1.0 / system.aspect * (system.nx / system.nz)
+        data = self.data(system)
+        ptp = np.ptp(data)
+        if np.isfinite(ptp) and ptp != 0.0:
+            z,x = np.mgrid[:system.nz,:system.nx]
+            u,v = data
+            speed = np.sqrt(u**2.0 + v**2.0)
+            self.image = self.ax.streamplot(x,z,u,v,color=speed, **self.im_kwargs)
+            self.cb = self.ax.figure.colorbar(self.image.lines, ax=self.ax)
+        self.ax.set_xlim(0, system.nx)
+        self.ax.set_ylim(0, system.nz)
+        self.ax.set_aspect(aspect)
+        self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
+        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.iteration, system.engine.iterations), transform=self.ax.transAxes)
+        self.ax.xaxis.set_visible(False)
+        self.ax.yaxis.set_visible(False)
+        self.initialized = True
+        
+    def update(self, system):
+        """Update the view"""
+        if not self.initialized:
+            self.initialize(system)
+        aspect = 1.0 / system.aspect * (system.nx / system.nz)
+        self.ax.cla()
+        self.ax.set_xlim(0, system.nx)
+        self.ax.set_ylim(0, system.nz)
+        self.ax.set_aspect(aspect)
+        data = self.data(system)
+        ptp = np.ptp(data)
+        if np.isfinite(ptp) and ptp != 0.0:
+            z,x = np.mgrid[:system.nz,:system.nx]
+            u,v = data
+            speed = np.sqrt(u**2.0 + v**2.0)
+            self.image = self.ax.streamplot(x,z,u,v, color=speed, **self.im_kwargs)
+            if hasattr(self, 'cb'):
+                self.cb.ax.clear()
+                self.cb = self.ax.figure.colorbar(self.image.lines, ax=self.ax, cax=self.cb.ax)
+            else:
+                self.cb = self.ax.figure.colorbar(self.image.lines, ax=self.ax)
+        self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
+        self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.iteration, system.engine.iterations))
+        
+
 class ProfileView(View):
     """A profile of a single variable."""
     def __init__(self, variable):
