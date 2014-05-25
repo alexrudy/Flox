@@ -28,6 +28,12 @@ class NumpyArrayEngine(dict, TimekeepingEngine):
         """Number of iterations available."""
         return self._iterations
         
+    @iterations.setter
+    def iterations(self, value):
+        """Set the iterations"""
+        if value < self.length:
+            self._iterations = value
+        
     @property
     def length(self):
         """Maximum object length."""
@@ -47,6 +53,7 @@ class NumpyArrayEngine(dict, TimekeepingEngine):
         """Set the array length before initializing."""
         if self._length is None:
             self._length = 100
+        self._iterations = 0
         return super(NumpyArrayEngine, self).initialize_arrays(system)
     
     @property

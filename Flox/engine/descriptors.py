@@ -11,8 +11,9 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 
 import six
 
-
 from pyshell.util import descriptor__get__
+
+from ..transform import spectral_transform
 
 class ArrayValue(object):
     """An array value instance"""
@@ -98,5 +99,5 @@ class SpectralArrayProperty(ArrayProperty):
         
     def itransform(self, obj):
         """Perform the inverse transform."""
-        return spectral_transform(self._func, self.__get__(obj), obj.nx, obj.aspect.value)
+        return spectral_transform(self._func, self.__get__(obj, type(obj)).raw, obj.nx, obj.aspect.value)
         

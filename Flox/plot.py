@@ -64,15 +64,15 @@ class MultiViewController(object):
         generator = self._animation_generator(system, queue=queue, buffer=buffer, timeout=timeout)
         callback = self._animation_callback(progressbar=progressbar)
         # kwargs.setdefault('repeat', False)
-        kwargs.setdefault('save_count', system.engine.iterations)
+        kwargs.setdefault('save_count', int(system.engine.iterations))
         return animation.FuncAnimation(self.figure, func=callback, frames=generator, init_func=lambda : self.update(system), **kwargs)
         
     def _animation_generator(self, system, queue=None, buffer=10, timeout=60):
         """Get the animation generator."""
         if queue is not None:
-            generator = lambda : system.engine.iterate_queue_buffered(queue, buffer=buffer, timeout=timeout)
+            generator = lambda : system.iterate_queue_buffered(queue, buffer=buffer, timeout=timeout)
         else:
-            generator = lambda : iter(system.engine)
+            generator = lambda : iter(system)
         return generator
     
     def _animation_callback(self, progressbar=None):
@@ -83,7 +83,7 @@ class MultiViewController(object):
             # callback_progressbar_wrapper expects arguments of the form iteration, *args
             # We do this trick to insert the iterations into the arglist, then remove them.
             _callback = callback_progressbar_wrapper(lambda i, s : self.update(s), progressbar)
-            callback = lambda s : _callback(s.it, s)
+            callback = lambda s : _callback(s.iteration, s)
         return callback
         
     def animate(self, system, queue=None, progress=True, **kwargs):
@@ -149,7 +149,7 @@ class GridView(View):
         
     def data(self, system):
         """Return the transformed data"""
-        data = system.engine.transformed[self.variable].value
+        data = getattr(system,self.variable).transformed.value
         if self.variable == "VectorPotential":
             return data + system.B0.value * np.linspace(0, 1, system.nx + 2)[1:-1][np.newaxis,:]
         else:
@@ -165,14 +165,14 @@ class GridView(View):
         self.ax.xaxis.set_visible(False)
         self.ax.yaxis.set_visible(False)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
-        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.engine.iteration, system.engine.iterations), transform=self.ax.transAxes)
+        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.iteration, system.engine.iterations), transform=self.ax.transAxes)
         
     def update(self, system):
         """Update the view"""
         super(GridView, self).update(system)
         self.image.set_data(self.data(system))
         self.image.autoscale()
-        self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.engine.iteration, system.iterations))
+        self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.iteration, system.engine.iterations))
 
 
 class RawGridView(GridView):
@@ -180,7 +180,7 @@ class RawGridView(GridView):
     
     def data(self, system):
         """Return the transformed data"""
-        return getattr(system, self.variable)
+        return getattr(system, self.variable).raw
 
 class ContourView(GridView):
     """Show countours."""
@@ -195,7 +195,7 @@ class ContourView(GridView):
             self.cb = self.ax.figure.colorbar(self.image, ax=self.ax)
         self.ax.set_aspect(aspect)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
-        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nt), transform=self.ax.transAxes)
+        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.iteration, system.engine.iterations), transform=self.ax.transAxes)
         self.ax.xaxis.set_visible(False)
         self.ax.yaxis.set_visible(False)
         self.initialized = True
@@ -217,7 +217,7 @@ class ContourView(GridView):
             else:
                 self.cb = self.ax.figure.colorbar(self.image, ax=self.ax)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
-        self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nt))
+        self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.iteration, system.engine.iterations))
     
 
 class ProfileView(View):
@@ -259,7 +259,7 @@ class MProfileView(ProfileView):
         
     def ydata(self, system):
         """Return the y-data values."""
-        return getattr(system,self.variable)[self.z,:]
+        return getattr(system,self.variable).raw[self.z,:]
         
     def xdata(self, system):
         """Return the xdata."""
@@ -279,7 +279,7 @@ class VProfileView(ProfileView):
         
     def ydata(self, system):
         """Return the y-data values."""
-        return getattr(system,self.variable)[:,self.mode]
+        return getattr(system,self.variable).raw[:,self.mode]
         
     def xdata(self, system):
         """Return the xdata."""
@@ -297,7 +297,7 @@ class V1DProfileView(VProfileView):
     def ydata(self, system):
         """Return the y-data values."""
         from .finitedifference import first_derivative2D
-        f = getattr(system,self.variable)
+        f = getattr(system,self.variable).raw
         df = np.zeros_like(f)
         fm = np.zeros(system.nx)
         fp = np.zeros(system.nx)
@@ -317,7 +317,7 @@ class V2DProfileView(VProfileView):
     def ydata(self, system):
         """Return the y-data values."""
         from .finitedifference import second_derivative2D
-        f = getattr(system,self.variable)
+        f = getattr(system,self.variable).raw
         ddf = np.zeros_like(f)
         fm = np.zeros(system.nx)
         fp = np.zeros(system.nx)

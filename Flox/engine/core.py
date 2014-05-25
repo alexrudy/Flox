@@ -25,7 +25,6 @@ class EngineIterator(collections.Iterator):
         super(EngineIterator, self).__init__()
         self.engine = engine
         self._system = system.__getstate__()
-        del self._system['_iteration']
         self.iteration = 0
         self.expired = False
         
@@ -37,9 +36,8 @@ class EngineIterator(collections.Iterator):
         """Advance this iterator."""
         if self.expired:
             raise StopIteration
-        try:
-            self.iteration += 1
-        except IndexError as e:
+        self.iteration += 1
+        if self.iteration >= self.engine.iterations:
             self.expired = True
             raise StopIteration
         else:
@@ -48,8 +46,9 @@ class EngineIterator(collections.Iterator):
     def system(self, iteration):
         """Return a new system"""
         system = self.engine.type.__new__(self.engine.type)
-        system.iteration = iteration
+        self._system['_iteration'] = iteration
         system.__setstate__(self._system)
+        system.engine = self.engine
         return system
     
     def __len__(self):
@@ -160,6 +159,8 @@ class TimekeepingEngine(ArrayEngine):
         
     def __setdata__(self, obj, name, value):
         """Engine caller to the underlying set method."""
+        if self._iterations < obj.iteration:
+            self._iterations = obj.iteration
         self[name][...,obj.iteration] = value
 
 class EngineInterface(object):
@@ -168,18 +169,22 @@ class EngineInterface(object):
     _iteration = None
     
     def __init__(self, nt=None, engine=ArrayEngine, **kwargs):
-        self._iteration = 0
         self.engine = engine
         if nt is not None:
             self.engine.length = nt
         super(EngineInterface, self).__init__(**kwargs)
         self.engine.initialize_arrays(self)
+        self.iteration = 0
+    
+    def __iter__(self):
+        """Iterator"""
+        return self.engine.iterator(self)
     
     @property
     def iteration(self):
         """The iteration number."""
         if self._iteration is None:
-            raise AttributeError("Iteration is not set!")
+            return 0
         return self._iteration
     
     @iteration.setter
@@ -213,7 +218,13 @@ class EngineInterface(object):
     
     def read_packet(self, packet):
         """Read the packet."""
-        return self.engine.read_packet(self, packet)
+        try:
+            self._iteration += 1
+            r = self.engine.read_packet(self, packet)
+        except:
+            self._iteration -= 1
+            raise
+        return r
     
     def create_packet(self):
         """Create the packet."""

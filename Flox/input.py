@@ -15,8 +15,7 @@ from pyshell.astron.yaml_tools import astropy_quantity_yaml_factory
 import astropy.constants
 import astropy.units
 
-from .array import ArrayEngine
-
+from .engine.core import ArrayEngine
 
 class FloxDumper(PyshellDumper):
     """A YAML Dumper which permits quantities!"""

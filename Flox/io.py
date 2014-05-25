@@ -68,7 +68,7 @@ class HDF5Writer(GridWriter):
                     group.attrs[param] = value.value
                 elif isinstance(value, six.string_types):
                     group.attrs[param] = value
-            group.attrs['iteration'] = data.iteration
+            group.attrs['iterations'] = data.engine.iterations
     
     def create_array(self, group, data, array_name):
         """Write the array object"""
@@ -93,7 +93,7 @@ class HDF5Writer(GridWriter):
             for param in data.get_parameter_list():
                 if param in group.attrs:
                     setattr(data, param, group.attrs[param])
-            
+            data.engine.iterations = group.attrs.get('iterations',0)
     
     def read_array(self, group, data, array_name):
         """Read the dataset."""
