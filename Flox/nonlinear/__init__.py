@@ -17,7 +17,12 @@ class NonlinearEvolver(_NonlinearEvolver, Evolver):
     def __init__(self, *args, **kwargs):
         super(NonlinearEvolver, self).__init__()
     
-    def get_packet_list(self):
+    @classmethod
+    def get_parameter_list(cls):
+        """Retrieve the relevant parameters."""
+        return []
+    
+    def get_data_list(self):
         """Variables"""
         return [ "Temperature", "dTemperature", "Vorticity", "dVorticity", "Stream", "Time"]
     

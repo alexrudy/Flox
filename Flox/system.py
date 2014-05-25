@@ -22,7 +22,7 @@ from .array import SpectralArrayProperty, ArrayEngine, ArrayProperty, EngineStat
 from .io import WriterInterface
 from .util import fullname
 
-from .process.packet import PacketInterface, Packet
+from .process.packet import PacketInterface
 
 @six.add_metaclass(abc.ABCMeta)
 class SystemBase(WriterInterface, HasUnitsProperties):
@@ -120,17 +120,11 @@ class SystemBase(WriterInterface, HasUnitsProperties):
     
     def read_packet(self, packet):
         """Read the packet."""
-        try:
-            self.it += 1
-            super(System2D, self).read_packet(packet)
-        except Exception as e:
-            self.it -= 1
-            raise e
-        
-    def check_array(self, value, name):
-        """Check an array's value."""
-        assert np.isfinite(value).all(), "{} is not finite.".format(name)
+        return self.engine.read_packet(packet)
     
+    def create_packet(self):
+        """Create the packet."""
+        return self.engine.create_packet()
 
 class System2D(SystemBase):
     """An abstract 2D Fluid box, with some basic properties."""

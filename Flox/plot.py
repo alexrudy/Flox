@@ -64,15 +64,15 @@ class MultiViewController(object):
         generator = self._animation_generator(system, queue=queue, buffer=buffer, timeout=timeout)
         callback = self._animation_callback(progressbar=progressbar)
         # kwargs.setdefault('repeat', False)
-        kwargs.setdefault('save_count', system.nt)
+        kwargs.setdefault('save_count', system.engine.iterations)
         return animation.FuncAnimation(self.figure, func=callback, frames=generator, init_func=lambda : self.update(system), **kwargs)
         
     def _animation_generator(self, system, queue=None, buffer=10, timeout=60):
         """Get the animation generator."""
         if queue is not None:
-            generator = lambda : system.iterate_queue_buffered(queue, buffer=buffer, timeout=timeout)
+            generator = lambda : system.engine.iterate_queue_buffered(queue, buffer=buffer, timeout=timeout)
         else:
-            generator = lambda : iter(system)
+            generator = lambda : iter(system.engine)
         return generator
     
     def _animation_callback(self, progressbar=None):
@@ -97,7 +97,7 @@ class MultiViewController(object):
         out = None if progress else io.StringIO()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            with ProgressBar(system.nt, file=out) as progressbar:
+            with ProgressBar(system.engine.iterations, file=out) as progressbar:
                 anim = self.get_animation(system, queue, progressbar, **kwargs)
                 plt.show()
             
@@ -113,7 +113,7 @@ class MultiViewController(object):
         out = None if progress else io.StringIO()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            with ProgressBar(system.nt, file=out) as PBar:
+            with ProgressBar(system.engine.iterations, file=out) as PBar:
                 anim = self.get_animation(system, queue, PBar, buffer=0, **kwargs)
                 anim.save(filename, **save_kwargs)
 
@@ -149,7 +149,7 @@ class GridView(View):
         
     def data(self, system):
         """Return the transformed data"""
-        data = system.transformed_array(self.variable, perturbed=self.perturbed).value
+        data = system.engine.transformed[self.variable].value
         if self.variable == "VectorPotential":
             return data + system.B0.value * np.linspace(0, 1, system.nx + 2)[1:-1][np.newaxis,:]
         else:
@@ -165,14 +165,14 @@ class GridView(View):
         self.ax.xaxis.set_visible(False)
         self.ax.yaxis.set_visible(False)
         self.title = self.ax.set_title("{} ({})".format(getattr(type(system), self.variable).name, getattr(type(system), self.variable).latex))
-        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nt), transform=self.ax.transAxes)
+        self.counter = self.ax.text(0.05, 1.15, "t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.engine.iteration, system.engine.iterations), transform=self.ax.transAxes)
         
     def update(self, system):
         """Update the view"""
         super(GridView, self).update(system)
         self.image.set_data(self.data(system))
         self.image.autoscale()
-        self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.it, system.nit))
+        self.counter.set_text("t={0.value:5.0f}{0.unit:generic} {1:4d}/{2:4d}".format(system.time, system.engine.iteration, system.iterations))
 
 
 class RawGridView(GridView):

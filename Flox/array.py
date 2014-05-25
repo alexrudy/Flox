@@ -17,7 +17,7 @@ import astropy.units as u
 from pyshell.astron.units import UnitsProperty, HasUnitsProperties, recompose, recompose_unit
 from pyshell.util import setup_kwargs
 
-from .process.packet import PacketInterface, Packet
+from .process.packet import PacketInterface
 from .transform import spectral_transform
 from .view import DictionaryView
 
@@ -174,7 +174,7 @@ class EngineIterator(collections.Iterator):
             self.expired = True
             raise StopIteration
         else:
-            return self.engine
+            return self.engine._system
     
     def __len__(self):
         """A best-estimate length of this iterator. May be unreliable"""
@@ -245,7 +245,7 @@ class ArrayEngine(collections.Mapping, PacketInterface):
         """Get the parameter list for YAML."""
         return [ '_system', '_iteration' ]
     
-    def get_packet_list(self):
+    def get_data_list(self):
         """Return the packet list."""
         return self.keys()
     
@@ -270,6 +270,13 @@ class ArrayEngine(collections.Mapping, PacketInterface):
     def _set(self, obj, name, value):
         """Engine caller to the underlying set method."""
         self.raw[name] = value
+        
+    def create_packet(self):
+        """Create the packet."""
+        packet = dict()
+        for key in self.get_data_list():
+            packet[key] = self._get(self._system, key)
+        return packet
 
 class TimekeepingEngine(ArrayEngine):
     """An engine which handles timekeeping using the system iteration interface."""

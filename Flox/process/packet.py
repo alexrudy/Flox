@@ -14,45 +14,41 @@ import abc
 import six
 from queue import Empty
 
-class Packet(dict):
-    """A 2D packet, containing the data required for the setup of an evolver."""
-    
-    def __init__(self):
-        super(Packet, self).__init__()
-        
-    def __setitem__(self, key, value):
-        """Set the item, converting it to a numpy array in the process."""
-        super(Packet, self).__setitem__(key, np.asanyarray(value))
-        
 @six.add_metaclass(abc.ABCMeta)
-class PacketInterface(object):
+class PickleInterface(object):
+    """The simple interface for declaring mutable and immutable parts."""
+    
+    def __getstate__(self):
+        """Return the pickling state for this object. 
+        Should return an empty dictionary, as we don't want to actually pickle the contents of this array engine."""
+        return { name:getattr(self, name) for name in self.get_parameter_list() }
+    
+    def __setstate__(self, state):
+        """Return the state, resetting the caching views."""
+        [ self.__setattr__(name, value) for name, value in state.items() ]
+        
+    @abc.abstractclassmethod
+    def get_parameter_list(cls):
+        """This method should return the parameters which need to be pickled."""
+        return []
+        
+    @abc.abstractmethod
+    def get_data_list(self):
+        """This method should return the data parameters which can be sent via the Packet interface."""
+        return []
+        
+
+class PacketInterface(PickleInterface):
     """The interface for packet consumers and producers."""
     
     def check_array(self, value, name):
         """Check an array's value."""
         pass
-    
-    def __iter__(self):
-        """Return the iterator for this object."""
-        raise NotImplementedError("Packet interface is not required to support iteration.")
-    
-    def __next__(self):
-        """Support packet iteration."""
-        raise NotImplementedError("Packet interface is not required to support iteration.")
         
-    def __len__(self):
-        """Support packet iteration."""
-        raise NotImplementedError("Packet interface is not required to support iteration.")
-    
-    @abc.abstractmethod
-    def get_packet_list(self):
-        """Return the parameter list."""
-        return []
-    
     def create_packet(self):
         """Create a packet from the LinearEvolver state."""
-        packet = Packet()
-        for variable in self.get_packet_list():
+        packet = dict()
+        for variable in self.get_data_list():
             packet[variable] = getattr(self, variable)
         return packet
         
