@@ -18,74 +18,37 @@ from pyshell.astron.units import UnitsProperty, HasUnitsProperties, recompose, C
 from pyshell.util import setup_kwargs, configure_class, resolve
 
 from .input import FloxConfiguration
-from .array import SpectralArrayProperty, ArrayEngine, ArrayProperty, EngineStateError
+from .engine.descriptors import SpectralArrayProperty, ArrayProperty
+from .engine.core import EngineInterface
 from .io import WriterInterface
 from .util import fullname
-
 from .process.packet import PacketInterface
+from .engine.units import WithUnitBases
 
 @six.add_metaclass(abc.ABCMeta)
-class SystemBase(WriterInterface, HasUnitsProperties):
+class SystemBase(EngineInterface, WriterInterface, HasUnitsProperties, WithUnitBases):
     """Base functions and properties for a system."""
-    it = 0
-    _bases = {}
-    _engine = None
     
-    def __init__(self, nx, nz, nt=None, engine=ArrayEngine, dtype=np.float):
-        super(SystemBase, self).__init__()
+    def __init__(self, nx, nz, nt=None, **kwargs):
+        
         self.nx = nx
         self.nz = nz
-        self.dtype = dtype
-        self._bases = {}
-        self.engine = engine
-        if nt is not None:
-            self.engine.length = nt
-        self.engine.initialize_arrays()
+        
+        super(SystemBase, self).__init__(**kwargs)
         
     def __repr__(self):
         """Represent this object!"""
-        return "<{0} ({1}x{2})>".format(self.__class__.__name__, self.nz, self.nx)
-    
-    @property
-    def engine(self):
-        """Get the engine property."""
-        if self._engine is None:
-            raise EngineStateError("{}: Engine not initialized.".format(self))
-        return self._engine
+        return "<{0} ({1}x{2})@({3})>".format(self.__class__.__name__, self.nz, self.nx, self.iteration)
         
-    @engine.setter
-    def engine(self, engine):
-        """Set the engine property."""
-        if isinstance(engine, ArrayEngine):
-            engine.system = self
-        elif isinstance(engine, collections.Mapping):
-            config = dict(**engine)
-            engine = resolve(config.pop('()'))(self, **config)
-        elif isinstance(engine, six.text_type):
-            engine = resolve(engine)(self)
-        elif issubclass(engine, ArrayEngine):
-            engine = engine(self)
-        if not isinstance(engine, ArrayEngine):
-            raise ValueError("Can't set an array engine to a non-subclass of {0}: {1!r}".format(ArrayEngine, engine))
-        self._engine = engine
-    
     @classmethod
     def get_parameter_list(cls):
         """Get a list of the parameters which can be changed/modified directly"""
-        return ['nz', 'nx']
+        return ['nz', 'nx'] + super(SystemBase, cls).get_parameter_list()
         
     @classmethod
     def get_attribute_list(cls):
         """Return a full list of attributes, abstract and not."""
-        return set(cls._list_attributes(UnitsProperty)) - set(cls._list_attributes(ArrayProperty))
-        
-    def nondimensionalize(self, quantity):
-        """Nondimensionalize a given quantity for use somewhere."""
-        return recompose(quantity, list(self._bases['nondimensional'].values()))
-        
-    def dimensionalize(self, quantity):
-        """Dimensionalize a given quantity or value."""
-        return recompose(quantity, list(self._bases['standard'].values()))
+        return set(cls._list_attributes(UnitsProperty))
         
     @classmethod
     def from_params(cls, parameters):
@@ -100,58 +63,14 @@ class SystemBase(WriterInterface, HasUnitsProperties):
             parameters[argname] = getattr(self, argname)
         return parameters
         
-    def __getstate__(self):
-        """Get the state for this object."""
-        parameters = {}
-        argnames = self.get_parameter_list()
-        for argname in argnames:
-            parameters[argname] = getattr(self, argname)
-        return parameters
-        
-    def __setstate__(self, parameters):
-        """Set the state of this system from pickling."""
-        for param in parameters:
-            setattr(self, param, parameters[param])
-        self._setup_standard_bases()
-        
     def list_arrays(self):
         """Return an iterator over the array property names."""
         return self._list_attributes(ArrayProperty)
     
-    def read_packet(self, packet):
-        """Read the packet."""
-        return self.engine.read_packet(packet)
-    
-    def create_packet(self):
-        """Create the packet."""
-        return self.engine.create_packet()
 
 class System2D(SystemBase):
     """An abstract 2D Fluid box, with some basic properties."""
     
-    def __repr__(self):
-        """Represent this system."""
-        try:
-            return "<{0} Pr={Prandtl.value:.1g} Ra={Rayleigh.value:.1g}>".format(self.__class__.__name__, Prandtl=self.Prandtl, Rayleigh=self.Rayleigh)
-        except NotImplementedError:
-            return super(System2D, self).__repr__()
-    
-    @abc.abstractproperty
-    def Prandtl(self):
-        """Prandtl number."""
-        raise NotImplementedError()
-        
-    
-    @abc.abstractproperty
-    def Rayleigh(self):
-        """Rayleigh number."""
-        raise NotImplementedError()
-        
-    @abc.abstractproperty
-    def deltaT(self):
-        """Temperature differential."""
-        raise NotImplementedError()
-        
     @abc.abstractproperty
     def depth(self):
         """Box depth"""
@@ -177,43 +96,11 @@ class System2D(SystemBase):
         """x grid spacing."""
         return self.width / self.nx
     
-    @abc.abstractproperty
-    def kinematic_viscosity(self):
-        """Kinematic Viscosity"""
-        raise NotImplementedError()
-    
-    @abc.abstractproperty
-    def thermal_diffusivity(self):
-        """Thermal Diffusivity"""
-        raise NotImplementedError()
-    
-    @ComputedUnitsProperty
-    def primary_viscosity(self):
-        """Primary Viscosity component"""
-        if self.kinematic_viscosity > self.thermal_diffusivity:
-            return self.kinematic_viscosity
-        else:
-            return self.thermal_diffusivity
-        
     @ComputedUnitsProperty
     def npa(self):
         """(n * pi / a)"""
         return np.arange(self.nx).astype(np.float) * np.pi / self.aspect
     
-    def _setup_standard_bases(self):
-        """Set the standard, non-dimensional bases"""
-        temperature_unit = u.def_unit("Box-delta-T", self.deltaT)
-        length_unit = u.def_unit("Box-D", self.depth)
-        viscosity_unit = u.def_unit("kappa", self.primary_viscosity)
-        time_unit = length_unit**2 / viscosity_unit
-        self._bases['nondimensional'] = { unit.physical_type:unit for unit in [temperature_unit, length_unit, viscosity_unit, time_unit] }
-        
-        temperature_unit = self.deltaT.unit
-        length_unit = self.depth.unit
-        time_unit = type(self).Time.unit(self)
-        viscosity_unit = length_unit**2 / time_unit
-        self._bases['standard'] = { unit.physical_type:unit for unit in [temperature_unit, length_unit, time_unit, viscosity_unit] }
-        
     def diagnostic_string(self, z=None, n=None):
         """A longer diagnostic string."""
         if n is None:
@@ -238,107 +125,8 @@ class System2D(SystemBase):
     @ComputedUnitsProperty
     def time(self):
         """The current time of this simulation"""
-        return self.engine.dimensional["Time"]
+        return self.Time.dimensional
     
     Time = ArrayProperty("Time", u.s, shape=tuple(), latex=r"$t$")
-    Temperature = SpectralArrayProperty("Temperature", u.K, func=np.cos, shape=('nz','nx'), latex=r"$T$")
-    Vorticity = SpectralArrayProperty("Vorticity", 1.0 / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\omega$")
-    Stream = SpectralArrayProperty("Stream", u.m**2 / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\psi$")
-    dTemperature = SpectralArrayProperty("dTemperature", u.K / u.s, func=np.cos, shape=('nz','nx'), latex=r"$\frac{d T}{dt}$")
-    dVorticity = SpectralArrayProperty("dVorticity", 1.0 / u.s / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\frac{d \omega}{dt}$")
 
-class NDSystem2D(System2D):
-    """A primarily non-dimensional 2D system."""
-    def __init__(self,
-        deltaT=0, depth=0, aspect=0, Prandtl=0, Rayleigh=0, kinematic_viscosity=0, **kwargs):
-        super(NDSystem2D, self).__init__(**kwargs)
-        self.deltaT = deltaT
-        self.depth = depth
-        self.aspect = aspect
-        self.Prandtl = Prandtl
-        self.Rayleigh = Rayleigh
-        self.kinematic_viscosity = kinematic_viscosity
-        self._setup_standard_bases()
-        
-        
-    deltaT = UnitsProperty("deltaT", u.K, latex=r"$\Delta T$")
-    depth = UnitsProperty("depth", u.m, latex=r"$D$")
-    aspect = UnitsProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
-    
-    kinematic_viscosity = UnitsProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
-    Prandtl = UnitsProperty("Prandtl", u.dimensionless_unscaled, latex=r"$Pr$")
-    Rayleigh = UnitsProperty("Rayleigh", u.dimensionless_unscaled, latex=r"$Re$")
-    
-    @ComputedUnitsProperty
-    def thermal_diffusivity(self):
-        """Thermal Diffusivity"""
-        return self.kinematic_viscosity * self.Prandtl
-        
-    @classmethod
-    def get_parameter_list(cls):
-        """Get a list of the parameters which can be changed/modified directly"""
-        properties = list(cls._list_attributes(UnitsProperty, strict=True))
-        return properties + super(NDSystem2D, cls).get_parameter_list()
-    
-
-class PhysicalSystem2D(System2D):
-    """A 2D Fluid box, with some basic properties.
-    
-    :param deltaT: The temperature change between the bottom and top of the box.
-    :param depth: The depth of the box.
-    :param aspect: The aspect ratio of the box.
-    :param kinematic_viscosity: The kinematic viscosity of the box.
-    :param thermal_diffusivity: The thermal diffusivity of the box.
-    :param thermal_expansion: The coefficient of thermal expansion.
-    :param gravitaional_acceleration: The rate of gravitational acceleration.
-    
-    """
-    def __init__(self, deltaT=0, depth=0, aspect=0,
-        kinematic_viscosity=0, thermal_diffusivity=0, thermal_expansion=0, gravitaional_acceleration=0,
-        **kwargs):
-        super(PhysicalSystem2D, self).__init__(**kwargs)
-        
-        # Box Physical Variables
-        self.deltaT = deltaT
-        self.depth = depth
-        self.aspect = aspect
-        
-        # Fluid Variables
-        self.kinematic_viscosity = kinematic_viscosity
-        self.thermal_diffusivity = thermal_diffusivity
-        self.thermal_expansion = thermal_expansion
-        self.gravitaional_acceleration = gravitaional_acceleration
-        self._setup_standard_bases()
-        
-        
-    deltaT = UnitsProperty("deltaT", u.K, latex=r"$\Delta T$")
-    depth = UnitsProperty("depth", u.m, latex=r"$D$")
-    aspect = UnitsProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
-    
-    kinematic_viscosity = UnitsProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
-    thermal_diffusivity = UnitsProperty("thermal diffusivity", u.m**2.0 / u.s, latex=r"$\nu$")
-    thermal_expansion = UnitsProperty("thermal expansion", 1.0 / u.K, latex=r"$\alpha$")
-    gravitaional_acceleration = UnitsProperty("gravitational acceleration", u.m / u.s**2.0, latex=r"$g$")
-    
-    @ComputedUnitsProperty
-    def width(self):
-        """The box width."""
-        return self.aspect * self.depth
-    
-    @ComputedUnitsProperty
-    def Prandtl(self):
-        """The Prandtl number."""
-        return (self.thermal_diffusivity / self.kinematic_viscosity)
-    
-    @ComputedUnitsProperty
-    def Rayleigh(self):
-        """The Rayleigh number."""
-        return (self.gravitaional_acceleration * self.thermal_expansion * self.deltaT * self.depth**3.0) / (self.thermal_diffusivity * self.kinematic_viscosity)
-    
-    @classmethod
-    def get_parameter_list(cls):
-        """Get a list of the parameters which can be changed/modified directly"""
-        import inspect
-        return inspect.getargspec(cls.__init__)[0][1:] + super(PhysicalSystem2D, cls).get_parameter_list()        
-    
         

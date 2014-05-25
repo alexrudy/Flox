@@ -32,14 +32,14 @@ class PickleInterface(object):
         """This method should return the parameters which need to be pickled."""
         return []
         
+
+class PacketInterface(PickleInterface):
+    """The interface for packet consumers and producers."""
+    
     @abc.abstractmethod
     def get_data_list(self):
         """This method should return the data parameters which can be sent via the Packet interface."""
         return []
-        
-
-class PacketInterface(PickleInterface):
-    """The interface for packet consumers and producers."""
     
     def check_array(self, value, name):
         """Check an array's value."""

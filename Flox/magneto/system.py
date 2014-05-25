@@ -15,10 +15,10 @@ import astropy.units as u
 from pyshell.astron.units import UnitsProperty, HasUnitsProperties, recompose, ComputedUnitsProperty, recompose_unit
 from pyshell.util import setup_kwargs, configure_class, resolve
 
-from ..array import SpectralArrayProperty, ArrayEngine, ArrayProperty
+from ..engine.descriptors import SpectralArrayProperty, ArrayProperty
 from ..transform import setup_transform
 from .._transform import transform
-from ..system import NDSystem2D
+from ..hydro.system import NDSystem2D
 from ..finitedifference import first_derivative2D
 
 class MagnetoSystem(NDSystem2D):
@@ -36,9 +36,9 @@ class MagnetoSystem(NDSystem2D):
     Chandrasekhar = UnitsProperty("Chandrasekhar", u.dimensionless_unscaled, latex=r"$Q$")
     B0 = UnitsProperty("Magnetic field", u.T, latex=r"$B_{0}$")
     
-    def _setup_standard_bases(self):
+    def setup_bases(self):
         """Setup the standard bases."""
-        super(MagnetoSystem, self)._setup_standard_bases()
+        super(MagnetoSystem, self).setup_bases()
         magnetic_unit = u.def_unit("B0", self.B0)
         mass_unit = magnetic_unit * u.A * u.s**2
         self._bases["standard"][u.T.physical_type] = u.T
@@ -62,7 +62,7 @@ class MagnetoSystem(NDSystem2D):
     @ComputedUnitsProperty
     def MagneticField(self):
         """The magnetic field."""
-        A = self.VectorPotential
+        A = self.VectorPotential.raw
         Bx_transform = setup_transform(np.sin, self.nx, self.nx)
         Bz_transform = setup_transform(np.cos, self.nx, self.nx)
         Bz_transform *= self.npa[:,np.newaxis]
@@ -72,5 +72,5 @@ class MagnetoSystem(NDSystem2D):
         first_derivative2D(A.shape[0], A.shape[1], dAdz, A, self.dz.value, np.zeros(A.shape[1]), np.zeros(A.shape[1]), 1.0)
         assert not transform(self.nz, self.nx, self.nx, Bx, dAdz, Bx_transform)
         assert not transform(self.nz, self.nx, self.nx, Bz, A, Bz_transform)
-        return np.hstack((Bx, 1.0 + Bz)) * type(self).VectorPotential.unit(self) / u.m
+        return np.hstack((Bx, 1.0 + Bz)) * type(self).VectorPotential.unit / u.m
         
