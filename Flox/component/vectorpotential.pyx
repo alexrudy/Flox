@@ -22,7 +22,7 @@ from Flox.transform import setup_transform
 from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D_nb
 from Flox._solve cimport TimeSolver
-from Flox.nonlinear.galerkin cimport galerkin_cos
+from Flox.nonlinear.galerkin cimport galerkin_cos_grad_cos
 from Flox._transform cimport transform
 from Flox.transform import setup_transform
 
@@ -144,5 +144,5 @@ cdef class VectorPotentialSolver(TimeSolver):
             dPdz[ j, k ] = - P_curr[j - 1, k] / dz
         
         # Now we do the non-linear terms from equation 11.25
-        return galerkin_cos(self.nz, self.nx, self.G_curr, self.V_curr, self.dVdz, P_curr, dPdz, a, 1.0)
+        return galerkin_cos_grad_cos(self.nz, self.nx, self.G_curr, self.V_curr, self.dVdz, P_curr, dPdz, a, 1.0)
 

@@ -21,7 +21,7 @@ from cython.parallel cimport prange
 from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D
 from Flox._solve cimport TimeSolver
-from Flox.nonlinear.galerkin cimport galerkin_sin
+from Flox.nonlinear.galerkin cimport galerkin_cos_grad_sin
 
 cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t[:] f_p, DTYPE_t[:] f_m) nogil:
     
@@ -69,6 +69,6 @@ cdef class TemperatureSolver(TimeSolver):
     cpdef int compute_nonlinear(self, DTYPE_t[:,:] P_curr, DTYPE_t[:,:] dPdz, DTYPE_t a, DTYPE_t[:] npa):
     
         # Now we do the non-linear terms from equation 4.6
-        return galerkin_sin(self.nz, self.nx, self.G_curr, self.V_curr, self.dVdz, P_curr, dPdz, a, npa, 1.0)
+        return galerkin_cos_grad_sin(self.nz, self.nx, self.G_curr, self.V_curr, self.dVdz, P_curr, dPdz, a, npa, 1.0)
     
 
