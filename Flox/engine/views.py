@@ -81,3 +81,12 @@ class TransformedView(DimensionalView):
     def __setdata__(self, system, key, value):
         """Set item."""
         raise AttributeError("{}: Can't set a transformed array! Key={}".format(system, key))
+        
+class PerturbedTransformedView(TransformedView):
+    """docstring for PerturbedTransformedView"""
+    
+    def __getdata__(self, system, key):
+        """Get item."""
+        descriptor = getattr(self.source.type, key)
+        return (descriptor.itransform(system, perturbed=True) * self.__ndunit__(system, key)).to(self.__unit__(system, key))
+    

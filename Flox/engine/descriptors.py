@@ -15,6 +15,20 @@ from pyshell.util import descriptor__get__
 
 from ..transform import spectral_transform
 
+def EvolverProperty(propname):
+    """A simulation property decorator."""
+    if not isinstance(propname, six.text_type):
+        raise ValueError("Must provide a property name.")
+    
+    def decorator(f):
+        """Decorate the function."""
+        f.propname = propname
+        return f
+    
+    return decorator
+    
+    
+
 class ArrayValue(object):
     """An array value instance"""
     def __init__(self, engine, system, attribute):
@@ -97,7 +111,7 @@ class SpectralArrayProperty(ArrayProperty):
         super(SpectralArrayProperty, self).__init__(name, unit, **kwargs)
         self._func = func
         
-    def itransform(self, obj):
+    def itransform(self, obj, perturbed=False):
         """Perform the inverse transform."""
-        return spectral_transform(self._func, self.__get__(obj, type(obj)).raw, obj.nx, obj.aspect.value)
+        return spectral_transform(self._func, self.__get__(obj, type(obj)).raw, obj.nx, obj.aspect.value, perturbed)
         

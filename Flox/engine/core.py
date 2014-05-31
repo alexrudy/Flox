@@ -17,7 +17,7 @@ import six
 from pyshell.util import setup_kwargs, configure_class, resolve
 
 from ..process.packet import PacketInterface
-from .views import DimensionalView, NonDimensionalView, TransformedView, BaseView
+from .views import DimensionalView, NonDimensionalView, TransformedView, BaseView, PerturbedTransformedView
 
 class EngineIterator(collections.Iterator):
     """An iterator wrapper for the engine class."""
@@ -76,6 +76,7 @@ class ArrayEngine(collections.Mapping, PacketInterface):
         self._views["dimensional"] = DimensionalView(self)
         self._views["nondimensional"] = NonDimensionalView(self)
         self._views["transformed"] = TransformedView(self)
+        self._views["perturbation"] = PerturbedTransformedView(self)
         self._views["raw"] = BaseView(self)
         
     @property
