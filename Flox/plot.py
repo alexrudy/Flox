@@ -149,7 +149,10 @@ class GridView(View):
         
     def data(self, system):
         """Return the transformed data"""
-        data = getattr(system,self.variable).transformed.value
+        if self.perturbed:
+            data = getattr(system,self.variable).perturbation.value
+        else:
+            data = getattr(system,self.variable).transformed.value
         if self.variable == "VectorPotential":
             return data + system.B0.value * np.linspace(0, 1, system.nx + 2)[1:-1][np.newaxis,:]
         else:
