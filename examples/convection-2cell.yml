@@ -1,5 +1,5 @@
 system:
-  '()': Flox.system.NDSystem2D
+  '()': Flox.hydro.system.NDSystem2D
   Prandtl: 0.5
   Rayleigh: 1.0e+6
   aspect: 3.0
@@ -9,7 +9,7 @@ system:
   nx: 50
   nz: 100
   nt: 1200
-  engine: 'Flox.array.NumpyArrayEngine'
+  engine: 'Flox.engine.numpy.NumpyArrayEngine'
 ic:
   stable: yes
   sin:
@@ -19,7 +19,7 @@ ic:
     random: yes
     epsilon: 0.01
 animate:
-  filename: problems/convection-2cell.mp4
+  filename: movies/convection-2cell.mp4
   buffer: 10
   enable: yes
   movie:
@@ -38,9 +38,9 @@ animate:
     S:
       r: 1
       c: 0
-      '()': Flox.plot.ContourView
-      variable: "Stream"
-      colors: k
+      '()': Flox.plot.VectorView
+      variable: "Velocity"
+      cmap: summer
 evolve:
   class: Flox.nonlinear.NonlinearEvolver
   iterations: 50
