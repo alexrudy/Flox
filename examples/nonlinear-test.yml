@@ -3,12 +3,12 @@ system:
   Prandtl: 0.5
   Rayleigh: 1.0e+6
   aspect: 1.0
-  deltaT: !quantity '1 K'
+  deltaT: !quantity '-1 K'
   depth: !quantity '1 m'
   kinematic_viscosity: !quantity '0.001 St'
   nx: 50
   nz: 200
-  nt: 50
+  nt: 500
   engine: 'Flox.engine.numpy.NumpyArrayEngine'
 ic:
   stable: yes
@@ -35,9 +35,10 @@ animate:
       '()': Flox.plot.GridView
       variable: "Temperature"
       cmap: "hot"
+      perturbed: yes
 evolve:
   class: Flox.nonlinear.NonlinearEvolver
-  iterations: 50
+  iterations: 500
   time: !quantity '1 yr'
 write:
   writer: Flox.io.HDF5Writer

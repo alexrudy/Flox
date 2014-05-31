@@ -1,20 +1,19 @@
 system:
-  '()': Flox.magneto.system.MagnetoSystem
+  '()': Flox.hydro.system.NDSystem2D
   Prandtl: 0.5
   Rayleigh: 1.0e+6
-  Chandrasekhar: 1.0e+3
-  Roberts: 1.0
   aspect: 1.0
   deltaT: !quantity '1 K'
   depth: !quantity '1 m'
-  B0: !quantity '0.001 T'
   kinematic_viscosity: !quantity '0.001 St'
   nx: 50
-  nz: 100
+  nz: 200
   nt: 500
   engine: 'Flox.engine.numpy.NumpyArrayEngine'
 ic:
-  stable: yes
+  stable: no
+  thermal:
+    enable: yes
   sin:
     amplitude: fixed
     limits: no
@@ -22,7 +21,7 @@ ic:
     k: [ 1 ]
     epsilon: 0.01
 animate:
-  filename: problems/magneto-test.mp4
+  filename: movies/forcing.mp4
   buffer: 10
   enable: yes
   movie:
@@ -30,7 +29,7 @@ animate:
     save_kwargs:
       bitrate: 100000
   nr: 1
-  nc: 3
+  nc: 1
   plots:
     T:
       r: 0
@@ -38,26 +37,15 @@ animate:
       '()': Flox.plot.GridView
       variable: "Temperature"
       cmap: "hot"
-    P:
-      r: 0
-      c: 1
-      '()': Flox.plot.VectorView
-      variable: "Velocity"
-      cmap: summer
-    A:
-      r: 0
-      c: 2
-      '()': Flox.plot.VectorView
-      variable: "MagneticField"
-      cmap: winter
+      perturbed: no
 evolve:
-  class: Flox.magneto.MagnetoEvolver
-  iterations: 50
-  time: !quantity '1 yr'
+  class: Flox.nonlinear.NonlinearEvolver
+  iterations: 500
   settings:
-    checkCFL: 10
-    safety: 0.1
+    tau: 1.0e-4
+    fks: 0.5
+  time: !quantity '1 yr'
 write:
   writer: Flox.io.HDF5Writer
-  filename: ~/Documents/magneto-test.hdf5
-  dataname: magneto
+  filename: ~/Documents/nonlinear.hdf5
+  dataname: forcing
