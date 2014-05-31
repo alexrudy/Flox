@@ -9,6 +9,8 @@
 
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
+import numpy as np
+
 from ._nonlinear import NonlinearEvolver as _NonlinearEvolver
 from ..evolver.base import Evolver
 
@@ -27,7 +29,7 @@ class NonlinearEvolver(_NonlinearEvolver, Evolver):
         return [ "Temperature", "dTemperature", "Vorticity", "dVorticity", "Stream", "Time"]
     
     @classmethod
-    def from_system(cls, system, saftey=0.5):
+    def from_system(cls, system, saftey=0.5, forcing=False, tau=0.0, fks=0.0):
         """Load the grid parameters into the LE"""
         ev = cls(
             system.nz, system.nx,
@@ -38,5 +40,11 @@ class NonlinearEvolver(_NonlinearEvolver, Evolver):
             )
         ev.Pr = system.nondimensionalize(system.Prandtl).value
         ev.Ra = system.nondimensionalize(system.Rayleigh).value
+        ev.tau = tau
+        if tau != 0:
+            ks = int(np.fix(system.nz * fks))
+            z = (np.arange(system.nz + 2) / (system.nz + 1))[1:-1]
+            ev.TInterface = ks
+            ev.TemperatureStable = 1.0 - z
         return ev
             

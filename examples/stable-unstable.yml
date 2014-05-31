@@ -42,7 +42,7 @@ evolve:
   class: Flox.nonlinear.NonlinearEvolver
   iterations: 500
   settings:
-    tau: 1.0e-4
+    tau: 1.0
     fks: 0.5
   time: !quantity '1 yr'
 write:

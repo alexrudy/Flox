@@ -23,11 +23,37 @@ class InitialConditioner(object):
         """Apply the initial conditions to a system."""
         self.stable(System)
         self.sin(System)
+        self.forcing(System)
+        
+    def forcing(self, System):
+        """Thermal forcing intial condition."""
+        if self.params.get('thermal.enable', False):
+            fks = self.params.get('thermal.fks', 0.5)
+            ks = int(np.fix(System.nz * fks))
+            top = self.params.get('thermal.top', False)
+            z = z_array(System)
+            T0 = 0.9
+            if System.deltaT.value > 0:
+                System.Temperature.raw[:,0] = 1.0 - z
+            else:
+                System.Temperature.raw[:,0] = z
+            
+            if top:
+                zp = 1 - (1 - z[ks:])/(1 - z[ks])
+                System.Temperature.raw[:ks,0] = (1 - z[ks:]) + zp * T0
+            else:
+                zp = 1 - (1 - z[ks:])/(1 - z[ks])
+                System.Temperature.raw[ks:,0] = (1 - z[ks:]) + zp * T0
+            
         
     def stable(self, System):
         """Apply the stable perturbation."""
         if self.params.get('stable',False):
-            stable_temperature_gradient(System)
+            z = z_array(System)
+            if System.deltaT.value > 0:
+                System.Temperature.raw[:,0] = 1.0 - z
+            else:
+                System.Temperature.raw[:,0] = z
     
     def sin(self, System):
         """Sin perturbations in each mode."""
@@ -52,7 +78,7 @@ class InitialConditioner(object):
                         eps = k**self.params.get('sin.powerlaw',-1) * amplitude
                     if amp_mode == 'powerlaw-random':
                         eps = np.random.randn(1) * k**self.params.get('sin.powerlaw',-1) * amplitude
-                    single_mode_perturbation(System, k, l, eps=eps)
+                    System.Temperature.raw[:,k] = eps * np.sin(l * np.pi * z_array(System))
 
 def z_array(System):
     """Z position array, appropriate for initialzing."""

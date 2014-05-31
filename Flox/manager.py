@@ -19,7 +19,7 @@ import os
 import multiprocessing.managers as mm
 import multiprocessing as mp
 
-from pyshell.util import resolve, ipydb
+from pyshell.util import resolve, ipydb, askip
 
 from .ic import InitialConditioner
 from .input import FloxConfiguration
@@ -74,6 +74,7 @@ class FloxManager(object):
             ICs = InitialConditioner(self.config['ic'])
             ICs.run(System)
             print(System)
+            # askip()()
         
         if self.opt.evolve:
             print("Evolving")

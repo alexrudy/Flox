@@ -34,6 +34,8 @@ cdef class Evolver:
     cdef VectorPotentialSolver _VectorPotential
     cdef CurrentDensitySolver _CurrentDensity
     
+    cdef public DTYPE_t tau
+    
     cpdef DTYPE_t delta_time(self)
     cpdef int step(self, DTYPE_t delta_time)
     cpdef int evolve(self, DTYPE_t time, int max_iterations)

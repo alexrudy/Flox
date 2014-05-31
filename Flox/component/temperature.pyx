@@ -50,6 +50,20 @@ cpdef int temperature_linear(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] P_curr
     
     return 0
     
+cpdef int temperature_forcing(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t[:] T_s, DTYPE_t tau, int js) nogil:
+    
+    cdef int j, jm, jp
+    
+    if js < 0:
+        jm = -js
+        jp = J
+    else:
+        jm = 0
+        jp = js
+    
+    for j in prange(jm,jp):
+        d_T[j, 0] += -(T_curr[j, 0] - T_s[j])/tau
+    return 0
 
 cdef class TemperatureSolver(TimeSolver):
     
@@ -57,6 +71,8 @@ cdef class TemperatureSolver(TimeSolver):
         # Boundary Conditions:
         # T(n=0,z=0) = 1.0
         self.V_m[0] = 1.0
+        self.V_p[0] = 0.9
+        self.T_s = np.zeros((nz,), dtype=np.float)
     
     cpdef int compute_base(self, DTYPE_t dz, DTYPE_t[:] npa):
         
@@ -71,4 +87,6 @@ cdef class TemperatureSolver(TimeSolver):
         # Now we do the non-linear terms from equation 4.6
         return galerkin_cos_grad_sin(self.nz, self.nx, self.G_curr, self.V_curr, self.dVdz, P_curr, dPdz, a, npa, 1.0)
     
+    cpdef int compute_forcing(self, DTYPE_t tau):
+        return temperature_forcing(self.nz, self.nx, self.G_curr, self.V_curr, self.T_s, tau, self.Z_interface)
 

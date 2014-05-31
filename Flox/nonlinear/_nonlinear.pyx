@@ -69,6 +69,9 @@ cdef class NonlinearEvolver(Evolver):
         self._Temperature.compute_base(self.dz, self.npa)
         # Then the nonlinear galerkin terms.
         self._Temperature.compute_nonlinear(self._Stream.V_curr, self._Stream.dVdz, self.a, self.npa)
+        # Add in the thermal forcing, if requested.
+        if self.tau > 0.0:
+            self._Temperature.compute_forcing(self.tau)
         
         # First the regular linear terms.
         self._Vorticity.compute_base(self._Temperature.V_curr, self.dz, self.npa, self.Pr, self.Ra)
@@ -87,4 +90,16 @@ cdef class NonlinearEvolver(Evolver):
         
         return 0
     
+    property TemperatureStable:
+        
+        "Stable Temperature Profile for Forcing"
+
+        def __set__(self, value):
+            self._Temperature.T_s = np.asanyarray(value).copy()
+    
+    property TInterface:
+        
+        def __set__(self, value):
+            self._Temperature.Z_interface = np.int(value)
+        
     
