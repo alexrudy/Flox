@@ -28,22 +28,15 @@ class InitialConditioner(object):
     def forcing(self, System):
         """Thermal forcing intial condition."""
         if self.params.get('thermal.enable', False):
+            print("Adding thermal.")
             fks = self.params.get('thermal.fks', 0.5)
             ks = int(np.fix(System.nz * fks))
             top = self.params.get('thermal.top', False)
             z = z_array(System)
-            T0 = 0.9
-            if System.deltaT.value > 0:
-                System.Temperature.raw[:,0] = 1.0 - z
-            else:
-                System.Temperature.raw[:,0] = z
-            
-            if top:
-                zp = 1 - (1 - z[ks:])/(1 - z[ks])
-                System.Temperature.raw[:ks,0] = (1 - z[ks:]) + zp * T0
-            else:
-                zp = 1 - (1 - z[ks:])/(1 - z[ks])
-                System.Temperature.raw[ks:,0] = (1 - z[ks:]) + zp * T0
+            T0 = 0.5
+            System.Temperature.raw[:,0] = z/z[ks]
+            zp = 1 - (1 - z[ks:])/(1 - z[ks])
+            System.Temperature.raw[ks:,0] = (1 - zp) + zp * T0
             
         
     def stable(self, System):

@@ -14,7 +14,7 @@ ic:
   stable: no
   thermal:
     enable: yes
-    fks: 0.85
+    fks: 0.5
   sin:
     amplitude: fixed
     limits: no
@@ -38,13 +38,13 @@ animate:
       '()': Flox.plot.GridView
       variable: "Temperature"
       cmap: "hot"
-      perturbed: no
+      perturbed: yes
 evolve:
   class: Flox.nonlinear.NonlinearEvolver
   iterations: 500
   settings:
-    tau: 1.0e-5
-    fks: 0.85
+    tau: 1.0e-3
+    fks: 0.5
   time: !quantity '1 yr'
 write:
   writer: Flox.io.HDF5Writer

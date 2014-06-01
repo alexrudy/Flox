@@ -70,8 +70,8 @@ cdef class TemperatureSolver(TimeSolver):
     def __cinit__(self, int nz, int nx):
         # Boundary Conditions:
         # T(n=0,z=0) = 1.0
-        self.V_m[0] = 1.0
-        self.V_p[0] = 0.9
+        self.V_m[0] = 0.0
+        self.V_p[0] = 0.5
         self.T_s = np.zeros((nz,), dtype=np.float)
     
     cpdef int compute_base(self, DTYPE_t dz, DTYPE_t[:] npa):

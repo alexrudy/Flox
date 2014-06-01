@@ -45,6 +45,6 @@ class NonlinearEvolver(_NonlinearEvolver, Evolver):
             ks = int(np.fix(system.nz * fks))
             z = (np.arange(system.nz + 2) / (system.nz + 1))[1:-1]
             ev.TInterface = ks
-            ev.TemperatureStable = 1.0 - z
+            ev.TemperatureStable = z/z[ks]
         return ev
             
