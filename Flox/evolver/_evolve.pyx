@@ -40,6 +40,8 @@ cdef class Evolver:
     
     cpdef int advance(self, DTYPE_t delta_time):
         
+        self.Time += delta_time
+        
         return 0
     
     cpdef int solve(self):
@@ -50,14 +52,12 @@ cdef class Evolver:
     cpdef int step(self, DTYPE_t delta_time):
         
         cdef int r
-        cdef DTYPE_t time = self.Time
         
         r = self.prepare()
         r += self.compute()
         r += self.advance(delta_time)
         r += self.solve()
         
-        self.Time = time + delta_time
         
         return r
         

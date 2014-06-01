@@ -29,7 +29,7 @@ from Flox.component.stream cimport StreamSolver
 
 cdef class HydroEvolver(Evolver):
     
-    def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t dz, DTYPE_t a, DTYPE_t safety):
+    def __cinit__(self, int nz, int nx, DTYPE_t[:] npa, DTYPE_t dz, DTYPE_t a, DTYPE_t safety, int checkCFL):
         
         self.dz = dz
         self.npa = npa
@@ -39,6 +39,7 @@ cdef class HydroEvolver(Evolver):
         self._Stream = StreamSolver(nz, nx)
         self._Stream.setup(self.dz, self.npa)
         self.safety = safety
+        self.checkCFL = checkCFL
         
     
     cpdef DTYPE_t delta_time(self):
@@ -56,6 +57,7 @@ cdef class HydroEvolver(Evolver):
     cpdef int prepare(self):
         # Prepare the computation, resetting arrays and computing first spatial derivatives.
         cdef int r = 0
+        r += Evolver.prepare(self)
         r += self._Temperature.prepare(self.dz)
         r += self._Vorticity.prepare(self.dz)
         r += self._Stream.prepare(self.dz)
@@ -64,6 +66,7 @@ cdef class HydroEvolver(Evolver):
     cpdef int compute(self):
         # First the regular linear terms.
         cdef int r = 0
+        r += Evolver.compute(self)
         r += self._Temperature.compute_base(self.dz, self.npa)
         if self._linear:
             # Then the linear only terms.
@@ -83,7 +86,7 @@ cdef class HydroEvolver(Evolver):
     
     cpdef int advance(self, DTYPE_t delta_time):
         cdef int r = 0
-        
+        r += Evolver.advance(self, delta_time)
         # Advance the variables.
         r += self._Temperature.advance(delta_time)
         r += self._Vorticity.advance(delta_time)
@@ -92,7 +95,7 @@ cdef class HydroEvolver(Evolver):
     
     cpdef int solve(self):
         cdef int r = 0
-        
+        r += Evolver.solve(self)
         # Advance the stream function.
         r += self._Stream.solve(self._Vorticity.V_curr, self._Stream.V_curr)
         
