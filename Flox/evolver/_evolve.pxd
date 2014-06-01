@@ -37,3 +37,8 @@ cdef class Evolver:
     cpdef DTYPE_t delta_time(self)
     cpdef int step(self, DTYPE_t delta_time)
     cpdef int evolve(self, DTYPE_t time, int max_iterations)
+    cpdef int prepare(self)
+    cpdef int compute(self)
+    cpdef int advance(self, DTYPE_t delta_time)
+    cpdef int solve(self)
+    

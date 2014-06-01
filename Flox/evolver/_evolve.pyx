@@ -30,9 +30,36 @@ cdef class Evolver:
         
         return self.timestep * self.safety
     
-    cpdef int step(self, DTYPE_t delta_time):
+    cpdef int prepare(self):
         
         return 0
+        
+    cpdef int compute(self):
+        
+        return 0
+    
+    cpdef int advance(self, DTYPE_t delta_time):
+        
+        return 0
+    
+    cpdef int solve(self):
+        
+        return 0
+    
+    
+    cpdef int step(self, DTYPE_t delta_time):
+        
+        cdef int r
+        cdef DTYPE_t time = self.Time
+        
+        r = self.prepare()
+        r += self.compute()
+        r += self.advance(delta_time)
+        r += self.solve()
+        
+        self.Time = time + delta_time
+        
+        return r
         
     cpdef int evolve(self, DTYPE_t time, int max_iterations):
         
