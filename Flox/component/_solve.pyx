@@ -60,6 +60,23 @@ cdef class Solver:
         def __set__(self, value):
             self._transform = np.asanyarray(value).copy()
     
+    
+    property Value_p:
+        
+        def __get__(self):
+            return np.asanyarray(self.V_p)
+    
+        def __set__(self, value):
+            self.V_p = np.asanyarray(value)
+    
+    property Value_m:
+    
+        def __get__(self):
+            return np.asanyarray(self.V_m)
+    
+        def __set__(self, value):
+            self.V_m = np.asanyarray(value)
+    
     # User should implement some function which can compute G_curr at each timestep!
     # We don't implement a method here, because its signature will vary greatly!
     
@@ -128,18 +145,3 @@ cdef class TimeSolver(Solver):
         def __set__(self, value):
             self.G_prev = np.asanyarray(value)
         
-    property Value_p:
-    
-        def __get__(self):
-            return np.asanyarray(self.V_p)
-        
-        def __set__(self, value):
-            self.V_p = np.asanyarray(value)
-    
-    property Value_m:
-    
-        def __get__(self):
-            return np.asanyarray(self.V_m)
-    
-        def __set__(self, value):
-            self.V_m = np.asanyarray(value)
