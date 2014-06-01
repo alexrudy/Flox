@@ -8,7 +8,7 @@
 # 
 
 from Flox._flox cimport DTYPE_t
-from Flox._solve cimport TimeSolver
+from Flox.component._solve cimport TimeSolver
 
 cpdef int vorticity(int J, int K, DTYPE_t[:,:] d_V, DTYPE_t[:,:] V_curr, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t Pr, DTYPE_t Ra, DTYPE_t[:] f_p, DTYPE_t[:] f_m) nogil
 

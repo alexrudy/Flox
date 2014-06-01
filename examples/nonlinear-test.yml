@@ -19,7 +19,7 @@ ic:
     k: [ 1 ]
     epsilon: 0.01
 animate:
-  filename: problems/nonlinear.mp4
+  filename: movies/nonlinear.mp4
   buffer: 10
   enable: yes
   movie:

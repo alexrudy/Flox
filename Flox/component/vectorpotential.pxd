@@ -8,7 +8,7 @@
 # 
 
 from Flox._flox cimport DTYPE_t
-from Flox._solve cimport TimeSolver
+from Flox.component._solve cimport TimeSolver
 
 cpdef int vectorpotential(int J, int K, DTYPE_t[:,:] d_A, DTYPE_t[:,:] A_curr, DTYPE_t[:,:] dAdzz, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t q) nogil
 

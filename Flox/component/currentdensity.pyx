@@ -19,7 +19,7 @@ cimport cython
 
 from cython.parallel cimport prange
 from Flox._flox cimport DTYPE_t
-from Flox._solve cimport Solver
+from Flox.component._solve cimport Solver
 
 cpdef int currentdensity(int J, int K, DTYPE_t[:,:] J_curr, DTYPE_t[:,:] A_curr, DTYPE_t[:,:] dAdzz, DTYPE_t[:] npa) nogil:
     

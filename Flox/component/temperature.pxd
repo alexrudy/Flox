@@ -8,7 +8,7 @@
 # 
 
 from Flox._flox cimport DTYPE_t
-from Flox._solve cimport TimeSolver
+from Flox.component._solve cimport TimeSolver
 
 cpdef int temperature(int J, int K, DTYPE_t[:,:] T_next, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t[:] f_p, DTYPE_t[:] f_m) nogil
 

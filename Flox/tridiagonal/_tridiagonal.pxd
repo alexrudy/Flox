@@ -7,7 +7,7 @@
 # 
 
 from Flox._flox cimport DTYPE_t
-from Flox._solve cimport Solver
+from Flox.component._solve cimport Solver
 
 cpdef int tridiagonal_split_matrix(int J, DTYPE_t[:,:] mat, DTYPE_t[:] sub, DTYPE_t[:] dia, DTYPE_t[:] sup) nogil
 

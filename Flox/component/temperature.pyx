@@ -20,7 +20,7 @@ from cython.parallel cimport prange
 
 from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D
-from Flox._solve cimport TimeSolver
+from Flox.component._solve cimport TimeSolver
 from Flox.nonlinear.galerkin cimport galerkin_cos_grad_sin
 
 cpdef int temperature(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] T_curr, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t[:] f_p, DTYPE_t[:] f_m) nogil:

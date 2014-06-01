@@ -21,7 +21,7 @@ from cython.parallel cimport prange
 from Flox.transform import setup_transform
 from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D_nb
-from Flox._solve cimport TimeSolver
+from Flox.component._solve cimport TimeSolver
 from Flox.nonlinear.galerkin cimport galerkin_cos_grad_cos
 from Flox._transform cimport transform
 from Flox.transform import setup_transform

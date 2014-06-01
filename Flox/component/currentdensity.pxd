@@ -8,7 +8,7 @@
 # 
 
 from Flox._flox cimport DTYPE_t
-from Flox._solve cimport Solver
+from Flox.component._solve cimport Solver
 
 cdef class CurrentDensitySolver(Solver):
     cpdef int compute_base(self, DTYPE_t[:,:] A_curr, DTYPE_t[:,:] dAdzz, DTYPE_t[:] npa)
