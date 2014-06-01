@@ -35,16 +35,23 @@ cdef class MagnetoEvolver(HydroEvolver):
     
     cpdef DTYPE_t delta_time(self):
         
-        cdef DTYPE_t dt_a, dt_b, dt_c, dt_d, dt
+        cdef DTYPE_t dt_hydro, dt_mdiff, dt_alfven, dt
         if self.timestep_ready:
             return HydroEvolver.delta_time(self)
+        dt = HydroEvolver.delta_time(self)
+        dt_hydro = self.timestep
+        dt_mdiff = (self.dz * self.dz) * self.q / 4.0
         if self.maxAlfven == 0.0:
             self.maxAlfven = self.Q * self.Pr / self.q
-        dt_a = (self.dz * self.dz) / 4.0
-        dt_b = (2.0 * np.pi) / (50.0 * np.sqrt(self.Ra * self.Pr))
-        dt_c = (self.dz * self.dz) * self.q / 4.0
-        dt_d = self.dz / np.sqrt(self.maxAlfven)
-        dt = np.min([dt_a, dt_b, dt_c, dt_d])
+        dt_alfven = self.dz / np.sqrt(self.maxAlfven)
+        
+        # Check the magnetic components of the timestep.
+        dt = dt_hydro
+        if dt > dt_mdiff:
+            dt = dt_mdiff
+        if dt > dt_alfven:
+            dt = dt_alfven
+        
         self.timestep = dt
         self.timestep_ready = True
         return HydroEvolver.delta_time(self)

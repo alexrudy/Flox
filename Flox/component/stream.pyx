@@ -20,8 +20,40 @@ from cython.parallel cimport prange
 
 from Flox._flox cimport DTYPE_t
 from Flox.tridiagonal._tridiagonal cimport TridiagonalSolver
+from Flox.component._transform cimport transform
+from Flox.transform import setup_transform
 
 cdef class StreamSolver(TridiagonalSolver):
+    
+    def __cinit__(self, int nz, int nx):
+        self.Velocity = np.zeros((nz, nx), dtype=np.float)
+        self.Vx = np.zeros((nz, nx), dtype=np.float)
+        self.Vz = np.zeros((nz, nx), dtype=np.float)
+    
+    cpdef int setup_transform(self, DTYPE_t[:] npa):
+        
+        self.Vx_transform = setup_transform(np.sin, self.nx, self.nx)
+        self.Vz_transform = setup_transform(np.cos, self.nx, self.nx)
+        for k in range(self.nx):
+            for kp in range(self.nx):
+                self.Vx_transform[k,kp] *= -1.0
+                self.Vz_transform[k,kp] *= npa[k]
+        self.transform_ready = True
+    
+    cpdef int compute_velocity(self):
+        # Compute and update the internal variable handling the maximum fluid velocity.
+        cdef int r, j, k
+        self.Vx[...] = 0.0
+        self.Vz[...] = 0.0
+        self.maxV = 0.0
+        r = transform(self.nz, self.nx, self.nx, self.Vx, self.dVdz, self.Vx_transform)
+        r += transform(self.nz, self.nx, self.nx, self.Vz, self.V_curr, self.Vz_transform)
+        for j in range(self.nz):
+            for k in range(self.nx):
+                self.Velocity[j,k] = (self.Vx[j,k])*(self.Vx[j,k]) + (self.Vz[j,k])*(self.Vz[j,k])
+                if self.Velocity[j,k] > self.maxV:
+                    self.maxV = self.Velocity[j,k]
+        return r
     
     cpdef int setup(self, DTYPE_t dz, DTYPE_t[:] npa):
         

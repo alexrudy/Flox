@@ -13,4 +13,5 @@ from Flox.evolver._evolve cimport Evolver
 cdef class HydroEvolver(Evolver):
     cdef public DTYPE_t Pr
     cdef public DTYPE_t Ra
+    cdef DTYPE_t maxV
     cdef bint _linear

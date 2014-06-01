@@ -40,16 +40,28 @@ cdef class HydroEvolver(Evolver):
         self._Stream.setup(self.dz, self.npa)
         self.safety = safety
         self.checkCFL = checkCFL
+        self.maxV = 0.0
         
     
     cpdef DTYPE_t delta_time(self):
         
-        cdef DTYPE_t dt_a, dt_b
+        cdef DTYPE_t dt_diffusion, dt_gmode, dt_velocity, dt
         if self.timestep_ready:
             return Evolver.delta_time(self)
-        dt_a = (self.dz * self.dz) / 4.0
-        dt_b = (2.0 * np.pi) / (50.0 * np.sqrt(self.Ra * self.Pr))
-        dt = np.min([dt_a, dt_b])
+        dt_diffusion = (self.dz * self.dz) / 4.0
+        dt_gmode = (2.0 * np.pi) / (50.0 * np.sqrt(self.Ra * self.Pr))
+        if self.maxV == 0:
+            dt_velocity = dt_diffusion
+        else:
+            dt_velocity = (self.dz) / self.maxV
+        
+        # Check the timestep.
+        dt = dt_diffusion
+        if dt > dt_gmode:
+            dt = dt_gmode
+        if dt > dt_velocity:
+            dt = dt_velocity
+        
         self.timestep = dt
         self.timestep_ready = True
         return Evolver.delta_time(self)
@@ -98,6 +110,13 @@ cdef class HydroEvolver(Evolver):
         r += Evolver.solve(self)
         # Advance the stream function.
         r += self._Stream.solve(self._Vorticity.V_curr, self._Stream.V_curr)
+        
+        # If requried, do things to compute the fluid velocity.
+        if not self._Stream.transform_ready:
+            r += self._Stream.setup_transform(self.npa)
+        if not self.timestep_ready:
+            r += self._Stream.compute_velocity()
+            self.maxV = self._Stream.maxV
         
         return r
     
