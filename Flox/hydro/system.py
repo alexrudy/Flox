@@ -75,12 +75,19 @@ class HydroSystem(System2D):
             fz = self.fz
         except AttributeError as e:
             return False
-        if self.fz.value == 0.0 and self.deltaT > 0:
+        if self.fz.value == 0.0 and self.deltaT.value > 0:
             return False
-        elif self.fz == self.depth and self.deltaT < 0:
+        elif self.fz == self.depth and self.deltaT.value < 0:
             return False
         else:
             return True
+    
+    def _disable_fz(self):
+        """A method to disable fz."""
+        if self.deltaT.value > 0:
+            self.fz = 0.0
+        elif self.deltaT.value < 0:
+            self.fz = self.depth
     
     @abc.abstractproperty
     def fz(self):
@@ -104,7 +111,7 @@ class HydroSystem(System2D):
     
     def setup_bases(self):
         """Set the standard, non-dimensional bases"""
-        temperature_unit = u.def_unit("Box-delta-T", self.deltaT)
+        temperature_unit = u.def_unit("Box-delta-T", np.abs(self.deltaT))
         length_unit = u.def_unit("Box-D", self.depth)
         viscosity_unit = u.def_unit("kappa", self.primary_viscosity)
         time_unit = length_unit**2 / viscosity_unit
@@ -171,6 +178,8 @@ class NDSystem2D(HydroSystem):
         self.kinematic_viscosity = kinematic_viscosity
         if fz is not None:
             self.fz = fz
+        else:
+            self._disable_fz()
         super(NDSystem2D, self).__init__(**kwargs)
         
         
@@ -224,6 +233,8 @@ class PhysicalSystem2D(HydroSystem):
         
         if fz is not None:
             self.fz = fz
+        else:
+            self._disable_fz()
         super(PhysicalSystem2D, self).__init__(**kwargs)
         
         

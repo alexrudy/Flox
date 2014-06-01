@@ -75,7 +75,8 @@ system_units = {
     'Roberts' : 1,
     'Chandrasekhar' : 1,
     'MagneticField' : 'T',
-    'Velocity': 'm / s'
+    'Velocity': 'm / s',
+    'fz' : 'm',
 }
 
 def test_system_quantities(system):

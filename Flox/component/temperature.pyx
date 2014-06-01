@@ -53,11 +53,6 @@ cpdef int temperature_linear(int J, int K, DTYPE_t[:,:] d_T, DTYPE_t[:,:] P_curr
 
 cdef class TemperatureSolver(TimeSolver):
     
-    def __cinit__(self, int nz, int nx):
-        # Boundary Conditions:
-        # T(n=0,z=0) = 1.0
-        self.V_m[0] = 1.0
-    
     cpdef int compute_base(self, DTYPE_t dz, DTYPE_t[:] npa):
         
         return temperature(self.nz, self.nx, self.G_curr, self.V_curr, dz, npa, self.V_p, self.V_m)

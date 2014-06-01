@@ -27,7 +27,10 @@ class InitialConditioner(object):
     def stable(self, System):
         """Apply the stable perturbation."""
         if self.params.get('stable',False):
-            stable_temperature_gradient(System)
+            if System.deltaT > 0.0:
+                System.Temperature.raw[:,0] = System.z / System.dz
+            elif System.deltaT < 0.0:
+                System.Temperature.raw[:,0] = 1.0 - (System.z / System.dz)
     
     def sin(self, System):
         """Sin perturbations in each mode."""
