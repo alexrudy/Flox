@@ -81,6 +81,10 @@ class System2D(SystemBase):
         """The z-grid spacing"""
         return self.depth / (self.nz + 2)
         
+    @property
+    def z(self):
+        return (np.arange(self.nz + 2) / (self.nz + 1))[1:-1] * self.dz
+        
     @abc.abstractproperty
     def aspect(self):
         """The aspect ratio of the box."""
