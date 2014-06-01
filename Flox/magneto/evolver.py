@@ -30,5 +30,5 @@ class MagnetoBase(HydroBase):
 class MagnetoEvolver(MagnetoBase, _MagnetoEvolver):
     """Evolver with magnetic fields"""
     def __init__(self, *args, **kwargs):
-        super(MagnetoEvolver, self).__init__(*args, **kwargs)        
+        super(MagnetoEvolver, self).__init__()        
         
