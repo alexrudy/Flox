@@ -70,7 +70,7 @@ class InitialConditioner(object):
                         eps = k**self.params.get('sin.powerlaw',-1) * amplitude
                     if amp_mode == 'powerlaw-random':
                         eps = np.random.randn(1) * k**self.params.get('sin.powerlaw',-1) * amplitude
-                    System.Temperature.raw[:,k] = eps * np.sin(l * np.pi * System.z)
+                    System.Temperature.raw[:,k] = eps * np.sin(l * np.pi * (System.z / System.dz).to(1).value)
 
 
 

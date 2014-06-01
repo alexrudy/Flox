@@ -1,4 +1,4 @@
-#!/usr/bin/env /opt/local/Library/Frameworks/Python.framework/Versions/3.3/bin/python3.3
+#!/usr/bin/env frpy
 # -*- coding: utf-8 -*-
 
 import os.path, os

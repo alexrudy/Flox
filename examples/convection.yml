@@ -1,5 +1,5 @@
 system:
-  '()': Flox.system.NDSystem2D
+  '()': Flox.hydro.system.NDSystem2D
   Prandtl: 0.5
   Rayleigh: 1.0e+6
   aspect: 3.0
@@ -9,7 +9,7 @@ system:
   nx: 50
   nz: 100
   nt: 1200
-  engine: 'Flox.array.NumpyArrayEngine'
+  engine: 'Flox.engine.numpy.NumpyArrayEngine'
 ic:
   stable: yes
   sin:
@@ -40,8 +40,8 @@ animate:
       variable: "Stream"
       colors: k
 evolve:
-  class: Flox.nonlinear.NonlinearEvolver
-  iterations: 500
+  class: Flox.hydro.evolver.HydroEvolver
+  iterations: 100
   time: !quantity '1 yr'
 write:
   writer: Flox.io.HDF5Writer
