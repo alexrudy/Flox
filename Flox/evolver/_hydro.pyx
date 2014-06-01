@@ -41,6 +41,8 @@ cdef class HydroEvolver(Evolver):
         self.safety = safety
         self.checkCFL = checkCFL
         self.maxV = 0.0
+        self._linear = False
+        self._forcing = False
         
     
     cpdef DTYPE_t delta_time(self):
@@ -86,6 +88,11 @@ cdef class HydroEvolver(Evolver):
         else:
             # Then the nonlinear galerkin terms.
             r += self._Temperature.compute_nonlinear(self._Stream.V_curr, self._Stream.dVdz, self.a, self.npa)
+        
+        if self._forcing:
+            # Apply the thermal forcing terms.
+            r += self._Temperature.compute_forcing()
+        
         
         # First the regular linear terms.
         r += self._Vorticity.compute_base(self._Temperature.V_curr, self.dz, self.npa, self.Pr, self.Ra)
@@ -133,9 +140,29 @@ cdef class HydroEvolver(Evolver):
             else:
                 return False
     
+    property forcing:
+        
+        "Set the temperature forcing mode."
+        
+        def __set__(self, value):
+            self._forcing = value
+        
+        def __get__(self):
+            if self._forcing:
+                return True
+            else:
+                return False
+    
     def set_T_bounds(self, T_p, T_m):
         self._Temperature.Value_p = T_p
         self._Temperature.Value_m = T_m
     
+    def set_T_forcing(self, fzmi, fzpi, T_s, tau):
+        self.forcing = True
+        self._Temperature.fzmi = fzmi
+        self._Temperature.fzpi = fzpi
+        self._Temperature.tau = tau
+        self._Temperature.T_s[...] = T_s[...]
     
+
     

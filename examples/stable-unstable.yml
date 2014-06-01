@@ -6,6 +6,9 @@ system:
   deltaT: !quantity '1 K'
   depth: !quantity '1 m'
   kinematic_viscosity: !quantity '0.001 St'
+  fzp: !quantity '0.75 m'
+  fzm: !quantity '0 m'
+  tau_forcing: !quantity '1000 s'
   nx: 50
   nz: 200
   nt: 500
@@ -14,7 +17,6 @@ ic:
   stable: no
   thermal:
     enable: yes
-    fks: 0.5
   sin:
     amplitude: fixed
     limits: no
@@ -40,11 +42,8 @@ animate:
       cmap: "hot"
       perturbed: no
 evolve:
-  class: Flox.nonlinear.NonlinearEvolver
+  class: Flox.hydro.evolver.HydroEvolver
   iterations: 100
-  settings:
-    tau: 1.0e-4
-    fks: 0.5
   time: !quantity '1 yr'
 write:
   writer: Flox.io.HDF5Writer

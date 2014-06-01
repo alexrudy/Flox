@@ -15,3 +15,6 @@ cdef class HydroEvolver(Evolver):
     cdef public DTYPE_t Ra
     cdef DTYPE_t maxV
     cdef bint _linear
+    
+    # Thermal Forcing Variables
+    cdef bint _forcing

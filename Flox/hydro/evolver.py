@@ -36,6 +36,8 @@ class HydroBase(Evolver):
             )
         ev.linear = system.linear
         ev.set_T_bounds(*system._T_Bounds())
+        if system.forcing:
+            ev.set_T_forcing(system.fzmi, system.fzpi, system._T_Stability(), system.tau)
         ev.Pr = system.nondimensionalize(system.Prandtl).value
         ev.Ra = system.nondimensionalize(system.Rayleigh).value
         return ev

@@ -28,6 +28,13 @@ class HydroSystem(System2D):
     
     _linear = False
     
+    def __init__(self, fzp=0, fzm=0, tau_forcing=0, **kwargs):
+        """Initializers which handle forcing."""
+        super(HydroSystem, self).__init__(**kwargs)
+        self.tau_forcing = tau_forcing
+        self.fzm = fzm
+        self.fzp = fzp
+    
     def __repr__(self):
         """Represent this system."""
         try:
@@ -71,33 +78,25 @@ class HydroSystem(System2D):
     @property
     def forcing(self):
         """Whether forcing is enabled or not."""
-        try:
-            fz = self.fz
-        except AttributeError as e:
-            return False
-        if self.fz.value == 0.0 and self.deltaT.value > 0:
-            return False
-        elif self.fz == self.depth and self.deltaT.value < 0:
-            return False
-        else:
+        if (self.fzp - self.fzm).value > 0.0:
             return True
+        else:
+            return False
     
-    def _disable_fz(self):
-        """A method to disable fz."""
-        if self.deltaT.value > 0:
-            self.fz = 0.0
-        elif self.deltaT.value < 0:
-            self.fz = self.depth
-    
-    @abc.abstractproperty
-    def fz(self):
-        """Set the forcing z cutoff height"""
-        raise NotImplementedError()
-        
     @property
-    def fzi(self):
+    def fzmi(self):
         """The index for forcing cutoff."""
-        return int(np.fix(self.fz/self.depth * self.nz))
+        return int(np.fix(self.fzm/self.depth * self.nz))
+    
+    @property
+    def fzpi(self):
+        """The index for forcing cutoff."""
+        return int(np.fix(self.fzp/self.depth * self.nz))
+    
+    @property
+    def fzr(self):
+        """The range of forcing zone."""
+        return self.fzp - self.fzm
     
     @property
     def linear(self):
@@ -152,11 +151,12 @@ class HydroSystem(System2D):
     def _T_Stability(self):
         """Return the temperature stability array for forcing mode."""
         T_s = np.zeros((self.nz), dtype=np.float)
-        if self.nondimensionalize(self.deltaT).value > 0.0:
-            T_s[:self.fzi] = (self.z/self.fz)[:self.fxi]
-        elif self.nondimensionalize(self.deltaT).value < 0.0:
-            T_s[self.fxi:] = 1.0 - (self.z/self.fz)[self.fxi:]
+        T_s[self.fzmi:self.fzpi] = self.Temperature.raw[self.fzmi:self.fzpi,0]
         return T_s
+    
+    fzm = UnitsProperty("fzm", u.m, latex=r"$f_{z-}$")
+    fzm = UnitsProperty("fzp", u.m, latex=r"$f_{z+}$")
+    tau_forcing = UnitsProperty("tau_forcing", u.s, latex=r"$\tau_{forcing}$")
     
     Temperature = SpectralArrayProperty("Temperature", u.K, func=np.cos, shape=('nz','nx'), latex=r"$T$")
     Vorticity = SpectralArrayProperty("Vorticity", 1.0 / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\omega$")
@@ -169,23 +169,18 @@ class HydroSystem(System2D):
 class NDSystem2D(HydroSystem):
     """A primarily non-dimensional 2D system."""
     def __init__(self,
-        deltaT=0, depth=0, aspect=0, Prandtl=0, Rayleigh=0, kinematic_viscosity=0, fz=None, **kwargs):
+        deltaT=0, depth=0, aspect=0, Prandtl=0, Rayleigh=0, kinematic_viscosity=0, **kwargs):
         self.deltaT = deltaT
         self.depth = depth
         self.aspect = aspect
         self.Prandtl = Prandtl
         self.Rayleigh = Rayleigh
         self.kinematic_viscosity = kinematic_viscosity
-        if fz is not None:
-            self.fz = fz
-        else:
-            self._disable_fz()
         super(NDSystem2D, self).__init__(**kwargs)
         
         
     deltaT = UnitsProperty("deltaT", u.K, latex=r"$\Delta T$")
     depth = UnitsProperty("depth", u.m, latex=r"$D$")
-    fz = UnitsProperty("fz", u.m, latex=r"$f_z$")
     aspect = UnitsProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
     
     kinematic_viscosity = UnitsProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
@@ -217,7 +212,7 @@ class PhysicalSystem2D(HydroSystem):
     
     """
     def __init__(self, deltaT=0, depth=0, aspect=0,
-        kinematic_viscosity=0, thermal_diffusivity=0, thermal_expansion=0, gravitaional_acceleration=0, fz=0,
+        kinematic_viscosity=0, thermal_diffusivity=0, thermal_expansion=0, gravitaional_acceleration=0,
         **kwargs):
         
         # Box Physical Variables
@@ -231,10 +226,6 @@ class PhysicalSystem2D(HydroSystem):
         self.thermal_expansion = thermal_expansion
         self.gravitaional_acceleration = gravitaional_acceleration
         
-        if fz is not None:
-            self.fz = fz
-        else:
-            self._disable_fz()
         super(PhysicalSystem2D, self).__init__(**kwargs)
         
         
