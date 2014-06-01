@@ -5,7 +5,7 @@ system:
   Chandrasekhar: 1.0e+3
   Roberts: 1.0
   aspect: 1.0
-  deltaT: !quantity '1 K'
+  deltaT: !quantity '-1 K'
   depth: !quantity '1 m'
   B0: !quantity '0.001 T'
   kinematic_viscosity: !quantity '0.001 St'
@@ -22,7 +22,7 @@ ic:
     k: [ 1 ]
     epsilon: 0.01
 animate:
-  filename: problems/magneto-test.mp4
+  filename: movies/magneto-test.mp4
   buffer: 10
   enable: yes
   movie:
@@ -51,12 +51,12 @@ animate:
       variable: "MagneticField"
       cmap: winter
 evolve:
-  class: Flox.magneto.MagnetoEvolver
+  class: Flox.magneto.evolver.MagnetoEvolver
   iterations: 50
   time: !quantity '1 yr'
   settings:
     checkCFL: 10
-    safety: 0.1
+    saftey: 0.1
 write:
   writer: Flox.io.HDF5Writer
   filename: ~/Documents/magneto-test.hdf5
