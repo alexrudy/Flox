@@ -24,9 +24,7 @@ extension_kwargs = dict(extra_compile_args=['-fopenmp'],
 extensions = [
     Extension("*", ["Flox/component/*.pyx"],
         **extension_kwargs),
-    Extension("*", ["Flox/_threads.pyx"],
-        **extension_kwargs),
-    Extension("*", ["Flox/evolver/_evolve.pyx"],
+    Extension("*", ["Flox/evolver/*.pyx"],
         **extension_kwargs),
     Extension("*", ["Flox/finitedifference.pyx"],
         **extension_kwargs),
@@ -38,7 +36,7 @@ extensions = [
         **extension_kwargs),
     Extension("*", ["Flox/magneto/*.pyx"],
         **extension_kwargs),
-    Extension("*", ["Flox/_transform.pyx"],
+    Extension("*", ["Flox/process/*.pyx"],
         **extension_kwargs),
         ]
 

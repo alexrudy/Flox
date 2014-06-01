@@ -17,7 +17,7 @@ from pyshell.util import setup_kwargs, configure_class, resolve
 
 from ..engine.descriptors import SpectralArrayProperty, ArrayProperty
 from ..transform import setup_transform
-from .._transform import transform
+from ..component._transform import transform
 from ..hydro.system import NDSystem2D
 from ..finitedifference import first_derivative2D
 

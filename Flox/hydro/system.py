@@ -20,11 +20,13 @@ from pyshell.util import setup_kwargs, configure_class, resolve
 from ..engine.descriptors import SpectralArrayProperty, ArrayProperty
 from ..system import System2D
 from ..transform import setup_transform
-from .._transform import transform
+from ..component._transform import transform
 from ..finitedifference import first_derivative2D
 
 class HydroSystem(System2D):
     """A hydrodynamical system."""
+    
+    _linear = False
     
     def __repr__(self):
         """Represent this system."""
@@ -66,6 +68,40 @@ class HydroSystem(System2D):
         else:
             return self.thermal_diffusivity
     
+    @property
+    def forcing(self):
+        """Whether forcing is enabled or not."""
+        try:
+            fz = self.fz
+        except AttributeError as e:
+            return False
+        if self.fz.value == 0.0 and self.deltaT > 0:
+            return False
+        elif self.fz == self.depth and self.deltaT < 0:
+            return False
+        else:
+            return True
+    
+    @abc.abstractproperty
+    def fz(self):
+        """Set the forcing z cutoff height"""
+        raise NotImplementedError()
+        
+    @property
+    def fzi(self):
+        """The index for forcing cutoff."""
+        return int(np.fix(self.fz/self.depth * self.nz))
+    
+    @property
+    def linear(self):
+        """Whether this object is evolved in a purely linear fashion."""
+        return self._linear
+        
+    @linear.setter
+    def linear(self, value):
+        """Set whether this object is in purely linear mode."""
+        self._linear = value
+    
     def setup_bases(self):
         """Set the standard, non-dimensional bases"""
         temperature_unit = u.def_unit("Box-delta-T", self.deltaT)
@@ -96,6 +132,25 @@ class HydroSystem(System2D):
         assert not transform(self.nz, self.nx, self.nx, Vz, S, Vz_transform)
         return np.array([Vx, Vz]) * type(self).Stream.unit / u.m
     
+    def _T_Bounds(self):
+        """Get the temperature bounds."""
+        T_p = np.zeros((self.nx), dtype=np.float)
+        T_m = np.zeros((self.nx), dtype=np.float)
+        if self.nondimensionalize(self.deltaT).value > 0.0:
+            T_p[0] = 1.0
+        elif self.nondimensionalize(self.deltaT).value < 0.0:
+            T_m[0] = 1.0
+        return (T_p, T_m)
+    
+    def _T_Stability(self):
+        """Return the temperature stability array for forcing mode."""
+        T_s = np.zeros((self.nz), dtype=np.float)
+        if self.nondimensionalize(self.deltaT).value > 0.0:
+            T_s[:self.fzi] = (self.z/self.fz)[:self.fxi]
+        elif self.nondimensionalize(self.deltaT).value < 0.0:
+            T_s[self.fxi:] = 1.0 - (self.z/self.fz)[self.fxi:]
+        return T_s
+    
     Temperature = SpectralArrayProperty("Temperature", u.K, func=np.cos, shape=('nz','nx'), latex=r"$T$")
     Vorticity = SpectralArrayProperty("Vorticity", 1.0 / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\omega$")
     Stream = SpectralArrayProperty("Stream", u.m**2 / u.s, func=np.sin, shape=('nz','nx'), latex=r"$\psi$")
@@ -107,18 +162,21 @@ class HydroSystem(System2D):
 class NDSystem2D(HydroSystem):
     """A primarily non-dimensional 2D system."""
     def __init__(self,
-        deltaT=0, depth=0, aspect=0, Prandtl=0, Rayleigh=0, kinematic_viscosity=0, **kwargs):
+        deltaT=0, depth=0, aspect=0, Prandtl=0, Rayleigh=0, kinematic_viscosity=0, fz=None, **kwargs):
         self.deltaT = deltaT
         self.depth = depth
         self.aspect = aspect
         self.Prandtl = Prandtl
         self.Rayleigh = Rayleigh
         self.kinematic_viscosity = kinematic_viscosity
+        if fz is not None:
+            self.fz = fz
         super(NDSystem2D, self).__init__(**kwargs)
         
         
     deltaT = UnitsProperty("deltaT", u.K, latex=r"$\Delta T$")
     depth = UnitsProperty("depth", u.m, latex=r"$D$")
+    fz = UnitsProperty("fz", u.m, latex=r"$f_z$")
     aspect = UnitsProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
     
     kinematic_viscosity = UnitsProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
@@ -150,7 +208,7 @@ class PhysicalSystem2D(HydroSystem):
     
     """
     def __init__(self, deltaT=0, depth=0, aspect=0,
-        kinematic_viscosity=0, thermal_diffusivity=0, thermal_expansion=0, gravitaional_acceleration=0,
+        kinematic_viscosity=0, thermal_diffusivity=0, thermal_expansion=0, gravitaional_acceleration=0, fz=0,
         **kwargs):
         
         # Box Physical Variables
@@ -163,11 +221,15 @@ class PhysicalSystem2D(HydroSystem):
         self.thermal_diffusivity = thermal_diffusivity
         self.thermal_expansion = thermal_expansion
         self.gravitaional_acceleration = gravitaional_acceleration
+        
+        if fz is not None:
+            self.fz = fz
         super(PhysicalSystem2D, self).__init__(**kwargs)
         
         
     deltaT = UnitsProperty("deltaT", u.K, latex=r"$\Delta T$")
     depth = UnitsProperty("depth", u.m, latex=r"$D$")
+    fz = UnitsProperty("fz", u.m, latex=r"$f_z$")
     aspect = UnitsProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
     
     kinematic_viscosity = UnitsProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
