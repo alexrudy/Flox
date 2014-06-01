@@ -67,7 +67,7 @@ cdef class MagnetoEvolver(HydroEvolver):
             r += self._VectorPotential.compute_nonlinear(self._Stream.V_curr, self._Stream.dVdz, self.a, self.dz)
         r += self._VectorPotential.compute_linear(self._Stream.dVdz)
         
-        # Hydro
+        # Hydro Computations
         r += HydroEvolver.compute(self)
         
         # Lorentz Force
@@ -77,16 +77,18 @@ cdef class MagnetoEvolver(HydroEvolver):
         
     cpdef int advance(self, DTYPE_t delta_time):
         cdef int r = 0
+        # Advance the Hydro Variables
         r += HydroEvolver.advance(self, delta_time)
+        # Advance the Vector potential
         r += self._VectorPotential.advance(delta_time)
         return r
         
     cpdef int solve(self):
         cdef int r = 0
-        # Advance the hydro variables.
+        # Solve the Stream function.
         r += HydroEvolver.solve(self)
         
-        # Advance the current denstiy function.
+        # Solve the current denstiy function.
         r += self._VectorPotential.prepare(self.dz) # This is called to set the second-derivatives correctly.
         r += self._CurrentDensity.compute_base(self._VectorPotential.V_curr, self._VectorPotential.dVdzz, self.npa)
         
