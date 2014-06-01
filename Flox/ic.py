@@ -70,21 +70,7 @@ class InitialConditioner(object):
                         eps = k**self.params.get('sin.powerlaw',-1) * amplitude
                     if amp_mode == 'powerlaw-random':
                         eps = np.random.randn(1) * k**self.params.get('sin.powerlaw',-1) * amplitude
-                    System.Temperature.raw[:,k] = eps * np.sin(l * np.pi * z_array(System))
+                    System.Temperature.raw[:,k] = eps * np.sin(l * np.pi * System.z)
 
-def z_array(System):
-    """Z position array, appropriate for initialzing."""
-    return (np.arange(System.nz + 2) / (System.nz + 1))[1:-1]
 
-def stable_temperature_gradient(System):
-    """Apply the stable temperature gradient to the system."""
-    if System.deltaT > 0.0:
-        step = -1
-    else:
-        step = 1
-    System.Temperature.raw[:,0] = z_array(System)[::-1]
-
-def single_mode_perturbation(System, k, l=1, eps=1):
-    """Single mode perturbation."""
-    System.Temperature.raw[:,k] = eps * np.sin(l * np.pi * z_array(System))
 
