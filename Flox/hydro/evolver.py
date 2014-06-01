@@ -12,11 +12,8 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 from ..evolver._hydro import HydroEvolver as _HydroEvolver
 from ..evolver.base import Evolver
 
-class HydroEvolver(_HydroEvolver, Evolver):
-    """Nonlinear evolver"""
-    def __init__(self, *args, **kwargs):
-        super(HydroEvolver, self).__init__()
-    
+class HydroBase(Evolver):
+    """Base evolver for hydro systems."""
     @classmethod
     def get_parameter_list(cls):
         """Retrieve the relevant parameters."""
@@ -24,20 +21,27 @@ class HydroEvolver(_HydroEvolver, Evolver):
     
     def get_data_list(self):
         """Variables"""
-        return super(HydroEvolver, self).get_data_list() + [ "Temperature", "dTemperature", "Vorticity", "dVorticity", "Stream", "Time"]
+        return super(HydroBase, self).get_data_list() + [ "Temperature", "dTemperature", "Vorticity", "dVorticity", "Stream", "Time"]
     
     @classmethod
-    def from_system(cls, system, saftey=0.5):
+    def from_system(cls, system, saftey=0.5, checkCFL=10):
         """Load the grid parameters into the LE"""
         ev = cls(
             system.nz, system.nx,
             system.nondimensionalize(system.npa).value,
             system.nondimensionalize(system.dz).value,
             system.nondimensionalize(system.aspect).value,
-            saftey
+            saftey,
+            checkCFL
             )
         ev.linear = system.linear
         ev.set_T_bounds(*system._T_Bounds())
         ev.Pr = system.nondimensionalize(system.Prandtl).value
         ev.Ra = system.nondimensionalize(system.Rayleigh).value
         return ev
+
+class HydroEvolver(_HydroEvolver, HydroBase):
+    """Nonlinear evolver"""
+    def __init__(self, *args, **kwargs):
+        super(HydroEvolver, self).__init__()
+    
