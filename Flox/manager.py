@@ -26,7 +26,7 @@ from .input import FloxConfiguration
 from .process.manager import AsynchronousManager
 from .process.evolver import EvolverManager
 from .plot import MultiViewController
-from ._threads import omp_set_num_threads, omp_get_num_threads
+from .process._threads import omp_set_num_threads, omp_get_num_threads
 
 
 class FloxManager(object):

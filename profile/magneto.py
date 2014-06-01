@@ -21,7 +21,7 @@ import astropy.units as u
 from Flox.magneto.system import MagnetoSystem
 from Flox.input import FloxConfiguration
 from Flox.magneto import MagnetoEvolver
-from Flox._threads import omp_set_num_threads
+from Flox.process._threads import omp_set_num_threads
 # from pyshell.util import ipydb
 
 def filename(extension=".yml"):
