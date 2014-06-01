@@ -150,8 +150,12 @@ class HydroSystem(System2D):
     
     def _T_Stability(self):
         """Return the temperature stability array for forcing mode."""
+        raise NotImplementedError("This feature is incomplete, and wrong!")
         T_s = np.zeros((self.nz), dtype=np.float)
-        T_s[self.fzmi:self.fzpi] = self.Temperature.raw[self.fzmi:self.fzpi,0]
+        if self.nondimensionalize(self.deltaT).value > 0.0:
+            T_s[self.fzmi:self.fzpi] = ((self.z - self.fzm)/self.fzr)[self.fzmi:self.fzpi]
+        elif self.nondimensionalize(self.deltaT).value < 0.0:
+            T_s[self.fzmi:self.fzpi] = 1.0 - ((self.z - self.fzm)/self.fzr)[self.fzmi:self.fzpi]
         return T_s
     
     fzm = UnitsProperty("fzm", u.m, latex=r"$f_{z-}$")
