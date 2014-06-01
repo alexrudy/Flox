@@ -14,6 +14,7 @@ ic:
   stable: no
   thermal:
     enable: yes
+    fks: 0.5
   sin:
     amplitude: fixed
     limits: no
