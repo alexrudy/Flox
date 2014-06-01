@@ -22,7 +22,7 @@ from cpython.array cimport array, clone
 
 from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport first_derivative2D
-from Flox._transform import transform
+from Flox.component._transform import transform
 
 cdef class Solver:
     

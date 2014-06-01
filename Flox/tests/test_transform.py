@@ -33,7 +33,7 @@ def test_spectral_transform(modal_amplitudes):
     
 def test_cython_spectral_transform(modal_amplitudes):
     """Test the cython transform"""
-    from Flox._transform import transform
+    from Flox.component._transform import transform
     amplitudes, nx = modal_amplitudes
     nz = amplitudes.shape[0]
     nm = amplitudes.shape[1]

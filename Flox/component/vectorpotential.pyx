@@ -23,7 +23,7 @@ from Flox._flox cimport DTYPE_t
 from Flox.finitedifference cimport second_derivative2D_nb
 from Flox.component._solve cimport TimeSolver
 from Flox.nonlinear.galerkin cimport galerkin_cos_grad_cos
-from Flox._transform cimport transform
+from Flox.component._transform cimport transform
 from Flox.transform import setup_transform
 
 cpdef int vectorpotential(int J, int K, DTYPE_t[:,:] d_A, DTYPE_t[:,:] A_curr, DTYPE_t[:,:] dAdzz, DTYPE_t dz, DTYPE_t[:] npa, DTYPE_t q) nogil:
