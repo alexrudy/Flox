@@ -154,7 +154,7 @@ class GridView(View):
         else:
             data = getattr(system,self.variable).transformed.value
         if self.variable == "VectorPotential":
-            return data + system.B0.value * np.linspace(0, 1, system.nn + 2)[1:-1][np.newaxis,:]
+            return data + system.B0.value * np.linspace(0, 1, system.nx + 2)[1:-1][np.newaxis,:]
         else:
             return data
         
