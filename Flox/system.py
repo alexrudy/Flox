@@ -84,7 +84,7 @@ class System2D(SystemBase):
         
     @property
     def z(self):
-        return (np.arange(self.nz + 2) / (self.nz + 1))[1:-1] * self.dz
+        return (np.arange(self.nz + 2))[1:-1] * self.dz
         
     @abc.abstractproperty
     def aspect(self):
