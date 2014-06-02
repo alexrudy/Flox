@@ -75,10 +75,10 @@ class HDF5Writer(GridWriter):
         array_obj = getattr(type(data), array_name)
         array_data = data.engine[array_name]
         try:
-            dataset = group.require_dataset(array_name, array_data.shape, dtype=array_data.dtype)
+            dataset = group.require_dataset(array_name, array_data.shape, compression="gzip", dtype=array_data.dtype)
         except TypeError as e:
             del group[array_name]
-            dataset = group.create_dataset(array_name, array_data.shape, dtype=array_data.dtype)
+            dataset = group.create_dataset(array_name, array_data.shape, compression="gzip", dtype=array_data.dtype)
         dataset[...] = array_data
         dataset.attrs['name'] = six.text_type(array_obj.name)
         dataset.attrs['unit'] = six.text_type(array_obj.unit)
