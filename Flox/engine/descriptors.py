@@ -41,7 +41,7 @@ class ArrayValue(object):
         """Return an inverted view of this array."""
         if attribute in self._engine._views:
             return self._engine._views[attribute].__getdata__(self._system, self._attr)
-        raise AttributeError("{0}: No attribute '{1}' on Array '{2}'".format(self._system.__class__.__name___, attribute, self._attr))
+        raise AttributeError("{0}: No attribute '{1}' on Array '{2}'".format(self._system.__class__.__name__, attribute, self._attr))
             
     
     def __setattr__(self, attribute, value):
@@ -51,7 +51,7 @@ class ArrayValue(object):
         if attribute in self._engine._views:
             return self._engine._views[attribute].__setdata__(self._system, self._attr, value)
         else:
-            raise AttributeError("{0}: Can't set attribute '{1}' on Array '{2}'".format(self._system.__class__.__name___, attribute, self._attr))
+            raise AttributeError("{0}: Can't set attribute '{1}' on Array '{2}'".format(self._system.__class__.__name__, attribute, self._attr))
     
     def __repr__(self):
         """A string representation of this array value."""
