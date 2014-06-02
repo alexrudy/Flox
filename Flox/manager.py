@@ -55,7 +55,7 @@ class FloxManager(object):
         self.config = FloxConfiguration()
         
         for defaults in resource_listdir(__name__, "defaults"):
-            self.config.load_resource(__name__, defaults)
+            self.config.load_resource(__name__, os.path.join("defaults",defaults))
         self.config.load(self.opt.configfile)
         configure_logging(self.config)
         

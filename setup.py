@@ -56,10 +56,10 @@ package_info['options'] = {
       'build_scripts': {
           'executable': 'frpy',
       },}
-package_info['package_data'] = {'Flox': ['data/*','*.yml']}
+package_info['package_data'] = {'Flox': ['data/*','defaults/*.yml']}
 setup(
     name = 'Flox',
-    version = "1.1.1",
+    version = "1.1.2",
     packages = find_packages(),
     install_requires = DEPENDENCIES,
     author = 'Alexander Rudy',
