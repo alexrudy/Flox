@@ -8,8 +8,11 @@ system:
   kinematic_viscosity: !quantity '0.001 St'
   fzp: !quantity '0.75 m'
   fzm: !quantity '0 m'
+  fTp: !quantity '2 K'
+  fTm: !quantity '0 K'
   tau_forcing: !quantity '1000 s'
-  nx: 50
+  nn: 50
+  nx: 200
   nz: 200
   nt: 500
   engine: 'Flox.engine.numpy.NumpyArrayEngine'
@@ -22,7 +25,7 @@ ic:
     limits: no
     enable: yes
     k: [ 1 ]
-    epsilon: 0.01
+    epsilon: 0.1
 animate:
   filename: movies/forcing.mp4
   buffer: 10
@@ -32,7 +35,7 @@ animate:
     save_kwargs:
       bitrate: 100000
   nr: 1
-  nc: 1
+  nc: 2
   plots:
     T:
       r: 0
@@ -41,9 +44,15 @@ animate:
       variable: "Temperature"
       cmap: "hot"
       perturbed: no
+    S:
+      r: 0
+      c: 1
+      '()': Flox.plot.ContourView
+      variable: "Stream"
+      colors: k
 evolve:
   class: Flox.hydro.evolver.HydroEvolver
-  iterations: 100
+  iterations: 50
   time: !quantity '1 yr'
 write:
   writer: Flox.io.HDF5Writer
