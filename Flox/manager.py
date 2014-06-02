@@ -19,7 +19,9 @@ import os
 import multiprocessing.managers as mm
 import multiprocessing as mp
 
+from logging import getLogger
 from pyshell.util import resolve, ipydb, askip
+from pyshell.loggers import configure_logging
 
 from .ic import InitialConditioner
 from .input import FloxConfiguration
@@ -28,6 +30,7 @@ from .process.evolver import EvolverManager
 from .plot import MultiViewController
 from .process._threads import omp_set_num_threads, omp_get_num_threads
 
+log = getLogger(__name__)
 
 class FloxManager(object):
     """Manage Flox Instances"""
@@ -46,52 +49,62 @@ class FloxManager(object):
         
     def load_configuration(self):
         """Load the configuration for this module."""
-        self.config = FloxConfiguration.fromfile(self.opt.configfile)
+        self.config = FloxConfiguration()
+        self.config.load_resource(__name__, 'logging.yml')
+        self.config.load(self.opt.configfile)
+        configure_logging(self.config)
+        
         if getattr(self.opt, 'snapshots', 0) > 0:
+            log.info("Setting 'evolve.nt'={}".format(self.opt.snapshots))
             self.config['evolve.nt'] = self.opt.snapshots
-            
+        
+        if self.opt.num_threads != 1:
+            log.info("Setting 'OMP_NUM_THREADS'={}".format(self.opt.num_threads))
         omp_set_num_threads(self.opt.num_threads)
+        log.debug("Got 'OMP_NUM_THREADS'={}".format(omp_get_num_threads()))
         
     def run(self):
         """Run this management object."""
         self.opt = self.parser.parse_args()
-        if self.opt.debug:
-            ipydb()
         self.load_configuration()
+        if self.opt.debug:
+            log.info("Set DEBUG mode.")
+            ipydb()
         
         # Build the system.
         System_config = self.config["system"]
         System_Class = resolve(System_config.pop("()"))
         System = System_Class.from_params(System_config)
+        log.debug("Created a system {}".format(System))
         
         if self.opt.restart:
-            print("Restarting")
+            log.info("Restarting")
             System.read(**self.config.get('write',{}))
-            print(System)
+            log.info(System)
         else:
-            print("Initializing")
+            log.info("Initializing")
             # Build the initial conditions
             ICs = InitialConditioner(self.config['ic'])
             ICs.run(System)
-            print(System)
+            log.info(System)
             # askip()()
         
         if self.opt.evolve:
-            print("Evolving")
+            log.info("Evolving")
             if not self.opt.multiprocess:
                 self.mo_evolve(System, debug=self.opt.debug)
             else:
                 self.mp_evolve(System, debug=self.opt.debug)
         else:
-            print("Reading")
+            log.info("Reading")
             System.read(**self.config.get('write',{}))
         
         System.it = 0
         if self.opt.movie:
-            print("Making Movie")
+            log.info("Making Movie")
             self.mo_movie(System, debug=self.opt.debug)
         if self.opt.view:
-            print("Viewing")
+            log.info("Viewing")
             self.mo_view(System, debug=self.opt.debug)
     
     def mo_evolve(self, System, debug=False):

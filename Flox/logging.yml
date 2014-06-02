@@ -1,0 +1,48 @@
+logging:
+  version: 1
+  disable_existing_loggers: false
+  formatters:
+    stdout:
+      (): pyshell.loggers.ColorStreamFormatter
+      format: "%(color)s%(levelname)-8s%(nocolor)s --> %(message)s"
+    file:
+      format: "%(asctime)s : %(levelname)s : %(processName)s %(message)s [%(module)s]"
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: stdout
+      level: INFO
+    file:
+      class : logging.FileHandler
+      formatter: file
+      filename: Flox.log
+      encoding: utf-8
+      mode: w
+      level: DEBUG
+    warnings:
+      class : logging.FileHandler
+      formatter: file
+      filename: Flox.warnings.log
+      encoding: utf-8
+      level: WARNING
+      mode: w
+  loggers:
+    py.warnings:
+      handlers:
+        - warnings
+      propagate: no
+    pyshell:
+      hanlders:
+        - file
+      level: DEBUG
+      propagate: no
+    Flox:
+      handlers:
+        - file
+      level: DEBUG
+      propagate: no
+  root:
+    level: DEBUG
+    handlers:
+      - console
+      - file

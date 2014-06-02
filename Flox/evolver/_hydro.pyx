@@ -15,6 +15,8 @@
 from __future__ import division
 
 import numpy as np
+import logging
+log = logging.getLogger(__name__)
 cimport numpy as np
 cimport cython
 from cpython.array cimport array, clone
@@ -43,6 +45,7 @@ cdef class HydroEvolver(Evolver):
         self.maxV = 0.0
         self._linear = False
         self._forcing = False
+        log.debug("Initialized with safety={} checkCFL={}".format(safety, checkCFL))
         
     
     cpdef DTYPE_t delta_time(self):
@@ -50,12 +53,13 @@ cdef class HydroEvolver(Evolver):
         cdef DTYPE_t dt_diffusion, dt_gmode, dt_velocity, dt
         if self.timestep_ready:
             return Evolver.delta_time(self)
+        
         dt_diffusion = (self.dz * self.dz) / 4.0
         dt_gmode = (2.0 * np.pi) / (50.0 * np.sqrt(self.Ra * self.Pr))
         if self.maxV == 0:
             dt_velocity = dt_diffusion
         else:
-            dt_velocity = (self.dz) / self.maxV
+            dt_velocity = (self.dz) / np.sqrt(self.maxV)
         
         # Check the timestep.
         dt = dt_diffusion
@@ -63,7 +67,6 @@ cdef class HydroEvolver(Evolver):
             dt = dt_gmode
         if dt > dt_velocity:
             dt = dt_velocity
-        
         self.timestep = dt
         self.timestep_ready = True
         return Evolver.delta_time(self)
