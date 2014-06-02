@@ -56,7 +56,7 @@ evolve:
   time: !quantity '1 yr'
   settings:
     checkCFL: 10
-    saftey: 0.1
+    safety: 0.1
 write:
   writer: Flox.io.HDF5Writer
   filename: ~/Documents/magneto-test.hdf5

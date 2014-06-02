@@ -3,10 +3,11 @@ system:
   Prandtl: 0.5
   Rayleigh: 1.0e+6
   aspect: 3.0
-  deltaT: !quantity '1 K'
+  deltaT: !quantity '-1 K'
   depth: !quantity '1 m'
   kinematic_viscosity: !quantity '0.001 St'
-  nx: 50
+  nn: 50
+  nx: 300
   nz: 100
   nt: 1200
   engine: 'Flox.engine.numpy.NumpyArrayEngine'
@@ -19,7 +20,7 @@ ic:
     random: yes
     epsilon: 0.1
 animate:
-  filename: problems/convection.mp4
+  filename: movies/convection.mp4
   buffer: 10
   enable: yes
   movie:
