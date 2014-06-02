@@ -16,7 +16,7 @@ def temperature_linearterms(system):
     from ...component.temperature import temperature
     dT = np.zeros_like(system.Temperature)
     f_m, f_p = system.b_Temperature
-    assert not temperature(system.nz, system.nx, dT, system.Temperature, system.dz, system.npa[0,:], f_p, f_m)
+    assert not temperature(system.nz, system.nn, dT, system.Temperature, system.dz, system.npa[0,:], f_p, f_m)
     return dT
 
 def temperature_linearsolver(system):
@@ -25,7 +25,7 @@ def temperature_linearsolver(system):
     Tn = np.zeros_like(system.Temperature)
     dTn = np.zeros_like(system.Temperature)
     dTo = np.zeros_like(system.Temperature)
-    TS = TemperatureSolver(system.nz, system.nx)
+    TS = TemperatureSolver(system.nz, system.nn)
     TS.Value = system.Temperature
     TS.Value_m, TS.Value_p = system.b_Temperature
     TS.compute_base(system.dz, system.npa[0,:])

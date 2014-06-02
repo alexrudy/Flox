@@ -30,7 +30,7 @@ class MagnetoEvolver(_MagnetoEvolver, Evolver):
     def from_system(cls, system, safety=0.5, checkCFL=10, LinearOnly=False):
         """Load the grid parameters into the LE"""
         ev = cls(
-            system.nz, system.nx,
+            system.nz, system.nn,
             system.nondimensionalize(system.npa).value,
             system.nondimensionalize(system.dz).value,
             system.nondimensionalize(system.aspect).value,

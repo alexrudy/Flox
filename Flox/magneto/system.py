@@ -63,8 +63,8 @@ class MagnetoSystem(NDSystem2D):
     def MagneticField(self):
         """The magnetic field."""
         A = self.VectorPotential.raw
-        Bx_transform = setup_transform(np.sin, self.nx, self.nx)
-        Bz_transform = setup_transform(np.cos, self.nx, self.nx)
+        Bx_transform = setup_transform(np.sin, self.nx, self.nn)
+        Bz_transform = setup_transform(np.cos, self.nx, self.nn)
         Bz_transform *= self.npa[:,np.newaxis]
         Bx = np.zeros_like(A)
         Bz = np.zeros_like(A)
@@ -72,7 +72,7 @@ class MagnetoSystem(NDSystem2D):
         first_derivative2D(A.shape[0], A.shape[1], dAdz, A, self.dz.value, np.zeros(A.shape[1]), np.zeros(A.shape[1]), -1.0)
         dAdz[0,:] = 0.0
         dAdz[-1,:] = 0.0
-        assert not transform(self.nz, self.nx, self.nx, Bx, dAdz, Bx_transform)
-        assert not transform(self.nz, self.nx, self.nx, Bz, A, Bz_transform)
+        assert not transform(self.nz, self.nn, self.nx, Bx, dAdz, Bx_transform)
+        assert not transform(self.nz, self.nn, self.nx, Bz, A, Bz_transform)
         return np.array([Bx, 1.0 + Bz]) * type(self).VectorPotential.unit / u.m
         

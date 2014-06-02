@@ -23,6 +23,8 @@ from astropy.utils.console import ProgressBar
 from ..process.packet import PacketInterface
 from ..util import callback_progressbar_wrapper
 
+log = logging.getLogger(__name__)
+
 @six.add_metaclass(abc.ABCMeta)
 class Evolver(PacketInterface):
     """The python side of the evolver."""
@@ -34,10 +36,23 @@ class Evolver(PacketInterface):
         except:
             return super(Evolver, self).__repr__()
         
+    def evolve(self, time, chunksize):
+        """Information on evolution."""
+        log.debug("Called evolve for t={}/n={}".format(time, chunksize))
+        time_start = self.Time
+        r = super(Evolver, self).evolve(time, chunksize)
+        log.debug("Evolved for {}".format(self.Time-time_start))
+        log.debug("Timestep currently {}".format(self.delta_time()))
+        return r
+        
     def evolve_system(self, system, total_time, chunksize=int(1e3), chunks=1000, quiet=False, callback=None):
         """Evolve over many iterations with a given total time."""
+        log.info("Evolving {}".format(system))
+        
         self.read_packet(system.create_packet())
         end_time = self.Time + system.nondimensionalize(total_time).value
+        log.debug("Total evolution time: {}".format(end_time))
+        
         file = None if not quiet else io.StringIO()
         callback = callback if callback is not None else lambda i,p : system.read_packet(p)
         with ProgressBar(chunks, file=file) as pbar:

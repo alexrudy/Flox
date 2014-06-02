@@ -37,8 +37,8 @@ def system_class(request):
     return request.param
 
 @pytest.fixture(params=[
-    dict(nx=10, nz=10),
-    dict(nx=100, nz=100),
+    dict(nx=10, nz=10, nn=10),
+    dict(nx=100, nz=100, nn=100),
 ])
 def system(request, system_class):
     """Return a system, setup."""

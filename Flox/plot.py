@@ -154,7 +154,7 @@ class GridView(View):
         else:
             data = getattr(system,self.variable).transformed.value
         if self.variable == "VectorPotential":
-            return data + system.B0.value * np.linspace(0, 1, system.nx + 2)[1:-1][np.newaxis,:]
+            return data + system.B0.value * np.linspace(0, 1, system.nn + 2)[1:-1][np.newaxis,:]
         else:
             return data
         
@@ -236,7 +236,7 @@ class VectorView(GridView):
         data = self.data(system)
         ptp = np.ptp(data)
         if np.isfinite(ptp) and ptp != 0.0:
-            z,x = np.mgrid[:system.nz,:system.nx]
+            z,x = np.mgrid[:system.nz,:system.nn]
             u,v = data
             speed = np.sqrt(u**2.0 + v**2.0)
             self.image = self.ax.streamplot(x,z,u,v,color=speed, **self.im_kwargs)
@@ -254,7 +254,7 @@ class VectorView(GridView):
         """Update the view"""
         if not self.initialized:
             self.initialize(system)
-        aspect = 1.0 / system.aspect * (system.nx / system.nz)
+        aspect = 1.0 / system.aspect * (system.nn / system.nz)
         self.ax.cla()
         self.ax.set_xlim(0, system.nx)
         self.ax.set_ylim(0, system.nz)
@@ -262,7 +262,7 @@ class VectorView(GridView):
         data = self.data(system)
         ptp = np.ptp(data)
         if np.isfinite(ptp) and ptp != 0.0:
-            z,x = np.mgrid[:system.nz,:system.nx]
+            z,x = np.mgrid[:system.nz,:system.nn]
             u,v = data
             speed = np.sqrt(u**2.0 + v**2.0)
             self.image = self.ax.streamplot(x,z,u,v, color=speed, **self.im_kwargs)
@@ -318,7 +318,7 @@ class MProfileView(ProfileView):
         
     def xdata(self, system):
         """Return the xdata."""
-        return np.arange(system.nx)
+        return np.arange(system.nn)
         
     def initialize(self, system):
         """Initialize the plot view."""
@@ -354,11 +354,11 @@ class V1DProfileView(VProfileView):
         from .finitedifference import first_derivative2D
         f = getattr(system,self.variable).raw
         df = np.zeros_like(f)
-        fm = np.zeros(system.nx)
-        fp = np.zeros(system.nx)
+        fm = np.zeros(system.nn)
+        fp = np.zeros(system.nn)
         if self.variable == "Temperature":
             fm[0] = 1.0
-        assert not first_derivative2D(system.nz, system.nx, df, f, 1.0/system.nz, fp, fm, 1.0)
+        assert not first_derivative2D(system.nz, system.nn, df, f, 1.0/system.nz, fp, fm, 1.0)
         return df[:,self.mode]
     
     def initialize(self, system):
@@ -374,11 +374,11 @@ class V2DProfileView(VProfileView):
         from .finitedifference import second_derivative2D
         f = getattr(system,self.variable).raw
         ddf = np.zeros_like(f)
-        fm = np.zeros(system.nx)
-        fp = np.zeros(system.nx)
+        fm = np.zeros(system.nn)
+        fp = np.zeros(system.nn)
         if self.variable == "Temperature":
             fm[0] = 1.0
-        assert not second_derivative2D(system.nz, system.nx, ddf, f, 1.0/system.nz, fp, fm, 1.0)
+        assert not second_derivative2D(system.nz, system.nn, ddf, f, 1.0/system.nz, fp, fm, 1.0)
         return ddf[:,self.mode]
     
     def initialize(self, system):

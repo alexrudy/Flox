@@ -29,21 +29,22 @@ from .engine.units import WithUnitBases
 class SystemBase(EngineInterface, WriterInterface, HasUnitsProperties, WithUnitBases):
     """Base functions and properties for a system."""
     
-    def __init__(self, nx, nz, **kwargs):
+    def __init__(self, nx, nz, nn, **kwargs):
         
         self.nx = nx
         self.nz = nz
+        self.nn = nn
         
         super(SystemBase, self).__init__(**kwargs)
         
     def __repr__(self):
         """Represent this object!"""
-        return "<{0} ({1}x{2})@({3})>".format(self.__class__.__name__, self.nz, self.nx, self.iteration)
+        return "<{0} ({1}x{2})@({3})>".format(self.__class__.__name__, self.nz, self.nn, self.iteration)
         
     @classmethod
     def get_parameter_list(cls):
         """Get a list of the parameters which can be changed/modified directly"""
-        return ['nz', 'nx'] + super(SystemBase, cls).get_parameter_list()
+        return ['nz', 'nx', 'nn'] + super(SystemBase, cls).get_parameter_list()
         
     @classmethod
     def get_attribute_list(cls):
@@ -98,18 +99,18 @@ class System2D(SystemBase):
     @ComputedUnitsProperty
     def dx(self):
         """x grid spacing."""
-        return self.width / self.nx
+        return self.width / self.nn
     
     @ComputedUnitsProperty
     def npa(self):
         """(n * pi / a)"""
-        return np.arange(self.nx).astype(np.float) * np.pi / self.aspect
+        return np.arange(self.nn).astype(np.float) * np.pi / self.aspect
     
     def diagnostic_string(self, z=None, n=None):
         """A longer diagnostic string."""
         if n is None:
             n = [0, 1]
-            ns = np.arange(self.nx)[n]
+            ns = np.arange(self.nm)[n]
         if z is None:
             z = self.nz // 3
             zs = np.arange(self.nz)[z]

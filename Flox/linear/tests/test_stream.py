@@ -22,7 +22,7 @@ def test_stream_solver(system):
 def test_stream_matrix(system):
     """Matrix used for the stream solver function."""
     from ...component.stream import StreamSolver
-    SS = StreamSolver(system.nz, system.nx)
+    SS = StreamSolver(system.nz, system.nn)
     SS.setup(system.dz, system.npa[0,:])
     
     sup, dia, sub = stream_matrix(system)
@@ -39,13 +39,13 @@ def test_stream_matrix(system):
 def stream_matrix(system):
     """Extract the matrix components for Stream."""
     # Matrix contents
-    sup = np.empty((system.nz + 2, system.nx))
+    sup = np.empty((system.nz + 2, system.nn))
     sup[...] = -1.0 / (system.dz)**2.0
     
-    dia = np.empty((system.nz + 2, system.nx))
+    dia = np.empty((system.nz + 2, system.nn))
     dia[1:-1] = system.npa ** 2.0 + 2.0 / (system.dz) ** 2.0
     
-    sub = np.empty((system.nz + 2, system.nx))
+    sub = np.empty((system.nz + 2, system.nn))
     sub[...] = -1.0 / (system.dz)**2.0
     
     # Boundary Conditions
@@ -64,7 +64,7 @@ def stream_solver(system):
     
     stream = np.zeros_like(system.Vorticity)
     
-    SS = StreamSolver(system.nz, system.nx)
+    SS = StreamSolver(system.nz, system.nn)
     SS.setup(system.dz, system.npa[0,:])
     SS.solve(system.Vorticity, stream)
     

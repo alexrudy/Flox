@@ -16,7 +16,7 @@ from .system import second_derivative
 def test_system_shapes(system):
     """System array shapes"""
     for prop in ["z", "Temperature", "Vorticity", "Stream"]:
-        assert getattr(system, prop).shape == (system.nz, system.nx)
+        assert getattr(system, prop).shape == (system.nz, system.nn)
 
 def test_system_z(system):
     """System z array steps"""

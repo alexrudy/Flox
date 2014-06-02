@@ -127,21 +127,21 @@ class HydroSystem(System2D):
     def Velocity(self):
         """The magnetic field."""
         S = self.Stream.raw
-        Vx_transform = -setup_transform(np.sin, self.nx, self.nx)
-        Vz_transform = setup_transform(np.cos, self.nx, self.nx)
+        Vx_transform = -setup_transform(np.sin, self.nx, self.nn)
+        Vz_transform = setup_transform(np.cos, self.nx, self.nn)
         Vz_transform *= self.npa[:,np.newaxis]
         Vx = np.zeros_like(S)
         Vz = np.zeros_like(S)
         dSdz = np.zeros_like(S)
         assert not first_derivative2D(S.shape[0], S.shape[1], dSdz, S, self.dz.value, np.zeros(S.shape[1]), np.zeros(S.shape[1]), 1.0)
-        assert not transform(self.nz, self.nx, self.nx, Vx, dSdz, Vx_transform)
-        assert not transform(self.nz, self.nx, self.nx, Vz, S, Vz_transform)
+        assert not transform(self.nz, self.nn, self.nx, Vx, dSdz, Vx_transform)
+        assert not transform(self.nz, self.nn, self.nx, Vz, S, Vz_transform)
         return np.array([Vx, Vz]) * type(self).Stream.unit / u.m
     
     def _T_Bounds(self):
         """Get the temperature bounds."""
-        T_p = np.zeros((self.nx), dtype=np.float)
-        T_m = np.zeros((self.nx), dtype=np.float)
+        T_p = np.zeros((self.nn), dtype=np.float)
+        T_m = np.zeros((self.nn), dtype=np.float)
         if self.nondimensionalize(self.deltaT).value > 0.0:
             T_p[0] = 1.0
         elif self.nondimensionalize(self.deltaT).value < 0.0:
@@ -235,7 +235,6 @@ class PhysicalSystem2D(HydroSystem):
         
     deltaT = UnitsProperty("deltaT", u.K, latex=r"$\Delta T$")
     depth = UnitsProperty("depth", u.m, latex=r"$D$")
-    fz = UnitsProperty("fz", u.m, latex=r"$f_z$")
     aspect = UnitsProperty("aspect", u.dimensionless_unscaled, latex=r"$a$")
     
     kinematic_viscosity = UnitsProperty("kinematic viscosity", u.m**2.0 / u.s, latex=r"$\kappa$")
@@ -261,6 +260,6 @@ class PhysicalSystem2D(HydroSystem):
     @classmethod
     def get_parameter_list(cls):
         """Get a list of the parameters which can be changed/modified directly"""
-        import inspect
-        return inspect.getargspec(cls.__init__)[0][1:] + super(PhysicalSystem2D, cls).get_parameter_list()        
+        properties = list(cls._list_attributes(UnitsProperty, strict=True))
+        return properties + super(PhysicalSystem2D, cls).get_parameter_list()        
     

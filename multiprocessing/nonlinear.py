@@ -45,12 +45,12 @@ if __name__ == '__main__':
     System.Rayleigh = 1e6
     System.Prandtl = 0.5
     System.nz = 100
-    System.nx = 50
+    system.nn = 50
     System.aspect = 3
     System.nt = 500
     System.initialize_arrays()
     stable_temperature_gradient(System)
-    for m in range(1, System.nx//10):
+    for m in range(1, system.nn//10):
         single_mode_linear_perturbation(System, m, eps=5e-3)
     # single_mode_linear_perturbation(System, 1, eps=5e-1)
     matplotlib.rcParams['text.usetex'] = False

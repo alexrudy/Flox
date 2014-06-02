@@ -11,7 +11,7 @@ from __future__ import (absolute_import, unicode_literals, division, print_funct
 
 import numpy as np
 
-def spectral_transform(func, data, nx=1.0, a=1.0, perturbed=False):
+def spectral_transform(func, data, nx=1, a=1.0, perturbed=False):
     """Do a function transform along the 1st index."""
     data = np.asanyarray(data)
     

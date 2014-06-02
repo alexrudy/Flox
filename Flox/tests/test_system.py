@@ -76,7 +76,9 @@ system_units = {
     'Chandrasekhar' : 1,
     'MagneticField' : 'T',
     'Velocity': 'm / s',
-    'fz' : 'm',
+    'fzp' : 'm',
+    'fzm' : 'm',
+    'tau_forcing' : 's',
 }
 
 def test_system_quantities(system):

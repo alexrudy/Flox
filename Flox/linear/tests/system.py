@@ -40,10 +40,12 @@ def second_derivative(system, fluid_componet):
 six.add_metaclass(abc.ABCMeta)
 class AnalyticalSystem(object):
     """Setup an analytical system."""
-    def __init__(self, nz, nx, dz=1, dt=1, a=1, Ra=1, Pr=1):
+    def __init__(self, nz, nx, nn=None, dz=1, dt=1, a=1, Ra=1, Pr=1):
         super(AnalyticalSystem, self).__init__()
         self.nz = nz
         self.nx = nx
+        nn = nn if nn is not None else nx
+        self.nn = nn
         self.dz = dz
         self.dt = dt
         self.a = a
@@ -58,7 +60,7 @@ class AnalyticalSystem(object):
         
     def grids(self):
         """Make the grids"""
-        n, z = np.meshgrid(np.arange(self.nx), np.linspace(0, (self.nz-1) * self.dz, self.nz))
+        n, z = np.meshgrid(np.arange(self.nn), np.linspace(0, (self.nz-1) * self.dz, self.nz))
         return n, z
         
     @property
@@ -74,7 +76,7 @@ class AnalyticalSystem(object):
         
     def igrids(self):
         """docstring for igrids"""
-        x_i, z_i = np.meshgrid(np.linspace(0, 1, self.nx),np.linspace(0, 1, self.nz+2)[1:-1])
+        x_i, z_i = np.meshgrid(np.linspace(0, 1, self.nn),np.linspace(0, 1, self.nz+2)[1:-1])
         return x_i, z_i
         
     @property
@@ -86,12 +88,12 @@ class AnalyticalSystem(object):
     @property
     def zp(self):
         """Positive boundary for z"""
-        return (np.max(self.z) + self.dz) * np.ones((self.nx))
+        return (np.max(self.z) + self.dz) * np.ones((self.nn))
     
     @property
     def zm(self):
         """Negative boundray for z"""
-        return (np.min(self.z) - self.dz) * np.ones((self.nx))
+        return (np.min(self.z) - self.dz) * np.ones((self.nn))
     
     @abc.abstractproperty
     def Temperature(self):
@@ -262,7 +264,7 @@ class FourierSystem(AnalyticalSystem):
         
     @property
     def b_Temperature(self):
-        return [np.zeros(self.nx),np.zeros(self.nx)]
+        return [np.zeros(self.nn),np.zeros(self.nn)]
         
     @property
     def Vorticity(self):
@@ -271,7 +273,7 @@ class FourierSystem(AnalyticalSystem):
         
     @property
     def b_Vorticity(self):
-        return [np.zeros(self.nx),np.zeros(self.nx)]
+        return [np.zeros(self.nn),np.zeros(self.nn)]
         
     @property
     def Stream(self):
@@ -280,4 +282,4 @@ class FourierSystem(AnalyticalSystem):
         
     @property
     def b_Stream(self):
-        return [np.zeros(self.nx),np.zeros(self.nx)]
+        return [np.zeros(self.nn),np.zeros(self.nn)]
