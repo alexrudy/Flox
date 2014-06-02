@@ -147,6 +147,7 @@ class ArrayEngine(collections.Mapping, PacketInterface):
     def read_packet(self, system, packet):
         """Create the packet."""
         for key in self.get_data_list():
+            self.check_array(packet[key], key)
             self.__setdata__(system, key, packet[key])
         
     def create_packet(self, system):
@@ -155,6 +156,11 @@ class ArrayEngine(collections.Mapping, PacketInterface):
         for key in self.get_data_list():
             packet[key] = self.__getdata__(system, key)
         return packet
+        
+    def check_array(self, value, name):
+        """Check array values."""
+        if ~np.isfinite(value).all():
+            raise ValueError("{} should be finite. {} entries are not finite.".format(name, np.sum(~np.isfinite(value))))
 
 class TimekeepingEngine(ArrayEngine):
     """An engine which handles timekeeping using the system iteration interface."""
