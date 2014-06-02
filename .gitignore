@@ -11,6 +11,7 @@
 *.c
 *.html
 *.py[co]
+*.log
 
 # Python Builders
 build/*
