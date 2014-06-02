@@ -28,12 +28,14 @@ class HydroSystem(System2D):
     
     _linear = False
     
-    def __init__(self, fzp=0, fzm=0, tau_forcing=0, **kwargs):
+    def __init__(self, fzp=0, fzm=0, fTp=0, fTm=0, tau_forcing=0, **kwargs):
         """Initializers which handle forcing."""
         super(HydroSystem, self).__init__(**kwargs)
         self.tau_forcing = tau_forcing
         self.fzm = fzm
         self.fzp = fzp
+        self.fTp = fTp
+        self.fTm = fTm
     
     def __repr__(self):
         """Represent this system."""
@@ -150,16 +152,19 @@ class HydroSystem(System2D):
     
     def _T_Stability(self):
         """Return the temperature stability array for forcing mode."""
-        raise NotImplementedError("This feature is incomplete, and wrong!")
         T_s = np.zeros((self.nz), dtype=np.float)
         if self.nondimensionalize(self.deltaT).value > 0.0:
-            T_s[self.fzmi:self.fzpi] = ((self.z - self.fzm)/self.fzr)[self.fzmi:self.fzpi]
+            dTdz = (self.fTp - self.fTm)/(self.fzp - self.fzm)
+            T_s[self.fzmi:self.fzpi] = self.nondimensionalize(dTdz*(self.z - self.fzm)[self.fzmi:self.fzpi] + self.fTm).value
         elif self.nondimensionalize(self.deltaT).value < 0.0:
-            T_s[self.fzmi:self.fzpi] = 1.0 - ((self.z - self.fzm)/self.fzr)[self.fzmi:self.fzpi]
+            dTdz = (self.fTp - self.fTm)/(self.fzp - self.fzm)
+            T_s[self.fzmi:self.fzpi] = self.nondimensionalize(dTdz*(self.z - self.fzm)[self.fzmi:self.fzpi] + self.fTm).value
         return T_s
     
-    fzm = UnitsProperty("fzm", u.m, latex=r"$f_{z-}$")
-    fzm = UnitsProperty("fzp", u.m, latex=r"$f_{z+}$")
+    fzm = UnitsProperty("fzm", u.m, latex=r"$z_{f-}$")
+    fzp = UnitsProperty("fzp", u.m, latex=r"$z_{f+}$")
+    fTm = UnitsProperty("fTm", u.K, latex=r"$T_{f-}$")
+    fTp = UnitsProperty("fTp", u.K, latex=r"$T_{f+}$")
     tau_forcing = UnitsProperty("tau_forcing", u.s, latex=r"$\tau_{forcing}$")
     
     Temperature = SpectralArrayProperty("Temperature", u.K, func=np.cos, shape=('nz','nx'), latex=r"$T$")

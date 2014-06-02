@@ -12,6 +12,10 @@
 from __future__ import (absolute_import, unicode_literals, division, print_function)
 
 import numpy as np
+import astropy.units as u
+import logging
+
+log = logging.getLogger(__name__)
 
 class InitialConditioner(object):
     """A class which builds up initial conditions."""
@@ -22,34 +26,44 @@ class InitialConditioner(object):
     def run(self, System):
         """Apply the initial conditions to a system."""
         self.stable(System)
-        self.sin(System)
         self.forcing(System)
+        self.sin(System)
         
     def forcing(self, System):
         """Thermal forcing intial condition."""
         if self.params.get('thermal.enable', False):
-            print("Adding thermal.")
-            fks = self.params.get('thermal.fks', 0.5)
-            ks = int(np.fix(System.nz * fks))
-            top = self.params.get('thermal.top', False)
-            z = z_array(System)
-            T0 = 0.5
-            System.Temperature.raw[:,0] = z/z[ks]
-            zp = 1 - (1 - z[ks:])/(1 - z[ks])
-            System.Temperature.raw[ks:,0] = (1 - zp) + zp * T0
+            log.info("Adding Thermal Forcing IC: {!r}".format(self.params.get('thermal',{})))
+            log.debug("Adding Stable Region: [{} to {}]".format(System.fzm, System.fzp))
             
+            System.Temperature.raw[:,0] += System._T_Stability()
+            if System.deltaT > 0.0:
+                log.info("Adding unstable regions: [{} to {}] and [{} to {}]".format(0.0 * u.m, System.fzm, System.fzp, System.depth))
+                dTdz = (System.fTm) / System.fzm
+                System.Temperature.raw[:System.fzmi,0] += System.nondimensionalize(dTdz * System.z[:System.fzmi])
+                dTdz = (System.deltaT - System.fTp) / (System.depth - System.fzp)
+                System.Temperature.raw[System.fzpi:,0] += System.nondimensionalize(dTdz * (System.z[System.fzpi:] - System.fzp) + System.fTp)
+            elif System.deltaT < 0.0:
+                log.info("Adding unstable regions: [{} to {}] and [{} to {}]".format(0.0 * u.m, System.fzm, System.fzp, System.depth))
+                dTdz = (System.fTm + System.deltaT) / System.fzm
+                System.Temperature.raw[:System.fzmi,0] += System.nondimensionalize(dTdz * System.z[:System.fzmi] + System.deltaT)
+                dTdz = (-System.fTp) / (System.depth - System.fzp)
+                System.Temperature.raw[System.fzpi:,0] += System.nondimensionalize(dTdz * (System.z[System.fzpi:] - System.fzp) + System.fTp)
+            else:
+                log.warning("No unstable region added, DeltaT={}".format(System.detlaT))
         
     def stable(self, System):
         """Apply the stable perturbation."""
         if self.params.get('stable',False):
+            log.info("Adding stable background")
             if System.deltaT > 0.0:
-                System.Temperature.raw[:,0] = System.z / System.dz
+                System.Temperature.raw[:,0] += System.nondimensionalize(System.z * System.deltaT/System.depth)
             elif System.deltaT < 0.0:
-                System.Temperature.raw[:,0] = 1.0 - (System.z / System.dz)
+                System.Temperature.raw[:,0] += System.nondimensionalize(System.deltaT - System.z * System.deltaT/System.depth)
     
     def sin(self, System):
         """Sin perturbations in each mode."""
         if self.params.get('sin.enable', False):
+            log.info("Adding sin(πz) perturbations")            
             if self.params.get('sin.limits', True):
                 kmin, kmax = self.params.get('sin.k',[1,2])
                 ks = range(kmin, kmax)
@@ -60,6 +74,7 @@ class InitialConditioner(object):
                 ls = self.params.get('sin.l',[1])
             amplitude = self.params.get('sin.epsilon',0.5)
             amp_mode = self.params.get('sin.amplitude','fixed')
+            log.debug("A*sin(πz)={}".format(amp_mode))
             for k in ks:
                 for l in ls:
                     if amp_mode == 'fixed':
@@ -70,7 +85,8 @@ class InitialConditioner(object):
                         eps = k**self.params.get('sin.powerlaw',-1) * amplitude
                     if amp_mode == 'powerlaw-random':
                         eps = np.random.randn(1) * k**self.params.get('sin.powerlaw',-1) * amplitude
-                    System.Temperature.raw[:,k] = eps * np.sin(l * np.pi * (System.z / System.dz).to(1).value)
+                    log.debug("Adding to mode k={} with A={} and l={}".format(k, eps, l))
+                    System.Temperature.raw[:,k] += eps * np.sin(l * np.pi * (System.z/System.depth).to(1).value)
 
 
 

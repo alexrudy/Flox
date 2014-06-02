@@ -165,7 +165,8 @@ cdef class HydroEvolver(Evolver):
         self._Temperature.fzmi = fzmi
         self._Temperature.fzpi = fzpi
         self._Temperature.tau = tau
-        self._Temperature.T_s[...] = T_s[...]
+        self._Temperature.T_s = T_s
+    
     
 
     
