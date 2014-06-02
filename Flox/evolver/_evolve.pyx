@@ -74,7 +74,8 @@ cdef class Evolver:
             timestep = self.delta_time()
             
             cfl += 1
-            if cfl >= self.checkCFL:
+            # We check the CFL every N iterations and at the first iteration.
+            if cfl >= self.checkCFL or j==0:
                 cfl = 0
                 self.timestep_ready = False
             
