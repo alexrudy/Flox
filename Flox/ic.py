@@ -58,7 +58,7 @@ class InitialConditioner(object):
             if System.deltaT > 0.0:
                 System.Temperature.raw[:,0] += System.nondimensionalize(System.z * System.deltaT/System.depth)
             elif System.deltaT < 0.0:
-                System.Temperature.raw[:,0] += System.nondimensionalize(System.deltaT - System.z * System.deltaT/System.depth)
+                System.Temperature.raw[:,0] += System.nondimensionalize(System.z * System.deltaT/System.depth - System.deltaT)
     
     def sin(self, System):
         """Sin perturbations in each mode."""
