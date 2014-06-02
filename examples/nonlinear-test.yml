@@ -9,8 +9,10 @@ system:
   nx: 50
   nn: 50
   nz: 200
-  nt: 500
-  engine: 'Flox.engine.numpy.NumpyArrayEngine'
+  nt: 200
+  engine:
+    '()': 'Flox.engine.hdf5.HDF5ArrayEngine'
+    filename: '~/Documents/EART275/nonlinear.hdf5'
 ic:
   stable: yes
   sin:
@@ -41,7 +43,4 @@ evolve:
   class: Flox.hydro.evolver.HydroEvolver
   iterations: 500
   time: !quantity '1 yr'
-write:
-  writer: Flox.io.HDF5Writer
-  filename: ~/Documents/nonlinear.hdf5
-  dataname: convection
+write: no

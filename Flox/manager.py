@@ -119,7 +119,8 @@ class FloxManager(object):
         evolver = resolve(self.config['evolve.class'])
         EV = evolver.from_system(System, **self.config.get('evolve.settings',{}))
         EV.evolve_system(System, self.config['evolve.time'], chunks=int(self.config.get('evolve.nt',System.engine.free)), chunksize=int(self.config.get('evolve.iterations',1)), quiet=debug)
-        System.write(**self.config.get('write',{}))
+        if self.config.get('write', False) is not False:
+            System.write(**self.config.get('write',{}))
     
     def mo_movie(self, System, debug=False):
         """Create a movie."""
@@ -136,6 +137,7 @@ class FloxManager(object):
         if debug:
             mp.log_to_stderr()
         
+        
         # Launch the necessary managers.
         
         # Queue Synchronization Manager
@@ -147,6 +149,7 @@ class FloxManager(object):
         EM.register_evolver(evolver)
         
         # Output/Writing Manager
+        writing = self.config.get('write', False) is not False
         WM = AsynchronousManager()
         WM.name = WM.name.replace("AsynchronousManager","WritingManager")
         
@@ -161,9 +164,9 @@ class FloxManager(object):
             # Start all of the processes.
             SM.start()
             EM.start()
-            WM.start()
             Qs = []
-            
+            # Set up writing
+            WM.start()
             # Set up animation
             if animate:
                 AM.start()
@@ -191,7 +194,8 @@ class FloxManager(object):
                 MVC = getattr(AM, MultiViewController.__name__)(self.config['animate'].store)
                 MVC.animate(System, AQ, buffer=self.config.get('animate.buffer',10), timeout=self.config.get('animate.timeout',2), **self.config.get('animate.view',{}))
             
-            WS.write(**self.config.get('write',{}))
+            if writing:
+                WS.write(**self.config.get('write',{}))
             
         except Exception as e:
             raise e
