@@ -22,6 +22,9 @@ import multiprocessing as mp
 from logging import getLogger
 from pyshell.util import resolve, ipydb, askip
 from pyshell.loggers import configure_logging
+import os, os.path
+import glob
+from pkg_resources import resource_listdir
 
 from .ic import InitialConditioner
 from .input import FloxConfiguration
@@ -50,7 +53,9 @@ class FloxManager(object):
     def load_configuration(self):
         """Load the configuration for this module."""
         self.config = FloxConfiguration()
-        self.config.load_resource(__name__, 'logging.yml')
+        
+        for defaults in resource_listdir(__name__, "defaults"):
+            self.config.load_resource(__name__, defaults)
         self.config.load(self.opt.configfile)
         configure_logging(self.config)
         

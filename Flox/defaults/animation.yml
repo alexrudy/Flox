@@ -1,0 +1,5 @@
+animate:
+  movie:
+    interval: 20
+    save_kwargs:
+      bitrate: 100000

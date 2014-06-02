@@ -18,6 +18,7 @@ import numpy as np
 import queue
 import warnings
 
+
 from astropy.utils.console import ProgressBar
 from matplotlib import animation
 
