@@ -1,0 +1,13 @@
+include README.md
+
+recursive-include Flox *.pyx *.c *.yml
+
+recursive-include docs *
+recursive-include licenses *
+recursive-include cextern *
+recursive-include scripts *
+
+exclude *.pyc *.o
+prune docs/_build
+prune build
+

@@ -56,6 +56,7 @@ package_info['options'] = {
       'build_scripts': {
           'executable': 'frpy',
       },}
+package_info['package_data'] = {'Flox': ['data/*','*.yml']}
 setup(
     name = 'Flox',
     version = "1.0.1",
