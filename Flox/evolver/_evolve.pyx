@@ -64,17 +64,21 @@ cdef class Evolver:
     cpdef int evolve(self, DTYPE_t time, int max_iterations):
         
         cdef int j, r = 0, cfl = 0
+        cdef DTYPE_t timestep
         self.timestep_ready = False
         
         for j in range(max_iterations):
             if self.Time > time:
                 break
-            r += self.step(self.delta_time())
+            
+            timestep = self.delta_time()
             
             cfl += 1
             if cfl >= self.checkCFL:
                 cfl = 0
                 self.timestep_ready = False
+            
+            r += self.step(timestep)
             
             if r == 0:
                 pass

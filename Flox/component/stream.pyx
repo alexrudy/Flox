@@ -43,6 +43,7 @@ cdef class StreamSolver(TridiagonalSolver):
     cpdef int compute_velocity(self):
         # Compute and update the internal variable handling the maximum fluid velocity.
         cdef int r, j, k
+        cdef DTYPE_t Vz, Vx
         self.Vx[...] = 0.0
         self.Vz[...] = 0.0
         self.maxV = 0.0
@@ -50,9 +51,11 @@ cdef class StreamSolver(TridiagonalSolver):
         r += transform(self.nz, self.nx, self.nx, self.Vz, self.V_curr, self.Vz_transform)
         for j in range(self.nz):
             for k in range(self.nx):
-                self.Velocity[j,k] = (self.Vx[j,k])*(self.Vx[j,k]) + (self.Vz[j,k])*(self.Vz[j,k])
-                if self.Velocity[j,k] > self.maxV:
-                    self.maxV = self.Velocity[j,k]
+                Vz = (self.Vz[j,k])*(self.Vz[j,k])
+                Vx = (self.Vx[j,k])*(self.Vx[j,k])
+                self.Velocity[j,k] = Vx + Vz
+                if Vz > self.maxV:
+                    self.maxV = Vz
         return r
     
     cpdef int setup(self, DTYPE_t dz, DTYPE_t[:] npa):
