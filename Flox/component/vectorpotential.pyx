@@ -52,7 +52,7 @@ cpdef int vectorpotential_linear(int J, int K, DTYPE_t[:,:] d_A, DTYPE_t[:,:] dP
 cpdef int vectorpotential_dz(int J, int K, DTYPE_t[:,:] dAdz) nogil:
     
     cdef int j, k
-    for k in prange(K):
+    for k in range(K):
         # This takes care of the top and bottom boundaries in (11.25)
         # Equation (11.37): Bottom boundary, first derivative vanishes.
         j = 0

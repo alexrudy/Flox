@@ -68,7 +68,38 @@ class NumpyArrayEngine(dict, TimekeepingEngine):
         """Allocate arrays with empty numpy arrays"""
         self[name] = np.zeros(shape + tuple([self.length]), dtype=self._dtype)
         
+class NumpyWriterEngine(NumpyArrayEngine):
+    """A numpy engine which dumps its contents and writes every n frames."""
+    def __init__(self, system, length=None, dtype=np.float, writeargs=dict()):
+        """docstring for __init__"""
+        super(NumpyWriterEngine, self).__init__(system, length, dtype)
+        self.writeargs = writeargs
+    
+    @property
+    def iterations(self):
+        """Number of iterations available."""
+        return self._iterations
+    
+    @iterations.setter
+    def iterations(self, value):
+        """Set the iterations"""
+        self._iterations = value
+    
+    def __getdata__(self, obj, name):
+        """Engine caller to the underlying get method."""
+        it = (obj.iteration % self.length)
+        return self[name][...,it]
+    
+    def __setdata__(self, obj, name, value):
+        """Modify __setdata__ to write when the iteration ticks over."""
+        if (self.iterations % self.length) == 0:
+            self.write(**writeargs)
+        if self.iterations < obj.iteration:
+            self.iterations = obj.iteration
+        it = (obj.iteration % self.length)
+        self[name][...,it] = value
         
+    
 class NumpyFrameEngine(dict, ArrayEngine):
     """A numpy-based array engine which only holds a single frame."""
     
