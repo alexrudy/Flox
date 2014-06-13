@@ -28,23 +28,20 @@ def filename(extension=".yml"):
 
 
 if __name__ == '__main__':
-    ipydb()
     
     Config = FloxConfiguration.fromfile(filename(".yml"))
     System = NDSystem2D.from_params(Config["system"])
-    iterations = int(Config["iterations"])
     chunks = System.nt - System.it - 1
-    Writer = HDF5Writer(filename(".hdf5"))
     stable_temperature_gradient(System)
     single_mode_linear_perturbation(System, 1)
     print(System)
     print(System.diagnostic_string())
     NLE = NonlinearEvolver.from_system(System)
-    NLE.evolve_system(System, Config['time'], iterations, chunks)
+    NLE.evolve_system(System, Config['time'], int(Config["iterations"]), chunks)
     print("")
     print(System)
     print(System.diagnostic_string())
-    # for it in range(System.nit):
-    #     System.it = it
-    #     print(System.diagnostic_string())
+    Writer = HDF5Writer(filename(".hdf5"))
     Writer.write(System,'main')
+    
+    

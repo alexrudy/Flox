@@ -1,32 +1,30 @@
 system:
   '()': Flox.hydro.system.NDSystem2D
   Prandtl: 0.5
-  Rayleigh: 1.0e+6
+  Rayleigh: 1.0e+10
   aspect: 3.0
-  deltaT: !quantity '1 K'
+  deltaT: !quantity '-1 K'
   depth: !quantity '1 m'
   kinematic_viscosity: !quantity '0.001 St'
   nn: 50
   nx: 300
   nz: 100
-  nt: 1200
+  nt: 200
   engine: 'Flox.engine.numpy.NumpyArrayEngine'
 ic:
   stable: yes
   sin:
     limits: no
     enable: yes
-    k: [ 1, 8 ]
+    k: [ 1 ]
     random: yes
     epsilon: 0.01
 animate:
-  filename: movies/convection-2cell.mp4
+  filename: movies/convection-hRa.mp4
   buffer: 10
   enable: yes
   movie:
     interval: 20
-    save_kwargs:
-      bitrate: 100000
   nr: 2
   nc: 1
   plots:
@@ -39,14 +37,17 @@ animate:
     S:
       r: 1
       c: 0
-      '()': Flox.plot.VectorView
-      variable: "Velocity"
-      cmap: summer
+      '()': Flox.plot.ContourView
+      variable: "Stream"
+      colors: k
 evolve:
-  class: Flox.nonlinear.NonlinearEvolver
-  iterations: 50
+  class: Flox.hydro.evolver.HydroEvolver
+  iterations: 100
+  settings:
+    checkCFL: 5
+    safety: 0.05
   time: !quantity '1 yr'
 write:
   writer: Flox.io.HDF5Writer
-  filename: ~/Documents/convection-2cell.hdf5
-  dataname: convection
+  filename: ~/Documents/convection-hRa.hdf5
+  dataname: convection-hRa

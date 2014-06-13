@@ -9,7 +9,8 @@ system:
   depth: !quantity '1 m'
   B0: !quantity '1 T'
   kinematic_viscosity: !quantity '0.001 St'
-  nx: 100
+  nx: 300
+  nn: 100
   nz: 200
   nt: 5000
   engine: 'Flox.array.NumpyArrayEngine'
@@ -38,12 +39,6 @@ animate:
       '()': Flox.plot.GridView
       variable: "Temperature"
       cmap: "hot"
-    # S:
-    #   r: 1
-    #   c: 0
-    #   '()': Flox.plot.ContourView
-    #   variable: "Stream"
-    #   colors: k
     A:
       r: 1
       c: 0
