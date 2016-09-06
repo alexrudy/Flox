@@ -125,7 +125,7 @@ cdef class TridiagonalSolver(Solver):
     cpdef int warm(self, DTYPE_t[:,:] sub, DTYPE_t[:,:] dia, DTYPE_t[:,:] sup):
         self.sub = sub
         self.dia = dia
-        self.sub = sub
+        self.sup = sup
         return self._warm_work()
     
     cdef int _warm_work(self):
